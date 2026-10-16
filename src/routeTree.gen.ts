@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BlackRouteImport } from './routes/black'
-import { Route as FaviconDotsvgRouteImport } from './routes/favicon[.]svg'
 import { Route as AdminBlackRouteImport } from './routes/admin_.black'
 import { Route as ApiLojaRouteImport } from './routes/api.loja'
 import { Route as ApiNuvemshopRouteImport } from './routes/api.nuvemshop'
@@ -30,11 +29,6 @@ const AdminRoute = AdminRouteImport.update({
 const BlackRoute = BlackRouteImport.update({
   id: '/black',
   path: '/black',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaviconDotsvgRoute = FaviconDotsvgRouteImport.update({
-  id: '/favicon.svg',
-  path: '/favicon.svg',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminBlackRoute = AdminBlackRouteImport.update({
@@ -57,7 +51,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/black': typeof BlackRoute
-  '/favicon.svg': typeof FaviconDotsvgRoute
   '/admin/black': typeof AdminBlackRoute
   '/api/loja': typeof ApiLojaRoute
   '/api/nuvemshop': typeof ApiNuvemshopRoute
@@ -66,7 +59,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/black': typeof BlackRoute
-  '/favicon.svg': typeof FaviconDotsvgRoute
   '/admin/black': typeof AdminBlackRoute
   '/api/loja': typeof ApiLojaRoute
   '/api/nuvemshop': typeof ApiNuvemshopRoute
@@ -76,7 +68,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/black': typeof BlackRoute
-  '/favicon.svg': typeof FaviconDotsvgRoute
   '/admin_/black': typeof AdminBlackRoute
   '/api/loja': typeof ApiLojaRoute
   '/api/nuvemshop': typeof ApiNuvemshopRoute
@@ -84,28 +75,15 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/admin'
-    | '/black'
-    | '/favicon.svg'
-    | '/admin/black'
-    | '/api/loja'
-    | '/api/nuvemshop'
+    '/' | '/admin' | '/black' | '/admin/black' | '/api/loja' | '/api/nuvemshop'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/admin'
-    | '/black'
-    | '/favicon.svg'
-    | '/admin/black'
-    | '/api/loja'
-    | '/api/nuvemshop'
+    '/' | '/admin' | '/black' | '/admin/black' | '/api/loja' | '/api/nuvemshop'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/black'
-    | '/favicon.svg'
     | '/admin_/black'
     | '/api/loja'
     | '/api/nuvemshop'
@@ -115,7 +93,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   BlackRoute: typeof BlackRoute
-  FaviconDotsvgRoute: typeof FaviconDotsvgRoute
   AdminBlackRoute: typeof AdminBlackRoute
   ApiLojaRoute: typeof ApiLojaRoute
   ApiNuvemshopRoute: typeof ApiNuvemshopRoute
@@ -142,13 +119,6 @@ declare module '@tanstack/react-router' {
       path: '/black'
       fullPath: '/black'
       preLoaderRoute: typeof BlackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/favicon.svg': {
-      id: '/favicon.svg'
-      path: '/favicon.svg'
-      fullPath: '/favicon.svg'
-      preLoaderRoute: typeof FaviconDotsvgRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin_/black': {
@@ -179,7 +149,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   BlackRoute: BlackRoute,
-  FaviconDotsvgRoute: FaviconDotsvgRoute,
   AdminBlackRoute: AdminBlackRoute,
   ApiLojaRoute: ApiLojaRoute,
   ApiNuvemshopRoute: ApiNuvemshopRoute,

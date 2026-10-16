@@ -749,11 +749,8 @@ export function PublicPage({
           <div className="relative flex items-center justify-between">
             <span className="flex items-center gap-2.5">
               {profile.logo && (
-                <img src={profile.logo} alt="" width={40} height={40} className="h-10 w-10 rounded-md" />
+                <img src={profile.logo} alt="Soccer Games" width={52} height={52} className="h-[52px] w-[52px]" />
               )}
-              <span className="font-display text-[22px] font-bold uppercase leading-none tracking-[0.06em]">
-                Soccer<span className="text-[#d77bff]"> Games</span>
-              </span>
             </span>
             <span className="rounded-full border border-white/25 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85">
               PS4 · PS5

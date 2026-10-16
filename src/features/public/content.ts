@@ -71,7 +71,7 @@ export const profile = {
    * Logo da loja: coloque o PNG (fundo transparente) em public/logo-soccer.png e troque para "/logo-soccer.png".
    * Vazio = o nome "Soccer Games" escrito com a fonte da marca.
    */
-  logo: "",
+  logo: "/logo-soccer.png",
   showPrices: true,
 };
 

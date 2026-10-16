@@ -747,13 +747,14 @@ export function PublicPage({
             className="pointer-events-none absolute inset-0 opacity-[.07] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:28px_28px]"
           />
           <div className="relative flex items-center justify-between">
-            {profile.logo ? (
-              <Logo name={profile.name} size="sm" src={profile.logo} />
-            ) : (
+            <span className="flex items-center gap-2.5">
+              {profile.logo && (
+                <img src={profile.logo} alt="" width={40} height={40} className="h-10 w-10 rounded-md" />
+              )}
               <span className="font-display text-[22px] font-bold uppercase leading-none tracking-[0.06em]">
                 Soccer<span className="text-[#d77bff]"> Games</span>
               </span>
-            )}
+            </span>
             <span className="rounded-full border border-white/25 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85">
               PS4 · PS5
             </span>

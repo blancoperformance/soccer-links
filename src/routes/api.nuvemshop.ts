@@ -25,6 +25,8 @@ const page = (body: string, status = 200) =>
 export const Route = createFileRoute("/api/nuvemshop")({
   server: {
     handlers: {
+      // Webhooks de LGPD da Nuvemshop: este app não guarda dados de clientes, só confirma.
+      POST: async () => new Response(null, { status: 200 }),
       GET: async ({ request }) => {
         const code = new URL(request.url).searchParams.get("code") ?? "";
         const id = env("NUVEMSHOP_CLIENT_ID");

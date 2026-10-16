@@ -371,13 +371,13 @@ export function Quiz({ questions, whatsapp, initial = {}, onClose, onOpen }: Qui
               <p className="mt-8 text-[13px] text-mts-muted">
                 Ficou na dúvida?{" "}
                 <a
-                  href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`Olá! Fiz o quiz do link da bio e deu ${result.best.name}. Pode me ajudar a escolher?`)}`}
+                  href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => track("links_clique", { item_name: "Quiz: WhatsApp" })}
+                  onClick={() => track("links_clique", { item_name: "Quiz: primária ou secundária" })}
                   className="font-medium text-mts-text underline underline-offset-4"
                 >
-                  Fale com a gente no WhatsApp
+                  Entenda primária e secundária
                 </a>
               </p>
               <button

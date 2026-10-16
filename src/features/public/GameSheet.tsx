@@ -354,12 +354,12 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
               <p className="mt-6 border border-mts-btn-border px-4 py-3 text-sm text-mts-muted">
                 Esgotado no momento.{" "}
                 <a
-                  href={waLink(whatsapp, `Olá! Vim pelo link da bio. O ${game.name} vai voltar?`)}
+                  href={productUrl(game)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-mts-text underline underline-offset-4"
                 >
-                  Avisar quando voltar
+                  Ver na loja
                 </a>
               </p>
             )}
@@ -440,18 +440,15 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                 Ver a página completa na loja
               </a>
               <a
-                href={waLink(
-                  whatsapp,
-                  `Olá! Vim pelo link da bio e tenho uma dúvida sobre o ${game.name}.`,
-                )}
+href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() =>
-                  track("links_clique", { item_name: `WhatsApp: dúvida ${game.slug}` })
+                  track("links_clique", { item_name: `Ficha: primária ou secundária ${game.slug}` })
                 }
                 className="flex items-center gap-1.5 text-mts-muted underline underline-offset-4 hover:text-mts-text"
               >
-                <MessageCircle className="h-3.5 w-3.5" aria-hidden /> Tirar dúvida no WhatsApp
+                Primária ou secundária? Entenda
               </a>
             </div>
 

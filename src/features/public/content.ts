@@ -78,11 +78,6 @@ export const profile = {
 export const socials = [
   { platform: "instagram", label: "Instagram", url: "https://www.instagram.com/soccer.gamees/" },
   { platform: "youtube", label: "YouTube", url: "https://www.youtube.com/@soccergamesofc" },
-  {
-    platform: "whatsapp",
-    label: "WhatsApp",
-    url: wa("Olá, vim pelo link da bio da Soccer Games."),
-  },
 ] as const;
 
 export const contact = {

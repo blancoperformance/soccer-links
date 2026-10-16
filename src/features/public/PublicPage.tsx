@@ -472,13 +472,13 @@ function Shop({
           <div className="py-8 text-center">
             <p className="text-sm text-mts-text">Não encontramos "{q}" aqui.</p>
             <a
-              href={waLink(whatsapp, `Olá! Vim pelo link da bio e estou procurando: ${q}`)}
+              href={`https://lojasoccergames.com.br/search/?q=${encodeURIComponent(q)}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => track("links_clique", { item_name: "Busca sem resultado: WhatsApp" })}
+              onClick={() => track("links_clique", { item_name: "Busca sem resultado: loja" })}
               className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-mts-text underline underline-offset-4"
             >
-              Pergunte no WhatsApp se a gente tem
+              Procurar no site da loja
             </a>
           </div>
         )}
@@ -657,15 +657,11 @@ export function PublicPage({
       sub: "Entrega, ativação e licenças",
       onClick: () => goTo("atendimento"),
     },
-    ...(whatsapp
-      ? [
-          {
-            label: "WhatsApp",
-            sub: "Fale com a equipe",
-            href: waLink(whatsapp, "Olá, vim pelo link da bio da Soccer Games."),
-          },
-        ]
-      : []),
+    {
+      label: "Primária ou secundária?",
+      sub: "Entenda qual licença escolher",
+      href: "https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/",
+    },
   ];
 
   const sectionTitle = (t: string, sub?: string) => (
@@ -692,7 +688,7 @@ export function PublicPage({
             aria-label="Voltar ao topo"
             className="shrink-0"
           >
-            <Logo name={profile.name} size="sm" {...(profile.logo ? { src: profile.logo } : {})} />
+            <Logo name={profile.name} size="sm" {...(profile.logo ? { src: profile.logo.replace(".png", "-escura.png") } : {})} />
           </button>
           <div className="flex min-w-0 flex-1 gap-5 overflow-x-auto pr-4 [mask-image:linear-gradient(to_right,black_82%,transparent)] [scrollbar-width:none]">
             {nav.map((n) => (
@@ -979,28 +975,6 @@ export function PublicPage({
               <div className="mt-8">
                 <p className="text-[13px] font-semibold text-mts-text">Respostas rápidas</p>
                 <QuickAnswers items={quickAnswers} />
-              </div>
-            )}
-            {whatsapp && (
-              <div className="mt-6 text-[13px] text-mts-muted">
-                <p>
-                  Não encontrou o que precisa?{" "}
-                  <a
-                    href={waLink(
-                      whatsapp,
-                      lastGame
-                        ? `Olá! Vim pelo link da bio e tenho uma dúvida sobre o ${lastGame.name}.`
-                        : "Olá! Vim pelo link da bio da Soccer Games.",
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => track("links_clique", { item_name: "WhatsApp do atendimento" })}
-                    className="font-medium text-mts-text underline underline-offset-4"
-                  >
-                    Fale com a equipe no WhatsApp
-                  </a>
-                </p>
-                {hours && <p className="mt-1">{hours}</p>}
               </div>
             )}
           </section>

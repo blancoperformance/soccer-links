@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "rm -f bun.lock && bun install",
+  "buildCommand": "NITRO_PRESET=vercel bun run build"
+}

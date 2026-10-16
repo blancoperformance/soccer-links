@@ -1,0 +1,48 @@
+# Minimal checks on every push and pull request: install, lint, typecheck, tests, build.
+# Install mirrors the Vercel deploy (vercel.json): bun.lock points to Lovable's private registry,
+# so it is removed and bun takes the versions pinned in package-lock.json instead.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install (same as Vercel)
+        run: rm -f bun.lock && bun install
+
+      # Not blocking yet: the repo starts with ~100 Prettier formatting errors, mostly in files
+      # Lovable generates (src/integrations/supabase/*). Remove continue-on-error once they are fixed.
+      - name: Lint
+        run: bun run lint
+        continue-on-error: true
+
+      - name: Typecheck
+        run: bunx tsc --noEmit
+
+      - name: Test
+        run: bun run test
+
+      - name: Build
+        run: NITRO_PRESET=vercel bun run build

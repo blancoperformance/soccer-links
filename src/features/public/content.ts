@@ -189,7 +189,7 @@ export const campaign: {
   image?: string;
   endsAt?: string;
 } = {
-  enabled: true,
+  enabled: false,
   badge: "Black November",
   title: "Grupo VIP da Black",
   subtitle: "As ofertas da Black chegam primeiro no grupo.",
@@ -242,7 +242,7 @@ export const community = {
     sub: "Crie conteúdo com a gente",
   },
   vip: {
-    enabled: true,
+    enabled: false,
     title: "Grupo VIP",
     sub: "Ofertas e lançamentos antes de todo mundo",
     url: "/black",

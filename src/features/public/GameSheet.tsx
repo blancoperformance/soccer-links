@@ -63,6 +63,8 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     setPick(suggested);
     setSlide(0);
     scroller.current?.scrollTo({ top: 0 });
+    const raf = requestAnimationFrame(() => scroller.current?.scrollTo({ top: 0 }));
+    return () => cancelAnimationFrame(raf);
   }, [game.slug, suggested]);
 
   useEffect(() => {

@@ -90,7 +90,8 @@ export function livePriceFrom(live: LiveGame | null): number | null {
  * abre o carrinho da loja. As UTMs dizem de onde a visita veio, para o Analytics separar as
  * vendas da bio por canal (utm_medium=bio).
  */
-export function cartUrl(variantId: number, content: string) {
+/** A loja não aceita adicionar ao carrinho por link (/comprar/ID/ dá 404): abre o produto com a licença escolhida. */
+export function cartUrl(variantId: number, content: string, slug?: string) {
   const origin = visitOrigin();
   const q = new URLSearchParams({
     utm_source: origin.source,
@@ -98,7 +99,8 @@ export function cartUrl(variantId: number, content: string) {
     utm_campaign: origin.campaign ?? "sempre-ativo",
     utm_content: content,
   });
-  return `${STORE}/comprar/${variantId}/?${q.toString()}`;
+  q.set("variant", String(variantId));
+  return slug ? `${STORE}/produtos/${slug}/?${q.toString()}` : `${STORE}/?${q.toString()}`;
 }
 
 export const licenseHint: Record<string, string> = {

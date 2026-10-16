@@ -109,7 +109,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
       window.location.href = storeUrl;
       return;
     }
-    const url = cartUrl(variant.id, `ficha-${game.slug}`);
+    const url = cartUrl(variant.id, `ficha-${game.slug}`, game.slug);
     track("checkout_click", {
       product: game.slug,
       detail: variant.label,

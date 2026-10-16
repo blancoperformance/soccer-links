@@ -114,8 +114,8 @@ describe("quiz", () => {
 
 describe("loja (Nuvemshop)", () => {
   it("link de carrinho com UTMs da bio", () => {
-    const u = new URL(cartUrl(123456, "ficha-gta"));
-    expect(u.origin + u.pathname).toBe("https://lojasoccergames.com.br/comprar/123456/");
+    const u = new URL(cartUrl(123456, "ficha-gta", "gta"));
+    expect(u.origin + u.pathname).toBe("https://lojasoccergames.com.br/produtos/gta/");
     expect(u.searchParams.get("utm_medium")).toBe("bio");
     expect(u.searchParams.get("utm_content")).toBe("ficha-gta");
   });

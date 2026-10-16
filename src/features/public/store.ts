@@ -105,7 +105,7 @@ export function cartUrl(variantId: number, content: string, slug?: string) {
 
 export const licenseHint: Record<string, string> = {
   primaria: "Fica no seu console: joga no seu perfil e em qualquer outro, até sem internet.",
-  secundaria: "Mais barata: joga só no perfil da Soccer Games no seu console, sempre com internet.",
+  secundaria: "Mais barata: para jogar, o console precisa estar com internet e com a conta da Soccer Games logada.",
 };
 
 export const gameHasStock = (g: Game, live: LiveGame | null) =>

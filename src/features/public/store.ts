@@ -100,6 +100,7 @@ export function cartUrl(variantId: number, content: string, slug?: string) {
     utm_content: content,
   });
   q.set("variant", String(variantId));
+  q.set("sg", "1");
   return slug ? `${STORE}/produtos/${slug}/?${q.toString()}` : `${STORE}/?${q.toString()}`;
 }
 

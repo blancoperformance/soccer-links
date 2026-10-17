@@ -61,6 +61,30 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   const inBag = useBag();
   const others = bagEnabled ? inBag.filter((i) => i.slug !== game.slug) : [];
   const versions = useMemo(() => versionsOf(game).filter((v) => v.slug !== game.slug), [game]);
+  const plat = game.platforms.length === 1 ? game.platforms[0]! : null;
+  /** Mesma edição no outro console (troca PS4/PS5 sem mudar de edição). */
+  const counterpart = useMemo(() => {
+    if (!plat) return null;
+    const other = plat === "PS5" ? "PS4" : "PS5";
+    const ed = (g: Game) =>
+      g.name.toLowerCase().replace(/\b(ps4|ps5|playstation ?[45])\b/g, "").replace(/\s+/g, " ").trim();
+    const pool = versions.filter((v) => v.platforms.length === 1 && v.platforms[0] === other);
+    return pool.find((v) => ed(v) === ed(game)) ?? pool[0] ?? null;
+  }, [versions, plat, game]);
+  const [flash, setFlash] = useState<string | null>(null);
+  const prevSlug = useRef(game.slug);
+  useEffect(() => {
+    if (prevSlug.current === game.slug) return;
+    prevSlug.current = game.slug;
+    if (!plat) return;
+    setFlash(`Versão ${plat}`);
+    const t = window.setTimeout(() => setFlash(null), 1600);
+    return () => clearTimeout(t);
+  }, [game.slug, plat]);
+  const switchTo = (v: Game) => {
+    track("links_clique", { item_name: `Versão: ${v.name}`, item_url: productUrl(v) });
+    onOpenOther(v);
+  };
   const similar = useMemo(() => similarTo(game, 4), [game]);
 
   useEffect(() => {
@@ -181,7 +205,16 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <span className="min-w-0 truncate text-sm font-medium text-mts-text">{game.short}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 truncate text-sm font-medium text-mts-text">{game.short}</span>
+            {plat && (
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black text-white ${plat === "PS5" ? "bg-[#0f0f0f]" : "bg-[#1f5fd6]"}`}
+              >
+                {plat}
+              </span>
+            )}
+          </span>
           <button
             type="button"
             onClick={onClose}
@@ -193,6 +226,14 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
         </div>
 
         <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-8">
+          {flash && (
+            <div className="pointer-events-none sticky top-3 z-30 -mb-10 flex justify-center">
+              <span className="animate-[sg-pop_.45s_ease-out] rounded-full bg-[#0f0f0f] px-4 py-2 text-sm font-bold text-white shadow-lg">
+                ✓ {flash}
+              </span>
+            </div>
+          )}
+
           {/* Fotos */}
           {images.length > 1 ? (
             <div className="relative">
@@ -234,6 +275,28 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
           )}
 
           <div className="px-5 sm:px-8">
+            {plat && counterpart && (
+              <div className="mt-5" role="group" aria-label="Console">
+                <p className="text-[13px] font-semibold text-mts-text">Seu console</p>
+                <div className="mt-2 grid grid-cols-2 gap-1 rounded-2xl bg-mts-btn-border/40 p-1">
+                  {(["PS4", "PS5"] as const).map((p) => {
+                    const on = p === plat;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => !on && switchTo(counterpart)}
+                        className={`h-11 rounded-xl text-[15px] font-black transition ${on ? (p === "PS5" ? "bg-[#0f0f0f] text-white shadow" : "bg-[#1f5fd6] text-white shadow") : "text-mts-muted"}`}
+                      >
+                        {on && <Check className="mr-1 inline h-4 w-4 align-[-2px]" aria-hidden />}
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="mt-5 flex flex-wrap gap-1.5">
               {game.platforms.map((p) => (
                 <span
@@ -293,7 +356,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
             {/* Outras versões (PS4/PS5, edições) */}
             {versions.length > 0 && (
               <div className="mt-5">
-                <p className="text-[13px] font-semibold text-mts-text">Outras versões</p>
+                <p className="text-[13px] font-semibold text-mts-text">Outras edições</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {[game, ...versions].slice(0, 6).map((v) => (
                     <button
@@ -302,11 +365,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                       aria-pressed={v.slug === game.slug}
                       onClick={() => {
                         if (v.slug === game.slug) return;
-                        track("links_clique", {
-                          item_name: `Versão: ${v.name}`,
-                          item_url: productUrl(v),
-                        });
-                        onOpenOther(v);
+                        switchTo(v);
                       }}
                       className={`rounded-full border px-3 py-2 text-left text-[12px] leading-tight ${v.slug === game.slug ? "border-mts-ink text-mts-text" : "border-mts-btn-border text-mts-muted hover:border-mts-ink hover:text-mts-text"}`}
                     >

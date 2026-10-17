@@ -5,6 +5,9 @@
  * Só age em quem veio da sacola do links.
  */
 (function () {
+  // roda uma vez só, mesmo que esteja no GTM e no app ao mesmo tempo
+  if (window.__sgBag) return;
+  window.__sgBag = true;
   var KEY = "sg_queue";
   var GO = "sg_go_checkout";
   var q = new URLSearchParams(location.search);

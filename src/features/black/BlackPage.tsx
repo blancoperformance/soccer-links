@@ -468,10 +468,11 @@ export function BlackPage() {
       <header className="relative z-10 mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-5">
         <a
           href="/"
-          className="font-display text-[15px] font-bold uppercase tracking-[0.06em]"
+          aria-label="Soccer Games"
+          className="flex items-center"
           onClick={() => track("links_clique", { item_name: "Black: logo" })}
         >
-          Soccer<span className="text-[#c64bff]"> Games</span>
+          <img src="/logo-soccer.png" alt="Soccer Games" width={40} height={40} className="h-10 w-10" />
         </a>
         <span className="flex items-center gap-2 text-[12px] text-white/70">
           <span className="sg-live-dot h-1.5 w-1.5 rounded-full bg-[#c64bff]" aria-hidden />

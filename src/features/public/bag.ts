@@ -80,6 +80,19 @@ export const bagTotals = (list: BagItem[]) => {
   return { total, save };
 };
 
+/**
+ * O script que monta o carrinho roda pelo GTM da loja. Se o GTM foi bloqueado aqui no links
+ * (aba privada do Safari, bloqueador de anúncios), quase certamente também será na loja:
+ * nesse caso o Comprar abre a página do produto, que sempre funciona.
+ */
+export const storeScriptLikely = () => {
+  try {
+    return typeof (window as unknown as { google_tag_manager?: unknown }).google_tag_manager === "object";
+  } catch {
+    return false;
+  }
+};
+
 /** Carrinho da loja com todos os itens da sacola. */
 export function bagUrl(list: BagItem[], content: string) {
   const origin = visitOrigin();

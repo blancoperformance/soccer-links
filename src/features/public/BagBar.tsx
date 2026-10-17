@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronUp, Trash2 } from "lucide-react";
 import { track } from "@/lib/tracking";
-import { bag, bagTotals, bagUrl, useBag } from "./bag";
+import { bag, bagTotals, bagUrl, storeScriptLikely, useBag } from "./bag";
 import { brl, INSTALLMENTS } from "./store";
 import { bagEnabled } from "./content";
 
@@ -27,7 +27,10 @@ export function BagBar() {
   const { total, save } = bagTotals(list);
   const n = list.length;
   const go = () => {
-    const url = bagUrl(list, "sacola");
+    // sem o script da loja (GTM bloqueado), abre o primeiro jogo na loja em vez de um carrinho vazio
+    const url = storeScriptLikely()
+      ? bagUrl(list, "sacola")
+      : `https://lojasoccergames.com.br/produtos/${list[0]!.slug}/?utm_source=bio&utm_medium=bio&utm_content=sacola-sem-script`;
     track("checkout_click", {
       product: list.map((i) => i.slug).join(","),
       detail: `sacola ${n}`,

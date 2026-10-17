@@ -6,7 +6,7 @@ import { withUtm } from "@/lib/utm";
 import { productUrl, similarTo, versionsOf, type Game } from "./games";
 import { brl, parcel, cartUrl, licenseHint, sized, variantFor, type LiveVariant } from "./store";
 import { Cover, useLiveGame } from "./GameCard";
-import { bag, bagUrl, useBag, type BagItem } from "./bag";
+import { bag, bagUrl, storeScriptLikely, useBag, type BagItem } from "./bag";
 import { bagEnabled } from "./content";
 
 interface Props {
@@ -142,7 +142,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
       window.location.href = storeUrl;
       return;
     }
-    const item = bagEnabled ? toItem() : null;
+    const item = bagEnabled && storeScriptLikely() ? toItem() : null;
     if (item) bag.add(item);
     const url = item
       ? bagUrl(bag.get(), `ficha-${game.slug}`)

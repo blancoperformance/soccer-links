@@ -85,13 +85,14 @@ export const bagTotals = (list: BagItem[]) => {
  * (aba privada do Safari, bloqueador de anúncios), quase certamente também será na loja:
  * nesse caso o Comprar abre a página do produto, que sempre funciona.
  */
-export const storeScriptLikely = () => {
-  try {
-    return typeof (window as unknown as { google_tag_manager?: unknown }).google_tag_manager === "object";
-  } catch {
-    return false;
-  }
-};
+let gtmReachable = true;
+if (typeof window !== "undefined") {
+  // testa se o navegador deixa carregar o GTM (aba privada do Safari e bloqueadores barram)
+  fetch("https://www.googletagmanager.com/gtm.js?id=GTM-NTMSLZ5H", { mode: "no-cors", cache: "force-cache" })
+    .then(() => (gtmReachable = true))
+    .catch(() => (gtmReachable = false));
+}
+export const storeScriptLikely = () => gtmReachable;
 
 /** Carrinho da loja com todos os itens da sacola. */
 export function bagUrl(list: BagItem[], content: string) {

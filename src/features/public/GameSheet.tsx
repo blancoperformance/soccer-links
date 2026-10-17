@@ -622,7 +622,7 @@ function SimilarCard({ game, onOpen }: { game: Game; onOpen: () => void }) {
     .filter((v) => v.available && v.price != null && v.id > 0)
     .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0];
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
     {bagEnabled && cheapest && live?.id && (
       <button
         type="button"
@@ -654,7 +654,7 @@ function SimilarCard({ game, onOpen }: { game: Game; onOpen: () => void }) {
         track("links_clique", { item_name: `Parecido: ${game.name}`, item_url: productUrl(game) });
         onOpen();
       }}
-      className="group text-left"
+      className="group block w-full text-left"
     >
       <Cover game={game} live={live} done={done} w={320} />
       <span className="mt-2 line-clamp-2 block text-[12px] leading-snug text-mts-text">

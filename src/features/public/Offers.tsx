@@ -108,7 +108,7 @@ export function DealsBanner({ onGo }: { onGo: () => void }) {
         track("links_clique", { item_name: "Ofertas: faixa do topo" });
         onGo();
       }}
-      className="group relative mb-2 mt-5 flex w-full items-center gap-3 overflow-hidden rounded-[22px] bg-[linear-gradient(120deg,#5b00a3_0%,#8a00c2_45%,#ff2d87_100%)] py-5 pl-5 pr-3 text-left text-white transition active:scale-[.99]"
+      className="group relative mb-2 mt-5 flex w-full items-center gap-3 overflow-hidden rounded-[22px] bg-[linear-gradient(120deg,#5b00a3_0%,#8a00c2_45%,#ff2d87_100%)] py-5 pl-5 pr-5 text-left text-white transition active:scale-[.99]"
     >
       {/* brilho que passa (faixa diagonal, sem sombra em volta) */}
       <span
@@ -135,14 +135,14 @@ export function DealsBanner({ onGo }: { onGo: () => void }) {
           )}
         </span>
       </span>
-      <span className="relative flex h-24 w-[104px] shrink-0 items-center justify-center">
+      <span className="relative mr-1 flex h-24 w-[112px] shrink-0 items-center justify-center">
         {covers.map((d, k) => (
           <img
             key={d.game.slug}
             src={img(d)}
             alt=""
             className="absolute h-[72px] w-[72px] rounded-[14px] object-cover shadow-[0_6px_14px_rgba(0,0,0,.3)] ring-2 ring-white/80"
-            style={{ transform: `translateX(${(k - 1) * 18}px) rotate(${(k - 1) * 10}deg)`, zIndex: k === 1 ? 3 : k }}
+            style={{ transform: `translateX(${(k - 1) * 16 - 10}px) rotate(${(k - 1) * 10}deg)`, zIndex: k === 1 ? 3 : k }}
           />
         ))}
         <span className="absolute -bottom-1 right-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#8a00c2] shadow transition-transform group-hover:translate-x-0.5">
@@ -151,32 +151,6 @@ export function DealsBanner({ onGo }: { onGo: () => void }) {
       </span>
     </button>
   );
-}
-
-/** Raridade da oferta pelo desconto real (estilo loot de jogo). */
-const tier = (pct: number) =>
-  pct >= 80
-    ? { name: "LENDÁRIA", cls: "from-[#ffb800] to-[#ff6a00]", ring: "ring-[#ffb800]" }
-    : pct >= 65
-      ? { name: "ÉPICA", cls: "from-[#b44dff] to-[#ff2d87]", ring: "ring-[#d77bff]" }
-      : { name: "RARA", cls: "from-[#2f7bff] to-[#00c6ff]", ring: "ring-[#5aa8ff]" };
-
-const SPIN_LINES = ["Embaralhando...", "Segura aí...", "Tá chegando...", "Quase..."];
-const DAILY_SPINS = 3;
-const todayKey = () => `sg:giros:${new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" })}`;
-function readSpins(): number {
-  try {
-    return Number(localStorage.getItem(todayKey()) ?? 0) || 0;
-  } catch {
-    return 0;
-  }
-}
-function saveSpins(n: number) {
-  try {
-    localStorage.setItem(todayKey(), String(n));
-  } catch {
-    /* sem storage: não limita */
-  }
 }
 
 function Confetti() {
@@ -214,10 +188,6 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
   const [face, setFace] = useState<Deal | null>(null);
   const [won, setWon] = useState<Deal | null>(null);
   const [spins, setSpins] = useState(0);
-  const [used, setUsed] = useState(0);
-  const [line, setLine] = useState(SPIN_LINES[0]!);
-  useEffect(() => setUsed(readSpins()), []);
-  const left = Math.max(0, DAILY_SPINS - used);
   const [showAll, setShowAll] = useState(false);
   const timer = useRef<number | null>(null);
 
@@ -234,10 +204,7 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
   if (!deals || deals.length === 0) return null;
 
   const spin = () => {
-    if (spinning || pool.length === 0 || left === 0) return;
-    const u = used + 1;
-    setUsed(u);
-    saveSpins(u);
+    if (spinning || pool.length === 0) return;
     // prêmio: uma das melhores ofertas do console (top 24), sem repetir a última
     const top = pool.slice(0, 24).filter((d) => d !== won);
     const prize = top[Math.floor(Math.random() * top.length)] ?? pool[0]!;
@@ -263,7 +230,6 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
         return;
       }
       setFace(pool[Math.floor(Math.random() * Math.min(pool.length, 30))]!);
-      setLine(SPIN_LINES[Math.min(SPIN_LINES.length - 1, Math.floor((step / total) * SPIN_LINES.length))]!);
       // começa rápido e vai freando
       timer.current = window.setTimeout(next, 30 + step * step * 0.8);
     };
@@ -288,64 +254,45 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
       </div>
 
       {/* Roleta */}
-      <div className="relative mt-4 overflow-hidden rounded-[24px] bg-[radial-gradient(120%_80%_at_50%_0%,#3a0066_0%,#0f0f0f_60%)] p-5 text-white">
-        <div className="relative flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#ffb800]">Roleta Soccer</p>
-            <p className="mt-1 text-[22px] font-black leading-[1.05] tracking-tight">
-              Qual jogo vai
-              <br />
-              cair pra você?
-            </p>
-          </div>
-          <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold">
-            {left} {left === 1 ? "giro" : "giros"} hoje
-          </span>
-        </div>
+      <div className="relative mt-4 overflow-hidden rounded-[22px] bg-[linear-gradient(160deg,#f3e3ff_0%,#ffffff_55%,#ffe6f1_100%)] p-5 text-mts-text ring-1 ring-[#8a00c2]/15">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#ff2d87] opacity-20 blur-3xl"
+        />
+        <p className="relative flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#8a00c2]">
+          <Sparkles className="h-4 w-4" aria-hidden /> Roleta das ofertas
+        </p>
+        <p className="relative mt-1 text-[15px] text-mts-muted">
+          Gire e veja qual oferta de {plat} caiu para você.
+        </p>
 
-        <div
-          className={`relative mx-auto mt-5 flex aspect-square w-[min(100%,250px)] items-center justify-center overflow-hidden rounded-[20px] bg-white/5 ring-4 transition ${won && !spinning ? tier(won.pct).ring : "ring-white/10"} ${spinning ? "animate-[sg-shake_.18s_linear_infinite]" : ""}`}
-        >
+        <div className="relative mx-auto mt-4 flex aspect-square w-[min(100%,260px)] items-center justify-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_-14px_rgba(138,0,194,.5)] ring-2 ring-[#8a00c2]/50">
           {face && img(face) ? (
             <img
               src={img(face, 480)}
               alt={won ? face.game.name : ""}
-              className={`h-full w-full object-cover transition duration-150 ${spinning ? "scale-95 brightness-75" : "scale-100"}`}
+              className={`h-full w-full object-cover ${spinning ? "scale-95 blur-[1px]" : "scale-100"} transition-transform duration-200`}
             />
           ) : (
-            <span className="flex flex-col items-center gap-2 text-white/30">
-              <Sparkles className="h-10 w-10" aria-hidden />
-              <span className="text-xs font-bold uppercase tracking-widest">Toque em girar</span>
-            </span>
+            <span className="font-display text-6xl font-black text-[#8a00c2]/25">?</span>
           )}
-          {spinning && (
-            <span className="absolute inset-x-0 bottom-3 text-center text-sm font-black tracking-wide">{line}</span>
-          )}
+          {won && !spinning && <Confetti key={spins} />}
           {won && !spinning && (
-            <>
-              <Confetti key={spins} />
-              <span
-                className={`absolute left-2.5 top-2.5 z-10 animate-[sg-pop_.5s_ease-out] rounded-full bg-gradient-to-r px-2.5 py-1 text-[11px] font-black tracking-wider ${tier(won.pct).cls}`}
-              >
-                OFERTA {tier(won.pct).name}
-              </span>
-              <span className="absolute bottom-2.5 right-2.5 z-10 animate-[sg-pop_.6s_ease-out] rounded-2xl bg-[#ff2d87] px-3 py-1.5 text-2xl font-black leading-none shadow-lg">
-                -{won.pct}%
-              </span>
-            </>
+            <span className="absolute left-2 top-2 animate-[sg-pop_.5s_ease-out] rounded-full bg-[#ff2d87] px-3 py-1 text-lg font-black shadow-lg">
+              -{won.pct}%
+            </span>
           )}
         </div>
 
         {won && !spinning ? (
           <div className="relative mt-4 text-center">
-            <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#7dffb3]">Caiu pra você</p>
-            <p className="mt-1 text-[16px] font-extrabold leading-snug">{won.game.name}</p>
-            <p className="mt-1.5 flex items-baseline justify-center gap-2">
-              <span className="text-sm text-white/45 line-through">{brl(won.from)}</span>
-              <span className="text-[26px] font-black leading-none text-[#7dffb3]">{brl(won.price)}</span>
+            <p className="text-[15px] font-bold leading-snug">{won.game.name}</p>
+            <p className="mt-1 text-sm">
+              <span className="text-mts-muted line-through">{brl(won.from)}</span>{" "}
+              <span className="text-xl font-black text-[#8a00c2]">{brl(won.price)}</span>
             </p>
-            <p className="mt-1.5 text-xs text-white/70">
-              R$ {won.save.toFixed(2).replace(".", ",")} a menos na licença {won.license.toLowerCase()}
+            <p className="mt-0.5 text-xs text-mts-muted">
+              Você economiza {brl(won.save)} na licença {won.license.toLowerCase()}.
             </p>
             <div className="mt-4 flex gap-2">
               <button
@@ -354,44 +301,35 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
                   track("links_clique", { item_name: `Roleta: abriu ${won.game.slug}` });
                   onOpen(won.game);
                 }}
-                className="h-[52px] flex-1 rounded-[16px] bg-white text-[15px] font-black text-[#0f0f0f] transition active:scale-[.98]"
+                className="h-12 flex-1 rounded-[14px] bg-[#8a00c2] text-[15px] font-bold text-white"
               >
-                Pegar esse jogo
+                Quero esse
               </button>
               <button
                 type="button"
                 onClick={spin}
-                disabled={left === 0}
                 aria-label="Girar de novo"
-                className="flex h-[52px] w-[52px] items-center justify-center rounded-[16px] border border-white/25 disabled:opacity-30"
+                className="flex h-12 w-12 items-center justify-center rounded-[14px] border border-[#8a00c2]/30 bg-white text-[#8a00c2]"
               >
                 <RotateCw className="h-5 w-5" aria-hidden />
               </button>
             </div>
-            {left === 0 && (
-              <p className="mt-3 text-xs text-white/60">Acabaram os giros de hoje. Amanhã tem mais 3.</p>
-            )}
           </div>
         ) : (
-          <>
-            <button
-              type="button"
-              onClick={spin}
-              disabled={spinning || pool.length === 0 || left === 0}
-              className="relative mt-5 h-14 w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#ffb800] via-[#ff2d87] to-[#8a00c2] text-[18px] font-black tracking-wide transition active:scale-[.98] disabled:opacity-60"
-            >
-              {spinning ? line : left === 0 ? "Volta amanhã" : spins ? "GIRAR DE NOVO" : "GIRAR"}
-            </button>
-            <p className="mt-2.5 text-center text-[11px] text-white/50">
-              Só cai jogo com desconto de verdade da loja. 3 giros por dia.
-            </p>
-          </>
+          <button
+            type="button"
+            onClick={spin}
+            disabled={spinning || pool.length === 0}
+            className="relative mt-4 h-12 w-full rounded-[14px] bg-gradient-to-r from-[#8a00c2] to-[#ff2d87] text-[15px] font-extrabold text-white disabled:opacity-70"
+          >
+            {spinning ? "Girando..." : spins ? "Girar de novo" : "Girar a roleta"}
+          </button>
         )}
       </div>
 
       {/* Ranking */}
       <p className="mt-6 flex items-center gap-2 text-sm font-bold text-mts-text">
-        <Flame className="h-4 w-4 text-[#ff2d87]" aria-hidden /> Top descontos de {plat} agora
+        <Flame className="h-4 w-4 text-[#ff2d87]" aria-hidden /> Maiores descontos de {plat} agora
       </p>
       <ol className="mt-3 space-y-2">
         {ranking.map((d, i) => (

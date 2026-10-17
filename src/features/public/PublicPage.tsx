@@ -911,7 +911,7 @@ export function PublicPage({
           )}
 
           <section id="ofertas" className={sectionCls} aria-label="Ofertas">
-            {sectionTitle("Caça-ofertas", "Gira a roleta e vê o que cai. Ou vai direto no top descontos.")}
+            {sectionTitle("Caça-ofertas", "Gire a roleta ou veja os maiores descontos da loja agora.")}
             <div className="mt-5">
               <Offers onOpen={(g) => openGame(g)} />
             </div>

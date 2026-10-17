@@ -1,4 +1,4 @@
-/* Soccer Games: sacola do links -> carrinho da loja (v5).
+/* Soccer Games: sacola do links -> carrinho da loja (v6).
  * Faz igual aos apps de "compre junto" da loja: envia o formulário nativo de compra
  * (POST /comprar/ com add_to_cart), um jogo por vez. A fila fica no sessionStorage
  * e continua sozinha a cada recarga do carrinho. No fim, vai direto para o checkout.
@@ -24,7 +24,15 @@
   if (!queue.length) {
     var go2 = false;
     try { go2 = sessionStorage.getItem(GO) === "1"; sessionStorage.removeItem(GO); } catch (e) {}
-    if (go2) location.replace("/comprar?go_to_checkout=1");
+    if (!go2) return;
+    // usa o botão "Iniciar compra" do próprio carrinho; se não achar, vai pelo caminho da Nuvemshop
+    var tries = 0;
+    var t = setInterval(function () {
+      tries++;
+      var b = document.querySelector('[name="go_to_checkout"], .js-go-checkout-btn, [data-component="cart.checkout-button"]');
+      if (b) { clearInterval(t); b.click(); return; }
+      if (tries > 10) { clearInterval(t); location.replace("/comprar?go_to_checkout=1"); }
+    }, 300);
     return;
   }
   var item = queue.shift();

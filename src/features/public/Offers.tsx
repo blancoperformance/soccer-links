@@ -254,11 +254,7 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
       </div>
 
       {/* Roleta */}
-      <div className="relative mt-4 overflow-hidden rounded-[22px] bg-[linear-gradient(160deg,#f3e3ff_0%,#ffffff_55%,#ffe6f1_100%)] p-5 text-mts-text ring-1 ring-[#8a00c2]/15">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#ff2d87] opacity-20 blur-3xl"
-        />
+      <div className="relative mt-4 overflow-hidden rounded-[22px] bg-white p-5 text-mts-text ring-1 ring-black/5">
         <p className="relative flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#8a00c2]">
           <Sparkles className="h-4 w-4" aria-hidden /> Roleta das ofertas
         </p>
@@ -266,7 +262,7 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
           Gire e veja qual oferta de {plat} caiu para você.
         </p>
 
-        <div className="relative mx-auto mt-4 flex aspect-square w-[min(100%,260px)] items-center justify-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_-14px_rgba(138,0,194,.5)] ring-2 ring-[#8a00c2]/50">
+        <div className="relative mx-auto mt-4 flex aspect-square w-[min(100%,320px)] items-center justify-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_-14px_rgba(138,0,194,.5)] ring-2 ring-[#8a00c2]/50">
           {face && img(face) ? (
             <img
               src={img(face, 480)}
@@ -278,7 +274,7 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
           )}
           {won && !spinning && <Confetti key={spins} />}
           {won && !spinning && (
-            <span className="absolute left-2 top-2 animate-[sg-pop_.5s_ease-out] rounded-full bg-[#ff2d87] px-3 py-1 text-lg font-black shadow-lg">
+            <span className="absolute left-2 top-2 animate-[sg-pop_.5s_ease-out] rounded-full bg-[#ff2d87] px-3 py-1 text-lg font-black text-white shadow-lg">
               -{won.pct}%
             </span>
           )}
@@ -344,9 +340,9 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
             >
               <span className="w-5 shrink-0 text-center text-sm font-black text-mts-muted">{i + 1}</span>
               {img(d) ? (
-                <img src={img(d)} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                <img src={img(d)} alt="" loading="lazy" className="h-[68px] w-[68px] shrink-0 rounded-xl object-cover" />
               ) : (
-                <span className="h-14 w-14 shrink-0 rounded-xl bg-mts-column" />
+                <span className="h-[68px] w-[68px] shrink-0 rounded-xl bg-mts-column" />
               )}
               <span className="min-w-0 flex-1">
                 <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-mts-text">{d.game.name}</span>

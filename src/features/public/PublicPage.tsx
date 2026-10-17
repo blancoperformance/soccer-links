@@ -641,6 +641,8 @@ export function PublicPage({
     onClick?: () => void;
     href?: string;
     strong?: boolean;
+    hot?: boolean;
+    badge?: string;
   }[] = [
     ...(campaign?.enabled
       ? [{ label: campaign.title, sub: campaign.subtitle, href: campaign.url, strong: true }]
@@ -649,9 +651,11 @@ export function PublicPage({
     ...(quizReady
       ? [
           {
-            label: "Descubra seu próximo jogo",
-            sub: "Quiz rápido, a gente indica",
+            label: "Qual jogo é a sua cara?",
+            sub: "Responde rapidinho e a gente acha o seu",
             onClick: () => openQuiz("botao"),
+            hot: true,
+            badge: "1 min",
           },
         ]
       : []),
@@ -816,33 +820,48 @@ export function PublicPage({
             {primary.map((b, i) => {
               const Icon = TILE_ICONS[i % TILE_ICONS.length]!;
               const wide = b.strong;
+              const hot = b.hot;
               const cls = `group relative flex min-h-[112px] flex-col justify-between overflow-hidden rounded-[18px] p-4 text-left transition-transform active:scale-[.99] ${
                 wide
                   ? "col-span-2 min-h-[96px] bg-[#c000ff] text-white shadow-[0_14px_40px_-16px_rgba(192,0,255,.9)]"
-                  : "border border-mts-btn-border bg-mts-btn text-mts-text hover:border-mts-ink"
+                  : hot
+                    ? "bg-[#8a00c2] text-white"
+                    : "border border-mts-btn-border bg-mts-btn text-mts-text hover:border-mts-ink"
               }`;
               const inner = (
                 <>
-                  <span className="flex items-start justify-between gap-3">
+                  {hot && (
                     <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-full ${wide ? "bg-white/20 text-white" : "bg-[var(--mts-glow)] text-mts-accent"}`}
+                      aria-hidden
+                      className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#ff2d87] opacity-60 blur-2xl"
+                    />
+                  )}
+                  <span className="relative flex items-start justify-between gap-3">
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-full ${wide || hot ? "bg-white/20 text-white" : "bg-[var(--mts-glow)] text-mts-accent"}`}
                     >
                       <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden />
                     </span>
                     <span
                       aria-hidden
-                      className={`text-lg transition-transform group-hover:translate-x-0.5 ${wide ? "text-white" : "text-mts-muted"}`}
+                      className={`text-lg transition-transform group-hover:translate-x-0.5 ${wide || hot ? "text-white" : "text-mts-muted"}`}
                     >
-                      →
+                      {b.badge ? (
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-[#8a00c2]">
+                          {b.badge}
+                        </span>
+                      ) : (
+                        "→"
+                      )}
                     </span>
                   </span>
-                  <span className="mt-3 block">
+                  <span className="relative mt-3 block">
                     <span className="font-display block text-[17px] font-semibold leading-tight">
                       {b.label}
                     </span>
                     {b.sub && (
                       <span
-                        className={`mt-1 block text-[12px] leading-snug ${wide ? "text-white/85" : "text-mts-muted"}`}
+                        className={`mt-1 block text-[12px] leading-snug ${wide || hot ? "text-white/85" : "text-mts-muted"}`}
                       >
                         {b.sub}
                       </span>

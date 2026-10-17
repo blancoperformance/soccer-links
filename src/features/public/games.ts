@@ -147,6 +147,10 @@ const haystack = new Map(
 export function searchGames(query: string): Game[] {
   let q = fold(query)
     .replace(/[^a-z0-9 -]/g, " ")
+    // "fc26" -> "fc 26", "re4" -> "re 4" (sem quebrar ps4/ps5)
+    .replace(/([a-z])(\d)/g, "$1 $2")
+    .replace(/(\d)([a-z])/g, "$1 $2")
+    .replace(/\bps (4|5)\b/g, "ps$1")
     .trim();
   if (q.length < 2) return [];
   for (const [k, v] of Object.entries(ALIASES)) q = q.replace(new RegExp(`\\b${k}\\b`, "g"), v);

@@ -232,3 +232,9 @@ describe("busca com erro de digitação", () => {
     expect(searchSmart("minecraft").corrected).toBeNull();
   });
 });
+describe("busca com número grudado", () => {
+  it("fc26 acha FC 26 e ps5 continua filtrando", () => {
+    expect(searchSmart("fc26").games.some((g) => /fc 26/i.test(g.name))).toBe(true);
+    expect(searchSmart("fc26 ps5").games.every((g) => g.platforms.includes("PS5"))).toBe(true);
+  });
+});

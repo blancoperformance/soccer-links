@@ -90,7 +90,7 @@ function Countdown({ ms }: { ms: number }) {
   );
 }
 
-const img = (d: Deal, w = 320) => (d.live.images[0] ? sized(d.live.images[0], w) : "");
+const img = (d: Deal, w = 480) => (d.live.images[0] ? sized(d.live.images[0], w) : "");
 
 /** Faixa do topo: "Hoje tem jogo com até 84% OFF" + contagem da campanha da loja. */
 export function DealsBanner({ onGo }: { onGo: () => void }) {
@@ -106,9 +106,9 @@ export function DealsBanner({ onGo }: { onGo: () => void }) {
         track("links_clique", { item_name: "Ofertas: faixa do topo" });
         onGo();
       }}
-      className="mt-3 flex w-full items-center gap-3 overflow-hidden rounded-[18px] bg-gradient-to-r from-[#8a00c2] to-[#ff2d87] px-4 py-3 text-left text-white shadow-[0_8px_24px_-12px_rgba(138,0,194,.8)]"
+      className="mt-3 flex w-full items-center gap-3 overflow-hidden rounded-[18px] bg-gradient-to-r from-[#8a00c2] to-[#ff2d87] px-4 py-3 text-left text-white"
     >
-      <Flame className="h-6 w-6 shrink-0 animate-pulse" aria-hidden />
+      <Flame className="h-6 w-6 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-extrabold leading-tight">
           Hoje tem jogo com até {top.pct}% OFF
@@ -289,8 +289,8 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
               className="flex w-full items-center gap-3 rounded-2xl bg-white p-2 pr-3 text-left shadow-sm"
             >
               <span className="w-5 shrink-0 text-center text-sm font-black text-mts-muted">{i + 1}</span>
-              {img(d, 160) ? (
-                <img src={img(d, 160)} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+              {img(d) ? (
+                <img src={img(d)} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
               ) : (
                 <span className="h-14 w-14 shrink-0 rounded-xl bg-mts-column" />
               )}

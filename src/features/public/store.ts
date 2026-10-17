@@ -13,6 +13,8 @@ export interface LiveVariant {
   /** "primaria", "secundaria" ou o nome da opção sem acento. */
   key: string;
   label: string;
+  /** Valor original da opção na loja (o formulário do carrinho usa este texto). */
+  value?: string;
   price: number | null;
   from: number | null;
   available: boolean;

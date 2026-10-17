@@ -160,9 +160,10 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
           productId: live.id,
           variantId: variant.id,
           license: variant.label,
+          option: variant.value ?? variant.label,
           price: variant.price,
           from: variant.from,
-          image: live.images[0] ? sized(live.images[0], 160) : "",
+          image: live.images[0] ? sized(live.images[0], 480) : "",
         }
       : null;
 
@@ -623,9 +624,10 @@ function SimilarCard({ game, onOpen }: { game: Game; onOpen: () => void }) {
             productId: live.id!,
             variantId: cheapest.id,
             license: cheapest.label,
+            option: cheapest.value ?? cheapest.label,
             price: cheapest.price,
             from: cheapest.from,
-            image: live.images[0] ? sized(live.images[0], 160) : "",
+            image: live.images[0] ? sized(live.images[0], 480) : "",
           });
           track("links_clique", { item_name: `Sacola: leve junto ${game.slug}` });
         }}

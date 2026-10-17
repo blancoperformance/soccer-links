@@ -13,6 +13,8 @@ export interface BagItem {
   productId: number;
   variantId: number;
   license: string;
+  /** Valor da opção na loja, para o carrinho escolher a licença certa. */
+  option?: string;
   price: number | null;
   from: number | null;
   image: string;
@@ -82,7 +84,9 @@ export function bagUrl(list: BagItem[], content: string) {
   const origin = visitOrigin();
   const q = new URLSearchParams({
     sg: "1",
-    sgadd: list.map((i) => `${i.productId}-${i.variantId}`).join(","),
+    sgadd: list
+      .map((i) => `${i.productId}-${i.variantId}-${encodeURIComponent(i.option ?? i.license)}`)
+      .join(","),
     utm_source: origin.source,
     utm_medium: "bio",
     utm_campaign: origin.campaign ?? "sempre-ativo",

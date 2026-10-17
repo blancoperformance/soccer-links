@@ -217,3 +217,18 @@ describe("caça-ofertas", () => {
     expect(d[0]!.save).toBe(80);
   });
 });
+
+import { searchSmart } from "@/features/public/games";
+describe("busca com erro de digitação", () => {
+  it("minecreft acha Minecraft", () => {
+    const r = searchSmart("minecreft");
+    expect(r.corrected).toBe("minecraft");
+    expect(r.games.some((g) => /minecraft/i.test(g.name))).toBe(true);
+  });
+  it("hogwarts escrito errado", () => {
+    expect(searchSmart("hogwats").games.some((g) => /hogwarts/i.test(g.name))).toBe(true);
+  });
+  it("busca certa não corrige", () => {
+    expect(searchSmart("minecraft").corrected).toBeNull();
+  });
+});

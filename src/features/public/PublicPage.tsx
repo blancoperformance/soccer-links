@@ -34,7 +34,7 @@ import {
   gamesForChip,
   getGame,
   isGame,
-  searchGames,
+  searchSmart,
   shelves,
   STORE,
   type Game,
@@ -350,7 +350,8 @@ function Shop({
   whatsapp: string;
 }) {
   const [count, setCount] = useState(PAGE);
-  const found = useMemo(() => searchGames(query), [query]);
+  const smart = useMemo(() => searchSmart(query), [query]);
+  const found = smart.games;
   const q = query.trim();
   const noResult = q.length >= 3 && found.length === 0;
   useEffect(() => {
@@ -447,7 +448,10 @@ function Shop({
         {(q || chip) && list.length > 0 && (
           <p className="mb-4 text-xs text-mts-muted">
             {list.length} {list.length === 1 ? "jogo" : "jogos"}
-            {q ? ` para "${q}"` : ` em ${label}`}
+            {q ? ` para "${smart.corrected ?? q}"` : ` em ${label}`}
+            {q && smart.corrected && (
+              <span className="ml-1">(você digitou "{q}")</span>
+            )}
           </p>
         )}
         {list.length > 0 && (

@@ -172,6 +172,72 @@ export function searchGames(query: string): Game[] {
   return scored.map((x) => x.g).slice(0, 48);
 }
 
+/* ---------- busca tolerante a erro de digitação ---------- */
+
+/** Distância de edição (com troca de letras vizinhas): "minecreft" -> "minecraft" = 1. */
+function dist(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > 2) return 9;
+  const d: number[][] = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 1; j <= n; j++) d[0]![j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++) {
+      const c = a[i - 1] === b[j - 1] ? 0 : 1;
+      let v = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + c);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, d[i - 2]![j - 2]! + 1);
+      d[i]![j] = v;
+    }
+  return d[m]![n]!;
+}
+
+/** Palavras dos nomes dos jogos (o "dicionário" da correção). */
+const vocab = Array.from(
+  new Set(
+    games.flatMap((g) =>
+      fold(`${g.name} ${g.short}`)
+        .replace(/[^a-z0-9 ]/g, " ")
+        .split(/\s+/)
+        .filter((w) => w.length >= 3 && !/^\d+$/.test(w)),
+    ),
+  ),
+);
+
+/** Corrige cada palavra que não existe no catálogo pela mais parecida. */
+function correct(word: string): string {
+  if (word.length < 3 || /^\d+$/.test(word) || vocab.includes(word) || word in ALIASES) return word;
+  const max = word.length <= 4 ? 1 : 2;
+  let best = word;
+  let bestScore = Infinity;
+  for (const v of vocab) {
+    const dd = dist(word, v);
+    if (dd > max) continue;
+    // desempate: mesma primeira letra e tamanho parecido ("ded" -> "dead", não "red")
+    const score = dd * 10 + (v[0] === word[0] ? 0 : 5) + Math.abs(v.length - word.length);
+    if (score < bestScore) {
+      bestScore = score;
+      best = v;
+    }
+  }
+  return best;
+}
+
+/**
+ * Busca que entende erro de digitação: tenta exato; se não achar nada, corrige as palavras
+ * ("minecreft" -> "minecraft", "spiderman" já tem apelido) e busca de novo.
+ */
+export function searchSmart(query: string): { games: Game[]; corrected: string | null } {
+  const exact = searchGames(query);
+  if (exact.length || fold(query).trim().length < 3) return { games: exact, corrected: null };
+  const words = fold(query)
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  const fixed = words.map(correct).join(" ");
+  if (fixed === words.join(" ")) return { games: [], corrected: null };
+  const again = searchGames(fixed);
+  return { games: again, corrected: again.length ? fixed : null };
+}
+
 /** Outras versões do mesmo jogo (PS4/PS5, edições), pelo nome curto. */
 export function versionsOf(g: Game): Game[] {
   const base = fold(g.short)

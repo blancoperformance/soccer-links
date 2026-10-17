@@ -1,10 +1,12 @@
-/* Soccer Games: sacola do links -> carrinho da loja (v4).
+/* Soccer Games: sacola do links -> carrinho da loja (v5).
  * Faz igual aos apps de "compre junto" da loja: envia o formulário nativo de compra
  * (POST /comprar/ com add_to_cart), um jogo por vez. A fila fica no sessionStorage
- * e continua sozinha a cada recarga do carrinho. Só age em quem veio da sacola do links.
+ * e continua sozinha a cada recarga do carrinho. No fim, vai direto para o checkout.
+ * Só age em quem veio da sacola do links.
  */
 (function () {
   var KEY = "sg_queue";
+  var GO = "sg_go_checkout";
   var q = new URLSearchParams(location.search);
   var add = q.get("sg") === "1" ? q.get("sgadd") : null;
   var queue = [];
@@ -18,7 +20,13 @@
       queue = JSON.parse(sessionStorage.getItem(KEY) || "[]");
     }
   } catch (e) { return; }
-  if (!queue.length) return;
+  if (add) { try { sessionStorage.setItem(GO, "1"); } catch (e) {} }
+  if (!queue.length) {
+    var go2 = false;
+    try { go2 = sessionStorage.getItem(GO) === "1"; sessionStorage.removeItem(GO); } catch (e) {}
+    if (go2) location.replace("/comprar?go_to_checkout=1");
+    return;
+  }
   var item = queue.shift();
   try { sessionStorage.setItem(KEY, JSON.stringify(queue)); } catch (e) { return; }
 

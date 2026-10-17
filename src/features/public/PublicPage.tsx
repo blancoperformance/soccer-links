@@ -40,6 +40,7 @@ import {
   type Game,
 } from "./games";
 import { loadCatalog } from "./store";
+import { DealsBanner, Offers } from "./Offers";
 
 function WhatsIcon() {
   return (
@@ -626,6 +627,7 @@ export function PublicPage({
 
   const highlight = context ?? lastGame;
   const nav = [
+    { id: "ofertas", label: "Ofertas" },
     { id: "loja", label: "Jogos" },
     ...(quizReady ? [{ id: "ideal", label: "Jogo ideal" }] : []),
     { id: "atendimento", label: "Atendimento" },
@@ -898,6 +900,7 @@ export function PublicPage({
             </ul>
           )}
 
+          <DealsBanner onGo={() => goTo("ofertas")} />
           {highlight && (
             <Highlight game={highlight} context={Boolean(context)} onOpen={(g) => openGame(g)} />
           )}
@@ -905,6 +908,13 @@ export function PublicPage({
           {campaign?.enabled && (campaign.image || campaign.endsAt) && (
             <CampaignHero c={campaign} />
           )}
+
+          <section id="ofertas" className={sectionCls} aria-label="Ofertas">
+            {sectionTitle("Caça-ofertas", "Gire a roleta ou veja os maiores descontos da loja agora.")}
+            <div className="mt-5">
+              <Offers onOpen={(g) => openGame(g)} />
+            </div>
+          </section>
 
           <section id="loja" className={sectionCls} aria-label="Jogos">
             {sectionTitle(

@@ -201,3 +201,19 @@ describe("Black November", () => {
 describe("dados conferidos", () => {
   it("todo jogo citado nos testes existe", () => expect(getGame(games[0]!.slug)).not.toBeNull());
 });
+
+import { dealsFrom } from "@/features/public/Offers";
+import { games as allGames } from "@/features/public/games";
+describe("caça-ofertas", () => {
+  it("só entra oferta real (preço de maior que o por) e ordena pelo desconto", () => {
+    const [a, b, c] = allGames.filter((g) => g.kind === "jogo");
+    const v = (price: number, from: number | null, available = true) => ({ id: 1, key: "primaria", label: "Primária", price, from, available });
+    const d = dealsFrom({
+      [a!.slug]: { id: 1, images: [], variants: [v(50, 100)] },
+      [b!.slug]: { id: 2, images: [], variants: [v(20, 100), v(90, 100)] },
+      [c!.slug]: { id: 3, images: [], variants: [v(50, null), v(10, 100, false)] },
+    });
+    expect(d.map((x) => x.pct)).toEqual([80, 50]);
+    expect(d[0]!.save).toBe(80);
+  });
+});

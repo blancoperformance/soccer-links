@@ -517,3 +517,12 @@ export const quiz: QuizQuestion[] = [
     ],
   },
 ];
+
+/**
+ * Caça-ofertas (roleta e ranking): usa só os preços reais da loja.
+ * endsAt = fim da campanha que está no ar na loja (deixe "" quando não houver). Atualize a cada campanha.
+ */
+export const offers: { label: string; endsAt?: string } = {
+  label: "A semana dos clássicos",
+  endsAt: "2026-10-18T23:59:00-03:00",
+};

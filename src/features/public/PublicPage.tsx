@@ -825,17 +825,11 @@ export function PublicPage({
                 wide
                   ? "col-span-2 min-h-[96px] bg-[#c000ff] text-white shadow-[0_14px_40px_-16px_rgba(192,0,255,.9)]"
                   : hot
-                    ? "bg-[#8a00c2] text-white"
+                    ? "bg-[radial-gradient(120%_100%_at_100%_0%,#ff2d87_0%,#a400d6_45%,#8a00c2_100%)] text-white"
                     : "border border-mts-btn-border bg-mts-btn text-mts-text hover:border-mts-ink"
               }`;
               const inner = (
                 <>
-                  {hot && (
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#ff2d87] opacity-60 blur-2xl"
-                    />
-                  )}
                   <span className="relative flex items-start justify-between gap-3">
                     <span
                       className={`flex h-9 w-9 items-center justify-center rounded-full ${wide || hot ? "bg-white/20 text-white" : "bg-[var(--mts-glow)] text-mts-accent"}`}

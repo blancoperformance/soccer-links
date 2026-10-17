@@ -543,3 +543,6 @@ export const bagEnabled: boolean = (() => {
     return false;
   }
 })();
+
+/** Cupom aplicado pelo link nativo da Nuvemshop (/discount/CODIGO). "" desliga. Precisa estar ativo na loja. */
+export const bioCoupon = "BIO1";

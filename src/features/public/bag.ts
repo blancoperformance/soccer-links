@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from "react";
 import { STORE } from "./games";
 import { visitOrigin } from "@/lib/tracking";
+import { bioCoupon } from "./content";
 
 export interface BagItem {
   slug: string;
@@ -92,5 +93,14 @@ export function bagUrl(list: BagItem[], content: string) {
     utm_campaign: origin.campaign ?? "sempre-ativo",
     utm_content: content,
   });
-  return `${STORE}/comprar/?${q.toString()}`;
+  return withCoupon(`/comprar/?${q.toString()}`);
+}
+
+/**
+ * Link nativo de cupom da Nuvemshop: /discount/CODIGO?redirect_to=/caminho. O cupom fica salvo no
+ * navegador e entra quando o produto vai para o carrinho.
+ */
+export function withCoupon(path: string) {
+  if (!bioCoupon) return `${STORE}${path}`;
+  return `${STORE}/discount/${encodeURIComponent(bioCoupon)}?redirect_to=${encodeURIComponent(path)}`;
 }

@@ -100,8 +100,8 @@ export function BagBar() {
                 {list.slice(-3).map((i, k, arr) => (
                   <span
                     key={i.slug}
-                    className="-ml-5 block h-10 w-10 overflow-hidden rounded-[11px] bg-gradient-to-br from-[#8a00c2] to-[#ff2d87] shadow-[0_2px_6px_rgba(0,0,0,.18)] ring-2 ring-white first:ml-0"
-                    style={{ transform: `rotate(${(k - (arr.length - 1) / 2) * 7}deg)`, zIndex: k }}
+                    className="block h-10 w-10 overflow-hidden rounded-[11px] bg-gradient-to-br from-[#8a00c2] to-[#ff2d87] shadow-[0_2px_6px_rgba(0,0,0,.18)] ring-2 ring-white"
+                    style={{ marginLeft: k === 0 ? 0 : -24, transform: `rotate(${(k - (arr.length - 1) / 2) * 7}deg)`, zIndex: k }}
                   >
                     {i.image && <img src={i.image} alt="" className="h-full w-full object-cover" />}
                   </span>
@@ -122,13 +122,13 @@ export function BagBar() {
                 <span className="mt-0.5 block whitespace-nowrap text-[18px] font-extrabold tracking-tight text-mts-text">
                   {brl(total)}
                 </span>
-                <span className="block truncate text-[10.5px] text-mts-muted">ou {INSTALLMENTS}x de {brl(total / INSTALLMENTS)} s/ juros</span>
+                <span className="block truncate text-[10.5px] text-mts-muted">ou {INSTALLMENTS}x de {brl(total / INSTALLMENTS)}</span>
               </span>
             </button>
             <button
               type="button"
               onClick={go}
-              className="flex h-12 shrink-0 items-center gap-1 rounded-[16px] bg-[#8a00c2] px-4 text-[14px] font-bold text-white transition active:scale-[.97]"
+              className="flex h-12 shrink-0 items-center gap-1 rounded-[16px] bg-[#8a00c2] px-3.5 text-[14px] font-bold text-white transition active:scale-[.97]"
             >
               Finalizar <span aria-hidden>→</span>
             </button>

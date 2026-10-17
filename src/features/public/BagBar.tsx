@@ -122,7 +122,7 @@ export function BagBar() {
                 <span className="mt-0.5 block whitespace-nowrap text-[18px] font-extrabold tracking-tight text-mts-text">
                   {brl(total)}
                 </span>
-                <span className="block truncate text-[10.5px] text-mts-muted">ou {INSTALLMENTS}x de {brl(total / INSTALLMENTS)} sem juros</span>
+                <span className="block truncate text-[10.5px] text-mts-muted">ou {INSTALLMENTS}x de {brl(total / INSTALLMENTS)} s/ juros</span>
               </span>
             </button>
             <button

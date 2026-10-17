@@ -724,7 +724,7 @@ export function PublicPage({
             <button
               type="button"
               onClick={() => goTo("loja")}
-              className="shrink-0 bg-mts-ink px-3.5 py-2 text-[13px] font-semibold text-mts-on-ink"
+              className="shrink-0 rounded-[12px] bg-mts-ink px-3.5 py-2 text-[13px] font-semibold text-mts-on-ink"
             >
               Ver jogos
             </button>

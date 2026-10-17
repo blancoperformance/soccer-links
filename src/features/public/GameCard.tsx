@@ -3,7 +3,7 @@ import { Gamepad2 } from "lucide-react";
 import { withUtm } from "@/lib/utm";
 import { track } from "@/lib/tracking";
 import { productUrl, type Game } from "./games";
-import { brl, liveSync, livePriceFrom, loadGame, sized, type LiveGame } from "./store";
+import { brl, parcel, liveSync, livePriceFrom, loadGame, sized, type LiveGame } from "./store";
 
 /** Dados ao vivo do jogo, carregados quando o cartão aparece na tela. */
 export function useLiveGame(slug: string, eager = false) {
@@ -147,9 +147,12 @@ export function GameCard({
       {showPrices && price !== null && !out && (
         <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[13px]">
           <span className="text-mts-muted">a partir de</span>
-          <span className="font-semibold tabular-nums text-mts-text">{brl(price)}</span>
+          <span className="font-bold tracking-tight text-mts-text">{brl(price)}</span>
           {from && <span className="text-[11px] text-mts-muted line-through">{brl(from)}</span>}
         </p>
+      )}
+      {showPrices && price !== null && !out && (
+        <p className="text-[11px] text-mts-muted">ou {parcel(price)}</p>
       )}
       {out && <p className="mt-0.5 text-[12px] text-mts-muted">Esgotado no momento</p>}
     </a>

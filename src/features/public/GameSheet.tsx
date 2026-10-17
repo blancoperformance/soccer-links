@@ -4,7 +4,7 @@ import { ArrowLeft, Check, KeyRound, Mail, MessageCircle, ShieldCheck, X } from 
 import { track } from "@/lib/tracking";
 import { withUtm } from "@/lib/utm";
 import { productUrl, similarTo, versionsOf, type Game } from "./games";
-import { brl, cartUrl, licenseHint, sized, variantFor, type LiveVariant } from "./store";
+import { brl, parcel, cartUrl, licenseHint, sized, variantFor, type LiveVariant } from "./store";
 import { Cover, useLiveGame } from "./GameCard";
 import { bag, bagUrl, useBag, type BagItem } from "./bag";
 import { bagEnabled } from "./content";
@@ -71,6 +71,11 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     const pool = versions.filter((v) => v.platforms.length === 1 && v.platforms[0] === other);
     return pool.find((v) => ed(v) === ed(game)) ?? pool[0] ?? null;
   }, [versions, plat, game]);
+  /** Outras edições do mesmo console (a troca de console fica no seletor). */
+  const editions = useMemo(
+    () => (plat ? versions.filter((v) => v.platforms.includes(plat)) : versions),
+    [versions, plat],
+  );
   const [flash, setFlash] = useState<string | null>(null);
   const prevSlug = useRef(game.slug);
   useEffect(() => {
@@ -341,18 +346,24 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                   null;
                 if (v && v.price !== null)
                   return (
+                    <>
                     <p className="flex flex-wrap items-baseline gap-x-2 text-mts-text">
                       {!variant && <span className="text-sm text-mts-muted">a partir de</span>}
                       {v.from && (
                         <span className="text-sm text-mts-muted line-through">{brl(v.from)}</span>
                       )}
-                      <span className="text-2xl font-semibold tabular-nums">{brl(v.price)}</span>
-                      {variant && (
-                        <span className="text-sm text-mts-muted">
-                          licença {variant.label.toLowerCase()}
+                      <span className="text-[28px] font-extrabold leading-none tracking-tight">{brl(v.price)}</span>
+                      {v.from && v.from > v.price && (
+                        <span className="rounded-full bg-[#ff2d87] px-2 py-0.5 text-xs font-black text-white">
+                          -{Math.round((1 - v.price / v.from) * 100)}%
                         </span>
                       )}
                     </p>
+                    <p className="mt-1.5 text-[13px] text-mts-muted">
+                      ou <strong className="font-semibold text-mts-text">{parcel(v.price)}</strong>
+                      {variant && <> · licença {variant.label.toLowerCase()}</>}
+                    </p>
+                    </>
                   );
                 if (!done) return <span className="block h-7 w-40 animate-pulse bg-mts-photo" />;
                 return (
@@ -362,11 +373,11 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
             </div>
 
             {/* Outras versões (PS4/PS5, edições) */}
-            {versions.length > 0 && (
+            {editions.length > 0 && (
               <div className="mt-5">
                 <p className="text-[13px] font-semibold text-mts-text">Outras edições</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {[game, ...versions].slice(0, 6).map((v) => (
+                  {[game, ...editions].slice(0, 6).map((v) => (
                     <button
                       key={v.slug}
                       type="button"
@@ -428,7 +439,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                         </span>
                         <span className="shrink-0 text-right">
                           {o.variant?.price != null && (
-                            <span className="block text-[15px] font-semibold tabular-nums text-mts-text">
+                            <span className="block text-[15px] font-bold tracking-tight text-mts-text">
                               {brl(o.variant.price)}
                             </span>
                           )}

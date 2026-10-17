@@ -75,6 +75,10 @@ export const sized = (src: string, w: number) =>
 
 export const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+/** Parcelamento que a loja mostra nos produtos ("5 x de R$ 15,98 sem juros"). */
+export const INSTALLMENTS = 5;
+export const parcel = (price: number) => `${INSTALLMENTS}x de ${brl(price / INSTALLMENTS)} sem juros`;
+
 /** Licença da loja que corresponde à licença do catálogo. */
 export const variantFor = (live: LiveGame | null, key: string) =>
   live?.variants.find((v) => v.key === key) ?? null;

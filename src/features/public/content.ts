@@ -531,4 +531,15 @@ export const offers: { label: string; endsAt?: string } = {
  * Sacola (vários jogos de uma vez). Só ligue depois que o script da sacola estiver no GTM da loja
  * e testado: sem ele, o carrinho abre vazio. Desligada, o Comprar abre o produto na loja.
  */
-export const bagEnabled = false;
+const BAG_ON = false;
+/** Para testar antes de ligar para todos: abra o links com ?sacola=1 (vale para a visita). */
+export const bagEnabled: boolean = (() => {
+  if (BAG_ON) return true;
+  try {
+    if (new URLSearchParams(window.location.search).get("sacola") === "1")
+      sessionStorage.setItem("sg:sacola", "1");
+    return sessionStorage.getItem("sg:sacola") === "1";
+  } catch {
+    return false;
+  }
+})();

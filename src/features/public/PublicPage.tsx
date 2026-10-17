@@ -41,6 +41,7 @@ import {
 } from "./games";
 import { loadCatalog } from "./store";
 import { DealsBanner, Offers } from "./Offers";
+import { BagBar } from "./BagBar";
 
 function WhatsIcon() {
   return (
@@ -1047,6 +1048,7 @@ export function PublicPage({
         />
       )}
 
+      {!sheet && <BagBar />}
       {sheet && (
         <GameSheet
           game={sheet.game}

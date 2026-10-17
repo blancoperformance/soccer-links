@@ -6,6 +6,7 @@ import { withUtm } from "@/lib/utm";
 import { productUrl, similarTo, versionsOf, type Game } from "./games";
 import { brl, cartUrl, licenseHint, sized, variantFor, type LiveVariant } from "./store";
 import { Cover, useLiveGame } from "./GameCard";
+import { bag, bagUrl, useBag, type BagItem } from "./bag";
 
 interface Props {
   game: Game;
@@ -56,6 +57,8 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   const [slide, setSlide] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const licRef = useRef<HTMLDivElement>(null);
+  const inBag = useBag();
+  const others = inBag.filter((i) => i.slug !== game.slug);
   const versions = useMemo(() => versionsOf(game).filter((v) => v.slug !== game.slug), [game]);
   const similar = useMemo(() => similarTo(game, 4), [game]);
 
@@ -109,7 +112,11 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
       window.location.href = storeUrl;
       return;
     }
-    const url = cartUrl(variant.id, `ficha-${game.slug}`, game.slug);
+    const item = toItem();
+    if (item) bag.add(item);
+    const url = item
+      ? bagUrl(bag.get(), `ficha-${game.slug}`)
+      : cartUrl(variant.id, `ficha-${game.slug}`, game.slug);
     track("checkout_click", {
       product: game.slug,
       detail: variant.label,
@@ -118,6 +125,34 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     });
     track("links_clique", { item_name: `Comprar: ${game.name}`, item_url: url });
     window.location.href = url;
+  };
+
+  const toItem = (): BagItem | null =>
+    variant && variant.id > 0 && live?.id
+      ? {
+          slug: game.slug,
+          name: game.name,
+          productId: live.id,
+          variantId: variant.id,
+          license: variant.label,
+          price: variant.price,
+          from: variant.from,
+          image: live.images[0] ? sized(live.images[0], 160) : "",
+        }
+      : null;
+
+  const addToBag = () => {
+    if (!chosen && !single) {
+      setNudge(true);
+      licRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => setNudge(false), 1600);
+      return;
+    }
+    const item = toItem();
+    if (!item) return buy();
+    bag.add(item);
+    track("links_clique", { item_name: `Sacola: adicionou ${game.slug}`, item_url: productUrl(game) });
+    onClose();
   };
 
   const cta = allOut
@@ -454,8 +489,9 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
 
             {similar.length > 0 && (
               <div className="mt-10">
-                <p className="text-[13px] font-semibold text-mts-text">
-                  Quem curte esse também joga
+                <p className="text-[13px] font-semibold text-mts-text">Leve junto</p>
+                <p className="mt-0.5 text-xs text-mts-muted">
+                  Toque no + para pôr na sacola e pagar tudo de uma vez.
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   {similar.map((s) => (
@@ -469,14 +505,25 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
 
         {/* Barra de compra */}
         <div className="shrink-0 border-t border-mts-btn-border bg-mts-column px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-8">
-          <button
-            type="button"
-            disabled={allOut}
-            onClick={buy}
-            className="flex h-[52px] w-full items-center rounded-[14px] justify-center gap-2 bg-mts-ink text-[15px] font-semibold text-mts-on-ink transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            {cta} {!allOut && <span aria-hidden>→</span>}
-          </button>
+          <div className="flex gap-2">
+            {!allOut && (
+              <button
+                type="button"
+                onClick={addToBag}
+                className="flex h-[52px] shrink-0 items-center justify-center rounded-[14px] border border-mts-text px-3 text-[13px] font-semibold text-mts-text"
+              >
+                + Sacola
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={allOut}
+              onClick={buy}
+              className="flex h-[52px] w-full items-center rounded-[14px] justify-center gap-2 bg-mts-ink text-[15px] font-semibold text-mts-on-ink transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {others.length > 0 && !allOut ? `Comprar com mais ${others.length}` : cta} {!allOut && <span aria-hidden>→</span>}
+            </button>
+          </div>
           <p className="mt-2 text-center text-[11px] text-mts-muted">
             Você finaliza no site da Soccer Games, com Pix, cartão ou boleto.
           </p>
@@ -488,7 +535,36 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
 
 function SimilarCard({ game, onOpen }: { game: Game; onOpen: () => void }) {
   const { live, done, ref } = useLiveGame(game.slug);
+  const list = useBag();
+  const added = list.some((i) => i.slug === game.slug);
+  const cheapest = (live?.variants ?? [])
+    .filter((v) => v.available && v.price != null && v.id > 0)
+    .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0];
   return (
+    <div className="relative">
+    {cheapest && live?.id && (
+      <button
+        type="button"
+        aria-label={added ? `${game.short} já está na sacola` : `Pôr ${game.short} na sacola`}
+        onClick={() => {
+          if (added) return bag.remove(game.slug);
+          bag.add({
+            slug: game.slug,
+            name: game.name,
+            productId: live.id!,
+            variantId: cheapest.id,
+            license: cheapest.label,
+            price: cheapest.price,
+            from: cheapest.from,
+            image: live.images[0] ? sized(live.images[0], 160) : "",
+          });
+          track("links_clique", { item_name: `Sacola: leve junto ${game.slug}` });
+        }}
+        className={`absolute right-2 top-2 z-10 flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm font-bold shadow-lg ${added ? "bg-[#1fbf6b] text-white" : "bg-white text-[#0f0f0f]"}`}
+      >
+        {added ? <Check className="h-4 w-4" aria-hidden /> : "+"}
+      </button>
+    )}
     <button
       ref={ref as React.Ref<HTMLButtonElement>}
       type="button"
@@ -502,6 +578,15 @@ function SimilarCard({ game, onOpen }: { game: Game; onOpen: () => void }) {
       <span className="mt-2 line-clamp-2 block text-[12px] leading-snug text-mts-text">
         {game.short}
       </span>
+      {cheapest?.price != null && (
+        <span className="mt-0.5 block text-[12px] font-bold text-mts-text">
+          {cheapest.from && cheapest.from > cheapest.price && (
+            <span className="mr-1 font-normal text-mts-muted line-through">{brl(cheapest.from)}</span>
+          )}
+          {brl(cheapest.price)}
+        </span>
+      )}
     </button>
+    </div>
   );
 }

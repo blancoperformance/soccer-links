@@ -68,6 +68,7 @@ export function Cover({
     >
       {src && !broken ? (
         <img
+          key={src}
           src={sized(src, w)}
           alt={game.name}
           loading="lazy"

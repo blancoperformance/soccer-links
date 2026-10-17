@@ -236,7 +236,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
 
           {/* Fotos */}
           {images.length > 1 ? (
-            <div className="relative">
+            <div key={game.slug} className="relative animate-[sg-fade_.35s_ease-out]">
               <div
                 onScroll={(e) => {
                   const el = e.currentTarget;
@@ -271,7 +271,14 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
               </div>
             </div>
           ) : (
-            <Cover game={game} live={live} done={done} w={1024} />
+            <Cover
+              key={game.slug}
+              game={game}
+              live={live}
+              done={done}
+              w={1024}
+              className="animate-[sg-fade_.35s_ease-out]"
+            />
           )}
 
           <div className="px-5 sm:px-8">

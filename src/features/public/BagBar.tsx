@@ -3,12 +3,13 @@ import { ShoppingBag, X } from "lucide-react";
 import { track } from "@/lib/tracking";
 import { bag, bagTotals, bagUrl, useBag } from "./bag";
 import { brl } from "./store";
+import { bagEnabled } from "./content";
 
 /** Barra fixa da sacola: total, economia e "Finalizar" com todos os jogos de uma vez. */
 export function BagBar() {
   const list = useBag();
   const [open, setOpen] = useState(false);
-  if (list.length === 0) return null;
+  if (!bagEnabled || list.length === 0) return null;
   const { total, save } = bagTotals(list);
   const go = () => {
     const url = bagUrl(list, "sacola");

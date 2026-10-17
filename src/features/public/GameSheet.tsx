@@ -7,6 +7,7 @@ import { productUrl, similarTo, versionsOf, type Game } from "./games";
 import { brl, cartUrl, licenseHint, sized, variantFor, type LiveVariant } from "./store";
 import { Cover, useLiveGame } from "./GameCard";
 import { bag, bagUrl, useBag, type BagItem } from "./bag";
+import { bagEnabled } from "./content";
 
 interface Props {
   game: Game;
@@ -58,7 +59,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   const scroller = useRef<HTMLDivElement>(null);
   const licRef = useRef<HTMLDivElement>(null);
   const inBag = useBag();
-  const others = inBag.filter((i) => i.slug !== game.slug);
+  const others = bagEnabled ? inBag.filter((i) => i.slug !== game.slug) : [];
   const versions = useMemo(() => versionsOf(game).filter((v) => v.slug !== game.slug), [game]);
   const similar = useMemo(() => similarTo(game, 4), [game]);
 
@@ -112,7 +113,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
       window.location.href = storeUrl;
       return;
     }
-    const item = toItem();
+    const item = bagEnabled ? toItem() : null;
     if (item) bag.add(item);
     const url = item
       ? bagUrl(bag.get(), `ficha-${game.slug}`)
@@ -490,9 +491,11 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
             {similar.length > 0 && (
               <div className="mt-10">
                 <p className="text-[13px] font-semibold text-mts-text">Leve junto</p>
-                <p className="mt-0.5 text-xs text-mts-muted">
-                  Toque no + para pôr na sacola e pagar tudo de uma vez.
-                </p>
+                {bagEnabled && (
+                  <p className="mt-0.5 text-xs text-mts-muted">
+                    Toque no + para pôr na sacola e pagar tudo de uma vez.
+                  </p>
+                )}
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   {similar.map((s) => (
                     <SimilarCard key={s.slug} game={s} onOpen={() => onOpenOther(s)} />
@@ -506,7 +509,7 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
         {/* Barra de compra */}
         <div className="shrink-0 border-t border-mts-btn-border bg-mts-column px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-8">
           <div className="flex gap-2">
-            {!allOut && (
+            {bagEnabled && !allOut && (
               <button
                 type="button"
                 onClick={addToBag}
@@ -542,7 +545,7 @@ function SimilarCard({ game, onOpen }: { game: Game; onOpen: () => void }) {
     .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0];
   return (
     <div className="relative">
-    {cheapest && live?.id && (
+    {bagEnabled && cheapest && live?.id && (
       <button
         type="button"
         aria-label={added ? `${game.short} já está na sacola` : `Pôr ${game.short} na sacola`}

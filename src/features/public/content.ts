@@ -526,3 +526,9 @@ export const offers: { label: string; endsAt?: string } = {
   label: "A semana dos clássicos",
   endsAt: "2026-10-18T23:59:00-03:00",
 };
+
+/**
+ * Sacola (vários jogos de uma vez). Só ligue depois que o script da sacola estiver no GTM da loja
+ * e testado: sem ele, o carrinho abre vazio. Desligada, o Comprar abre o produto na loja.
+ */
+export const bagEnabled = false;

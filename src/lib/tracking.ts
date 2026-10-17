@@ -36,7 +36,7 @@ declare global {
  * Microsoft Clarity (gravação de sessões). Opcional: crie um projeto "Links Soccer" no Clarity e
  * coloque o ID em VITE_CLARITY_ID na Vercel. Carrega só no domínio real e nunca nos aparelhos da equipe.
  */
-const CLARITY_ID = (import.meta.env["VITE_CLARITY_ID"] as string | undefined)?.trim() ?? "";
+const CLARITY_ID = (import.meta.env["VITE_CLARITY_ID"] as string | undefined)?.trim() || "yz9fgomtef";
 export function loadClarity() {
   if (typeof window === "undefined" || !CLARITY_ID || !shouldSend() || window.clarity) return;
   const c = function (...args: unknown[]) {

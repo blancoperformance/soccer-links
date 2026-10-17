@@ -745,7 +745,7 @@ export function PublicPage({
           <div className="relative flex items-center justify-between">
             <span className="flex items-center gap-2.5">
               {profile.logo && (
-                <img src={profile.logo} alt="Soccer Games" width={52} height={52} className="h-[52px] w-[52px]" />
+                <img src={profile.logo} alt="Soccer Games" width={36} height={36} className="h-9 w-9" />
               )}
             </span>
             <span className="rounded-full border border-white/25 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85">

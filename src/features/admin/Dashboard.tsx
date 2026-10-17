@@ -223,13 +223,17 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Logo({ className = "" }: { className?: string }) {
+function Logo({ className = "", light = false }: { className?: string; light?: boolean }) {
+  // light = fundo claro (login): logo com o S escuro. No menu preto, a logo com o S branco.
   return (
-    <span
-      aria-label="Soccer Games"
-      className={`font-display block text-[15px] font-bold uppercase leading-none tracking-[0.06em] text-neutral-950 ${className}`}
-    >
-      Soccer<span style={{ color: C.accent }}> Games</span>
+    <span aria-label="Soccer Games" className={`flex shrink-0 items-center ${className}`}>
+      <img
+        src={light ? "/logo-soccer-escura.png" : "/logo-soccer.png"}
+        alt="Soccer Games"
+        width={36}
+        height={36}
+        className="h-9 w-9"
+      />
     </span>
   );
 }
@@ -348,7 +352,7 @@ function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#f5f4f1] px-6">
       <div className="w-full max-w-sm border border-neutral-200 bg-white p-8">
-        <Logo />
+        <Logo light />
         <h1 className="mt-6 text-xl font-semibold text-neutral-950">Painel dos links</h1>
         <p className="mt-1 text-sm text-neutral-500">Acesso só da equipe Soccer Games.</p>
         <form

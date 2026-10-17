@@ -25,10 +25,13 @@ function Logo({ className = "" }: { className?: string }) {
   return (
     <span
       aria-label="Soccer Games"
-      className={`block whitespace-nowrap font-bold uppercase leading-none tracking-[0.06em] text-neutral-950 ${className}`}
+      className={`flex items-center gap-[0.4em] whitespace-nowrap font-bold uppercase leading-none tracking-[0.06em] text-neutral-950 ${className}`}
       style={{ fontFamily: "Montserrat, sans-serif" }}
     >
-      Soccer<span style={{ color: "#8a00c2" }}> Games</span>
+      <img src="/logo-soccer-escura.png" alt="" className="h-[1.6em] w-[1.6em]" />
+      <span>
+        Soccer<span style={{ color: "#8a00c2" }}> Games</span>
+      </span>
     </span>
   );
 }

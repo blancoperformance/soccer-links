@@ -372,29 +372,6 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
               })()}
             </div>
 
-            {/* Outras versões (PS4/PS5, edições) */}
-            {editions.length > 0 && (
-              <div className="mt-5">
-                <p className="text-[13px] font-semibold text-mts-text">Outras edições</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {[game, ...editions].slice(0, 6).map((v) => (
-                    <button
-                      key={v.slug}
-                      type="button"
-                      aria-pressed={v.slug === game.slug}
-                      onClick={() => {
-                        if (v.slug === game.slug) return;
-                        switchTo(v);
-                      }}
-                      className={`rounded-full border px-3 py-2 text-left text-[12px] leading-tight ${v.slug === game.slug ? "border-mts-ink text-mts-text" : "border-mts-btn-border text-mts-muted hover:border-mts-ink hover:text-mts-text"}`}
-                    >
-                      {v.name.replace(/\s+para\s+/i, " · ")}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Licença */}
             {!allOut && options.length > 1 && (
               <div ref={licRef} className="mt-7 scroll-mt-24">
@@ -464,6 +441,42 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                 </a>
               </div>
             )}
+            {!allOut && single && (
+              <div ref={licRef} className="mt-7 rounded-[14px] border-2 border-mts-ink bg-white px-4 py-3.5">
+                <p className="flex items-center justify-between gap-3">
+                  <span className="text-[15px] font-semibold text-mts-text">Licença {single.label.toLowerCase()}</span>
+                  {single.variant?.price != null && (
+                    <span className="text-[15px] font-bold tracking-tight text-mts-text">{brl(single.variant.price)}</span>
+                  )}
+                </p>
+                <p className="mt-0.5 text-xs leading-snug text-mts-muted">
+                  {licenseHint[single.key] ?? ""} É a única licença deste jogo para {plat ?? "o seu console"}.
+                </p>
+              </div>
+            )}
+            {/* Outras versões (PS4/PS5, edições) */}
+            {editions.length > 0 && (
+              <div className="mt-5">
+                <p className="text-[13px] font-semibold text-mts-text">Outras edições</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[game, ...editions].slice(0, 6).map((v) => (
+                    <button
+                      key={v.slug}
+                      type="button"
+                      aria-pressed={v.slug === game.slug}
+                      onClick={() => {
+                        if (v.slug === game.slug) return;
+                        switchTo(v);
+                      }}
+                      className={`rounded-full border px-3 py-2 text-left text-[12px] leading-tight ${v.slug === game.slug ? "border-mts-ink text-mts-text" : "border-mts-btn-border text-mts-muted hover:border-mts-ink hover:text-mts-text"}`}
+                    >
+                      {v.name.replace(/\s+para\s+/i, " · ")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {allOut && (
               <p className="mt-6 border border-mts-btn-border px-4 py-3 text-sm text-mts-muted">
                 Esgotado no momento.{" "}

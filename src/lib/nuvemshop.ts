@@ -54,7 +54,9 @@ export function fromApiProduct(p: ApiProduct): [string, LiveGame] | null {
   const handle = pick(p.handle);
   if (!handle) return null;
   const variants: LiveVariant[] = (p.variants ?? []).map((v) => {
-    const label = pick(v.values?.[0]) || "Única";
+    // a licença pode não ser a 1ª opção (ex.: Plataforma + Licença): procura a que diz primária/secundária
+    const vals = (v.values ?? []).map(pick).filter(Boolean);
+    const label = vals.find((x) => /^(prim|secund)/i.test(fold(x))) ?? vals[0] ?? "Única";
     const price = num(v.price);
     const promo = num(v.promotional_price);
     const final = promo && price && promo < price ? promo : (price ?? promo);

@@ -673,16 +673,6 @@ export function PublicPage({
     hot?: boolean;
     badge?: string;
   }[] = [
-    ...(campaignOn && campaign
-      ? [
-          {
-            label: "Ver a campanha na loja",
-            sub: "Todos os Best Sellers da semana",
-            href: campaign.url,
-            strong: true,
-          },
-        ]
-      : []),
     { label: "Ver os jogos", sub: `${GAME_COUNT} jogos de PS4 e PS5`, onClick: () => goTo("loja") },
     ...(quizReady
       ? [

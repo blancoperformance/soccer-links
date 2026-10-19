@@ -10,8 +10,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Flame, RotateCw, Sparkles, Timer } from "lucide-react";
 import { track } from "@/lib/tracking";
 import { games, isGame, type Game } from "./games";
-import { brl, loadCatalog, sized, type LiveGame } from "./store";
+import { brl, loadCatalog, loadGame, sized, type LiveGame } from "./store";
 import { offers as offersCfg } from "./content";
+import { weeklyGameSlugs } from "./promotion";
 
 export interface Deal {
   game: Game;
@@ -24,10 +25,10 @@ export interface Deal {
 }
 
 /** Melhor oferta de cada jogo (a licença com maior desconto real). */
-export function dealsFrom(cat: Record<string, LiveGame>): Deal[] {
+export function dealsFrom(cat: Record<string, LiveGame>, scope?: ReadonlySet<string>): Deal[] {
   const out: Deal[] = [];
   for (const g of games) {
-    if (!isGame(g)) continue;
+    if (!isGame(g) || (scope && !scope.has(g.slug))) continue;
     const live = cat[g.slug];
     if (!live) continue;
     let best: Deal | null = null;
@@ -36,22 +37,48 @@ export function dealsFrom(cat: Record<string, LiveGame>): Deal[] {
       const pct = Math.round((1 - v.price / v.from) * 100);
       if (pct < 5) continue;
       if (!best || pct > best.pct)
-        best = { game: g, live, price: v.price, from: v.from, pct, save: v.from - v.price, license: v.label };
+        best = {
+          game: g,
+          live,
+          price: v.price,
+          from: v.from,
+          pct,
+          save: v.from - v.price,
+          license: v.label,
+        };
     }
     if (best) out.push(best);
   }
   return out.sort((a, b) => b.pct - a.pct || b.save - a.save);
 }
 
-function useDeals() {
+function useDeals(weekly: boolean) {
   const [deals, setDeals] = useState<Deal[] | null>(null);
   useEffect(() => {
     let on = true;
-    void loadCatalog().then((cat) => on && setDeals(cat ? dealsFrom(cat) : []));
+    const scope = weekly ? weeklyGameSlugs : undefined;
+    void loadCatalog().then(async (cat) => {
+      // Sem token, a seleção da semana também funciona com as páginas dos produtos.
+      if (!cat && scope) {
+        cat = {};
+        const slugs = [...scope];
+        const snapshot = cat;
+        await Promise.all(
+          Array.from({ length: 4 }, async () => {
+            while (on && slugs.length) {
+              const slug = slugs.shift()!;
+              const game = await loadGame(slug);
+              if (game) snapshot[slug] = game;
+            }
+          }),
+        );
+      }
+      if (on) setDeals(cat ? dealsFrom(cat, scope) : []);
+    });
     return () => {
       on = false;
     };
-  }, []);
+  }, [weekly]);
   return deals;
 }
 
@@ -94,12 +121,12 @@ function Countdown({ ms }: { ms: number }) {
 const img = (d: Deal, w = 480) => (d.live.images[0] ? sized(d.live.images[0], w) : "");
 
 /** Faixa do topo: "Hoje tem jogo com até 84% OFF" + contagem da campanha da loja. */
-export function DealsBanner({ onGo }: { onGo: () => void }) {
-  const deals = useDeals();
-  const left = useCountdown(offersCfg.endsAt);
+export function DealsBanner({ onGo, weekly = false }: { onGo: () => void; weekly?: boolean }) {
+  const deals = useDeals(weekly);
+  const left = useCountdown(weekly ? offersCfg.endsAt : undefined);
   if (!deals?.length) return null;
   const top = deals[0]!;
-  const live = left != null && left > 0;
+  const live = weekly && left != null && left > 0;
   const covers = deals.filter((d) => d.live.images[0]).slice(0, 3);
   return (
     <button
@@ -117,7 +144,8 @@ export function DealsBanner({ onGo }: { onGo: () => void }) {
       />
       <span className="relative min-w-0 flex-1">
         <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white/80">
-          <Flame className="h-3.5 w-3.5" aria-hidden /> Ofertas de hoje
+          <Flame className="h-3.5 w-3.5" aria-hidden />{" "}
+          {weekly ? "Best Sellers da semana" : "Ofertas de hoje"}
         </span>
         <span className="mt-1 block leading-none">
           <span className="text-[14px] font-semibold text-white/90">Jogos com até </span>
@@ -142,7 +170,10 @@ export function DealsBanner({ onGo }: { onGo: () => void }) {
             src={img(d)}
             alt=""
             className="absolute h-[72px] w-[72px] rounded-[14px] object-cover shadow-[0_6px_14px_rgba(0,0,0,.3)] ring-2 ring-white/80"
-            style={{ transform: `translateX(${(k - 1) * 16 - 10}px) rotate(${(k - 1) * 10}deg)`, zIndex: k === 1 ? 3 : k }}
+            style={{
+              transform: `translateX(${(k - 1) * 16 - 10}px) rotate(${(k - 1) * 10}deg)`,
+              zIndex: k === 1 ? 3 : k,
+            }}
           />
         ))}
         <span className="absolute -bottom-1 right-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#8a00c2] shadow transition-transform group-hover:translate-x-0.5">
@@ -181,8 +212,14 @@ function Confetti() {
 }
 
 /** Roleta + ranking. */
-export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
-  const deals = useDeals();
+export function Offers({
+  onOpen,
+  weekly = false,
+}: {
+  onOpen: (g: Game) => void;
+  weekly?: boolean;
+}) {
+  const deals = useDeals(weekly);
   const [plat, setPlat] = useState<"PS5" | "PS4">("PS5");
   const [spinning, setSpinning] = useState(false);
   const [face, setFace] = useState<Deal | null>(null);
@@ -256,7 +293,8 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
       {/* Roleta */}
       <div className="relative mt-4 overflow-hidden rounded-[22px] bg-white p-5 text-mts-text ring-1 ring-black/5">
         <p className="relative flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#8a00c2]">
-          <Sparkles className="h-4 w-4" aria-hidden /> Roleta das ofertas
+          <Sparkles className="h-4 w-4" aria-hidden />{" "}
+          {weekly ? "Roleta dos Best Sellers" : "Roleta das ofertas"}
         </p>
         <p className="relative mt-1 text-[15px] text-mts-muted">
           Gire e veja qual oferta de {plat} caiu para você.
@@ -325,7 +363,8 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
 
       {/* Ranking */}
       <p className="mt-6 flex items-center gap-2 text-sm font-bold text-mts-text">
-        <Flame className="h-4 w-4 text-[#ff2d87]" aria-hidden /> Maiores descontos de {plat} agora
+        <Flame className="h-4 w-4 text-[#ff2d87]" aria-hidden />{" "}
+        {weekly ? `Best Sellers de ${plat} em oferta` : `Maiores descontos de ${plat} agora`}
       </p>
       <ol className="mt-3 space-y-2">
         {ranking.map((d, i) => (
@@ -338,14 +377,23 @@ export function Offers({ onOpen }: { onOpen: (g: Game) => void }) {
               }}
               className="flex w-full items-center gap-3 rounded-2xl bg-white p-2 pr-3 text-left shadow-sm"
             >
-              <span className="w-5 shrink-0 text-center text-sm font-black text-mts-muted">{i + 1}</span>
+              <span className="w-5 shrink-0 text-center text-sm font-black text-mts-muted">
+                {i + 1}
+              </span>
               {img(d) ? (
-                <img src={img(d)} alt="" loading="lazy" className="h-[68px] w-[68px] shrink-0 rounded-xl object-cover" />
+                <img
+                  src={img(d)}
+                  alt=""
+                  loading="lazy"
+                  className="h-[68px] w-[68px] shrink-0 rounded-xl object-cover"
+                />
               ) : (
                 <span className="h-[68px] w-[68px] shrink-0 rounded-xl bg-mts-column" />
               )}
               <span className="min-w-0 flex-1">
-                <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-mts-text">{d.game.name}</span>
+                <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-mts-text">
+                  {d.game.name}
+                </span>
                 <span className="mt-1 block text-xs">
                   <span className="text-mts-muted line-through">{brl(d.from)}</span>{" "}
                   <span className="font-bold text-mts-text">{brl(d.price)}</span>

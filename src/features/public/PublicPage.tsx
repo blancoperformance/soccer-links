@@ -35,13 +35,15 @@ import {
   getGame,
   isGame,
   searchSmart,
-  shelves,
+  getShelves,
+  type Shelf,
   STORE,
   type Game,
 } from "./games";
 import { loadCatalog } from "./store";
 import { DealsBanner, Offers } from "./Offers";
 import { BagBar } from "./BagBar";
+import { isWeeklyPromotionActive, weeklyPromotion } from "./promotion";
 
 function WhatsIcon() {
   return (
@@ -233,61 +235,80 @@ export interface Campaign {
 
 const isInternal = (url: string) => url.startsWith("/");
 
-function CampaignHero({ c }: { c: Campaign }) {
+function CampaignCover({ game, index }: { game: Game; index: number }) {
+  const { live, done } = useLiveGame(game.slug, true);
+  return (
+    <span
+      className="absolute top-4 w-[36%] max-w-[150px] rounded-2xl shadow-[0_18px_32px_-10px_rgba(0,0,0,.65)] ring-1 ring-white/30"
+      style={{
+        left: `${14 + index * 18}%`,
+        transform: `rotate(${(index - 1) * 12}deg)`,
+        zIndex: index === 1 ? 3 : 2,
+      }}
+    >
+      <Cover game={game} live={live} done={done} w={320} />
+    </span>
+  );
+}
+
+function CampaignHero({ c, onBrowse }: { c: Campaign; onBrowse: () => void }) {
   const left = useCountdown(c.endsAt);
   if (c.endsAt && left === 0) return null;
   const parts =
-    left != null
-      ? ([
+    left == null
+      ? null
+      : ([
           ["dias", Math.floor(left / 86400000)],
           ["horas", Math.floor((left / 3600000) % 24)],
           ["min", Math.floor((left / 60000) % 60)],
-          ["seg", Math.floor((left / 1000) % 60)],
-        ] as const)
-      : null;
-  const internal = isInternal(c.url);
+        ] as const);
   return (
-    <a
-      href={internal ? c.url : withUtm(c.url, { content: c.slug })}
-      {...(internal ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-      onClick={() => track("links_clique", { item_name: `Banner ${c.title}`, item_url: c.url })}
-      className="group mts-enter relative mt-6 block overflow-hidden rounded-[22px] border border-mts-btn-border p-6"
-      style={{
-        background:
-          "radial-gradient(120% 90% at 100% 0%, rgba(192,0,255,.35), transparent 60%), radial-gradient(80% 70% at 0% 100%, rgba(192,0,255,.14), transparent 60%), var(--mts-btn-bg)",
-      }}
-    >
-      {c.image && <img src={c.image} alt="" className="mb-6 aspect-[16/9] w-full object-cover" />}
-      {c.badge && (
-        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-mts-accent">
-          <span className="sg-live-dot h-1.5 w-1.5 rounded-full bg-mts-accent" aria-hidden />{" "}
-          {c.badge}
-        </span>
-      )}
-      <span className="font-display mt-3 block text-[30px] font-semibold leading-none text-mts-text">
-        {c.title}
-      </span>
-      {c.subtitle && (
-        <span className="mt-3 block max-w-[360px] text-sm leading-relaxed text-mts-muted">
-          {c.subtitle}
-        </span>
-      )}
-      {parts && (
-        <span className="mt-5 flex gap-5 text-mts-text" aria-label="Tempo restante">
-          {parts.map(([label, v]) => (
-            <span key={label}>
-              <span className="font-display block text-xl font-semibold tabular-nums">
-                {String(v).padStart(2, "0")}
+    <div className="relative mt-6" aria-label={c.title}>
+      <p className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[.15em] text-white/80">
+        <span className="rounded-full bg-[#d77bff] px-3 py-1.5 text-[#220034]">{c.badge}</span>
+        Preço da semana
+      </p>
+      <h2 className="font-display mt-5 text-[clamp(48px,13vw,70px)] font-black uppercase leading-[.88] tracking-[-.04em] text-white">
+        Best
+        <br />
+        <span className="text-[#d77bff]">Sellers.</span>
+      </h2>
+      <p className="mt-4 max-w-[320px] text-[14px] leading-relaxed text-white/80">
+        Os queridinhos do seu console estão em oferta. Escolha o seu e bora jogar.
+      </p>
+      <div
+        className="relative mx-auto mt-3 h-[165px] max-w-[390px] min-[400px]:h-[185px]"
+        aria-label="Destaques da semana"
+      >
+        <span
+          aria-hidden
+          className="absolute bottom-2 left-1/2 h-20 w-3/4 -translate-x-1/2 rounded-full bg-[#c000ff]/35 blur-2xl"
+        />
+        {weeklyPromotion.highlights.map((slug, i) => {
+          const game = getGame(slug);
+          return game ? <CampaignCover key={slug} game={game} index={i} /> : null;
+        })}
+      </div>
+      <button
+        type="button"
+        onClick={onBrowse}
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-[#c000ff] px-5 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#a400db] active:scale-[.99]"
+      >
+        Escolher meu Best Seller <span aria-hidden>→</span>
+      </button>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[11px] text-white/70">
+        <span>Até domingo, 25/10 · PS4 e PS5</span>
+        {parts && (
+          <span className="flex gap-2 tabular-nums" aria-label="Tempo restante da campanha">
+            {parts.map(([label, n]) => (
+              <span key={label}>
+                <b className="text-white">{String(n).padStart(2, "0")}</b> {label}
               </span>
-              <span className="block text-[11px] text-mts-muted">{label}</span>
-            </span>
-          ))}
-        </span>
-      )}
-      <span className="mt-6 inline-flex items-center gap-2 bg-mts-ink px-4 py-3 text-[14px] font-semibold text-mts-on-ink transition-opacity group-hover:opacity-90">
-        {c.cta} <span aria-hidden>→</span>
-      </span>
-    </a>
+            ))}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -338,9 +359,11 @@ function Shop({
   whatsapp,
   query,
   setQuery,
+  shelves,
 }: {
   query: string;
   setQuery: (q: string) => void;
+  shelves: Shelf[];
   showPrices: boolean;
   onOpen: (g: Game) => boolean;
   shelf: string;
@@ -380,7 +403,7 @@ function Shop({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar jogo: GTA, FC 27, Spider-Man..."
+          placeholder="Buscar jogo: FC 26, Hogwarts, Call of Duty..."
           aria-label="Buscar jogo"
           className="h-12 w-full border-0 border-b border-mts-btn-border bg-transparent pl-7 pr-8 text-[15px] text-mts-text placeholder:text-mts-muted focus:border-mts-ink focus:outline-none [&::-webkit-search-cancel-button]:hidden"
         />
@@ -449,9 +472,7 @@ function Shop({
           <p className="mb-4 text-xs text-mts-muted">
             {list.length} {list.length === 1 ? "jogo" : "jogos"}
             {q ? ` para "${smart.corrected ?? q}"` : ` em ${label}`}
-            {q && smart.corrected && (
-              <span className="ml-1">(você digitou "{q}")</span>
-            )}
+            {q && smart.corrected && <span className="ml-1">(você digitou "{q}")</span>}
           </p>
         )}
         {list.length > 0 && (
@@ -532,7 +553,9 @@ export function PublicPage({
   community,
 }: PublicPageProps) {
   const [now, setNow] = useState<Date | null>(null);
-  const [shelf, setShelf] = useState(shelves[0]?.id ?? "");
+  const shelves = useMemo(() => getShelves(now ?? new Date()), [now]);
+  const campaignOn = Boolean(campaign?.enabled && isWeeklyPromotionActive(now ?? new Date()));
+  const [shelf, setShelf] = useState(() => getShelves()[0]?.id ?? "");
   const [chip, setChip] = useState<string | null>(null);
   const [quizOpen, setQuizOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -553,6 +576,7 @@ export function PublicPage({
 
   useEffect(() => {
     setNow(new Date());
+    const campaignClock = setInterval(() => setNow(new Date()), 30000);
     loadGtm();
     loadClarity();
     void loadCatalog();
@@ -586,7 +610,7 @@ export function PublicPage({
       },
       { rootMargin: "-45% 0px -50% 0px" },
     );
-    ["loja", "ideal", "atendimento", "comunidade"].forEach((id) => {
+    ["ofertas", "loja", "ideal", "atendimento", "comunidade"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) io.observe(el);
     });
@@ -597,6 +621,7 @@ export function PublicPage({
     };
     window.addEventListener("popstate", onPop);
     return () => {
+      clearInterval(campaignClock);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("popstate", onPop);
       io.disconnect();
@@ -632,7 +657,7 @@ export function PublicPage({
 
   const highlight = context ?? lastGame;
   const nav = [
-    { id: "ofertas", label: "Ofertas" },
+    { id: "ofertas", label: campaignOn ? "Best Sellers" : "Ofertas" },
     { id: "loja", label: "Jogos" },
     ...(quizReady ? [{ id: "ideal", label: "Jogo ideal" }] : []),
     { id: "atendimento", label: "Atendimento" },
@@ -648,8 +673,15 @@ export function PublicPage({
     hot?: boolean;
     badge?: string;
   }[] = [
-    ...(campaign?.enabled
-      ? [{ label: campaign.title, sub: campaign.subtitle, href: campaign.url, strong: true }]
+    ...(campaignOn && campaign
+      ? [
+          {
+            label: "Ver a campanha na loja",
+            sub: "Todos os Best Sellers da semana",
+            href: campaign.url,
+            strong: true,
+          },
+        ]
       : []),
     { label: "Ver os jogos", sub: `${GAME_COUNT} jogos de PS4 e PS5`, onClick: () => goTo("loja") },
     ...(quizReady
@@ -699,7 +731,11 @@ export function PublicPage({
             aria-label="Voltar ao topo"
             className="shrink-0"
           >
-            <Logo name={profile.name} size="sm" {...(profile.logo ? { src: profile.logo.replace(".png", "-escura.png") } : {})} />
+            <Logo
+              name={profile.name}
+              size="sm"
+              {...(profile.logo ? { src: profile.logo.replace(".png", "-escura.png") } : {})}
+            />
           </button>
           <div className="flex min-w-0 flex-1 gap-5 overflow-x-auto pr-4 [mask-image:linear-gradient(to_right,black_82%,transparent)] [scrollbar-width:none]">
             {nav.map((n) => (
@@ -714,7 +750,7 @@ export function PublicPage({
               </button>
             ))}
           </div>
-          {campaign?.enabled ? (
+          {campaignOn && campaign ? (
             <a
               href={
                 isInternal(campaign.url)
@@ -756,7 +792,13 @@ export function PublicPage({
           <div className="relative flex items-center justify-between">
             <span className="flex items-center gap-2.5">
               {profile.logo && (
-                <img src={profile.logo} alt="Soccer Games" width={36} height={36} className="h-9 w-9" />
+                <img
+                  src={profile.logo}
+                  alt="Soccer Games"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9"
+                />
               )}
             </span>
             <span className="rounded-full border border-white/25 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85">
@@ -764,14 +806,29 @@ export function PublicPage({
             </span>
           </div>
           <h1 className="sr-only">{profile.name}</h1>
-          <p className="font-display relative mt-6 text-[32px] font-semibold leading-[1.04]">
-            Seu próximo jogo
-            <br />
-            <span className="text-[#d77bff]">chega no e-mail.</span>
-          </p>
-          <p className="relative mt-3 max-w-[340px] text-[14px] leading-relaxed text-white/70">
-            {profile.tagline}
-          </p>
+          {campaignOn && campaign ? (
+            <CampaignHero
+              c={campaign}
+              onBrowse={() => {
+                setQuery("");
+                setChip(null);
+                setShelf("best-sellers-semana");
+                goTo("loja");
+                track("links_clique", { item_name: "Best Sellers: escolher jogo" });
+              }}
+            />
+          ) : (
+            <>
+              <p className="font-display relative mt-6 text-[32px] font-semibold leading-[1.04]">
+                Seu próximo jogo
+                <br />
+                <span className="text-[#d77bff]">chega no e-mail.</span>
+              </p>
+              <p className="relative mt-3 max-w-[340px] text-[14px] leading-relaxed text-white/70">
+                {profile.tagline}
+              </p>
+            </>
+          )}
           <form
             role="search"
             className="relative mt-5 flex h-12 items-center overflow-hidden rounded-[12px] bg-white"
@@ -786,7 +843,7 @@ export function PublicPage({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && goTo("loja")}
-              placeholder="Buscar jogo: GTA, FC 27..."
+              placeholder="Buscar jogo: FC 26, Hogwarts..."
               aria-label="Buscar jogo"
               className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-[#0f0f0f] outline-none placeholder:text-[#8d8b96] [&::-webkit-search-cancel-button]:hidden"
             />
@@ -918,19 +975,20 @@ export function PublicPage({
             </ul>
           )}
 
-          <DealsBanner onGo={() => goTo("ofertas")} />
+          <DealsBanner onGo={() => goTo("ofertas")} weekly={campaignOn} />
           {highlight && (
             <Highlight game={highlight} context={Boolean(context)} onOpen={(g) => openGame(g)} />
           )}
 
-          {campaign?.enabled && (campaign.image || campaign.endsAt) && (
-            <CampaignHero c={campaign} />
-          )}
-
           <section id="ofertas" className={sectionCls} aria-label="Ofertas">
-            {sectionTitle("Caça-ofertas", "Gire a roleta ou veja os maiores descontos da loja agora.")}
+            {sectionTitle(
+              campaignOn ? "Seu próximo Best Seller" : "Caça-ofertas",
+              campaignOn
+                ? "Gire para descobrir um jogo da semana ou compare os descontos abaixo."
+                : "Gire a roleta ou veja os maiores descontos da loja agora.",
+            )}
             <div className="mt-5">
-              <Offers onOpen={(g) => openGame(g)} />
+              <Offers onOpen={(g) => openGame(g)} weekly={campaignOn} />
             </div>
           </section>
 
@@ -941,6 +999,7 @@ export function PublicPage({
             )}
             <div className="mt-5">
               <Shop
+                shelves={shelves}
                 showPrices={profile.showPrices}
                 onOpen={openGame}
                 shelf={shelf}
@@ -967,11 +1026,11 @@ export function PublicPage({
                   Quiz
                 </span>
                 <h2 className="font-display pr-16 text-[24px] font-semibold leading-tight text-mts-text">
-                  Qual vai ser o seu próximo jogo?
+                  {campaignOn ? "Ainda não escolheu seu jogo?" : "Qual vai ser o seu próximo jogo?"}
                 </h2>
                 <p className="mt-2 text-[13px] leading-relaxed text-mts-muted">
                   Poucas perguntas sobre como você joga e o que curte. A gente indica o jogo e a
-                  licença.
+                  licença, em todo o catálogo.
                 </p>
                 <p className="mt-5 text-[13px] font-semibold text-mts-text">{quiz[0].question}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">

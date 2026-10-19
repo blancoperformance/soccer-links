@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { isWeeklyPromotionActive } from "@/features/public/promotion";
 import { PublicPage } from "@/features/public/PublicPage";
 import {
   campaign,
@@ -13,17 +14,20 @@ import {
   trust,
 } from "@/features/public/content";
 
-const TITLE = "Soccer Games | Links";
-const DESC =
-  "Jogos digitais de PS4 e PS5, quiz para escolher o próximo jogo, atendimento e o Grupo VIP da Soccer Games.";
+const pageTitle = () =>
+  isWeeklyPromotionActive() ? "Semana dos Best Sellers | Soccer Games" : "Soccer Games | Links";
+const pageDescription = () =>
+  isWeeklyPromotionActive()
+    ? "De 19 a 25 de outubro: FC 26, Hogwarts Legacy, Call of Duty e mais Best Sellers de PS4 e PS5 em oferta na Soccer Games. Escolha seu jogo e sua licença."
+    : "Jogos digitais de PS4 e PS5, quiz para escolher o próximo jogo, atendimento e o Grupo VIP da Soccer Games.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: TITLE },
-      { name: "description", content: DESC },
-      { property: "og:title", content: TITLE },
-      { property: "og:description", content: DESC },
+      { title: pageTitle() },
+      { name: "description", content: pageDescription() },
+      { property: "og:title", content: pageTitle() },
+      { property: "og:description", content: pageDescription() },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

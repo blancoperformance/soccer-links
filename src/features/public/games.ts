@@ -7,6 +7,7 @@
  * (store.ts), nunca daqui. O preço da planilha só serve para ordenar.
  */
 import raw from "./games.json";
+import { isSeasonalPromotionActive, isWeeklyPromotionActive, weeklyPromotion } from "./promotion";
 
 export const STORE = "https://lojasoccergames.com.br";
 
@@ -82,15 +83,35 @@ function shelf(
   return { id, name, url: `${STORE}${url}`, games: games.filter(filter).slice(0, limit) };
 }
 
-export const shelves: Shelf[] = [
-  // Ordem pensada para venda: o que mais sai e o que está em oferta primeiro.
-  shelf("mais-vendidos", "Mais vendidos", "/best-sellers/", inColl("mais-vendidos")),
-  shelf("ofertas", "Ofertas", "/sazonal-psn/", (g) => inColl("sazonal")(g) || inColl("classicos")(g)),
-  shelf("lancamentos", "Lançamentos", "/lancamentos/", (g) => inColl("lancamentos")(g) || inColl("pre-venda")(g)),
-  shelf("ps5", "PS5", "/playstation-5/", (g) => isGame(g) && onPlat("PS5")(g), 60),
-  shelf("ps4", "PS4", "/playstation-4/", (g) => isGame(g) && onPlat("PS4")(g), 60),
-  shelf("infantis", "Infantis", "/playstation-5/infantis/", hasGenre("Infantil")),
-].filter((s) => s.games.length > 0);
+export const getShelves = (at = new Date()): Shelf[] =>
+  [
+    ...(isWeeklyPromotionActive(at)
+      ? [
+          {
+            id: "best-sellers-semana",
+            name: "Best Sellers da semana",
+            url: weeklyPromotion.url,
+            games: weeklyPromotion.games.flatMap((slug) => bySlug.get(slug) ?? []),
+          },
+        ]
+      : []),
+    // Ordem pensada para venda: o que mais sai e o que está em oferta primeiro.
+    shelf("mais-vendidos", "Mais vendidos", "/best-sellers/", inColl("mais-vendidos")),
+    ...(isSeasonalPromotionActive(at)
+      ? [shelf("ofertas", "Sazonal PSN", "/ofertas/", inColl("sazonal"))]
+      : []),
+    shelf(
+      "lancamentos",
+      "Lançamentos",
+      "/lancamentos/",
+      (g) => inColl("lancamentos")(g) || inColl("pre-venda")(g),
+    ),
+    shelf("ps5", "PS5", "/playstation-5/", (g) => isGame(g) && onPlat("PS5")(g), 60),
+    shelf("ps4", "PS4", "/playstation-4/", (g) => isGame(g) && onPlat("PS4")(g), 60),
+    shelf("infantis", "Infantis", "/playstation-5/infantis/", hasGenre("Infantil")),
+  ].filter((s) => s.games.length > 0);
+
+export const shelves = getShelves();
 
 /** Atalhos de gênero ("O que você quer jogar?"). */
 export const genreChips: { id: string; label: string; genre?: string; tag?: string }[] = [
@@ -180,7 +201,8 @@ export function searchGames(query: string): Game[] {
 
 /** Distância de edição (com troca de letras vizinhas): "minecreft" -> "minecraft" = 1. */
 function dist(a: string, b: string): number {
-  const m = a.length, n = b.length;
+  const m = a.length,
+    n = b.length;
   if (Math.abs(m - n) > 2) return 9;
   const d: number[][] = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
   for (let j = 1; j <= n; j++) d[0]![j] = j;
@@ -188,7 +210,8 @@ function dist(a: string, b: string): number {
     for (let j = 1; j <= n; j++) {
       const c = a[i - 1] === b[j - 1] ? 0 : 1;
       let v = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + c);
-      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, d[i - 2]![j - 2]! + 1);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+        v = Math.min(v, d[i - 2]![j - 2]! + 1);
       d[i]![j] = v;
     }
   return d[m]![n]!;

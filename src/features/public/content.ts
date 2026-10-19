@@ -5,6 +5,8 @@
  *
  * Regra: só fato confirmado. Prazos, regras e horários são os mesmos da Central de Atendimento.
  */
+import { weeklyPromotion } from "./promotion";
+
 export type ItemType = "link" | "feature" | "quiz" | "coupon" | "map";
 
 export interface LinkItem {
@@ -184,13 +186,14 @@ export const campaign: {
   image?: string;
   endsAt?: string;
 } = {
-  enabled: false,
-  badge: "Black November",
-  title: "Grupo VIP da Black",
-  subtitle: "As ofertas da Black chegam primeiro no grupo.",
-  cta: "Entrar no grupo",
-  url: "/black",
-  slug: "black-vip",
+  enabled: true,
+  badge: weeklyPromotion.badge,
+  title: weeklyPromotion.title,
+  subtitle: weeklyPromotion.subtitle,
+  cta: weeklyPromotion.cta,
+  url: weeklyPromotion.url,
+  slug: weeklyPromotion.slug,
+  endsAt: weeklyPromotion.endsAt,
 };
 
 /** Respostas que mais chegam no WhatsApp, resolvidas aqui. Mesmos fatos da Central. */
@@ -523,8 +526,8 @@ export const quiz: QuizQuestion[] = [
  * endsAt = fim da campanha que está no ar na loja (deixe "" quando não houver). Atualize a cada campanha.
  */
 export const offers: { label: string; endsAt?: string } = {
-  label: "A semana dos clássicos",
-  endsAt: "2026-10-18T23:59:00-03:00",
+  label: weeklyPromotion.title,
+  endsAt: weeklyPromotion.endsAt,
 };
 
 /**

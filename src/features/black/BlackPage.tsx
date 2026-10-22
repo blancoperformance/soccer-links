@@ -11,7 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { callRpc, readRpc } from "@/lib/backend";
-import { loadClarity, loadGtm, track } from "@/lib/tracking";
+import { loadClarity, loadGtm, loadPixel, track } from "@/lib/tracking";
 import { withUtm } from "@/lib/utm";
 import { black, phaseAt, type Phase } from "./config";
 import { blackFaq } from "./faq";
@@ -22,7 +22,6 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 declare global {
   interface Window {
-    fbq?: (...args: unknown[]) => void;
     gtag?: (...args: unknown[]) => void;
   }
 }
@@ -412,6 +411,7 @@ export function BlackPage() {
 
   useEffect(() => {
     loadGtm();
+    loadPixel();
     loadClarity();
     track("page_view");
     void readRpc<number>("black_vip_total").then((n) => {

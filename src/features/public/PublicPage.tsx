@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { withUtm } from "@/lib/utm";
 import { isPubliclyVisible } from "@/lib/schedule";
-import { loadClarity, loadGtm, memory, track } from "@/lib/tracking";
+import { loadClarity, loadGtm, loadPixel, memory, track } from "@/lib/tracking";
 import type { IconName, LinkItem, QuizQuestion } from "./content";
 import { Quiz } from "./Quiz";
 import { GameSheet } from "./GameSheet";
@@ -578,6 +578,7 @@ export function PublicPage({
     setNow(new Date());
     const campaignClock = setInterval(() => setNow(new Date()), 30000);
     loadGtm();
+    loadPixel();
     loadClarity();
     void loadCatalog();
     track("page_view");

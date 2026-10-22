@@ -1,7 +1,7 @@
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, KeyRound, Mail, MessageCircle, ShieldCheck, X } from "lucide-react";
-import { track } from "@/lib/tracking";
+import { pixelTrack, track } from "@/lib/tracking";
 import { withUtm } from "@/lib/utm";
 import { productUrl, similarTo, versionsOf, type Game } from "./games";
 import { brl, parcel, cartUrl, licenseHint, sized, variantFor, type LiveVariant } from "./store";
@@ -93,6 +93,10 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   const similar = useMemo(() => similarTo(game, 4), [game]);
 
   useEffect(() => {
+    pixelTrack("ViewContent", { content_type: "product", content_name: game.slug });
+  }, [game.slug]);
+
+  useEffect(() => {
     setPick(suggested);
     setSlide(0);
     scroller.current?.scrollTo({ top: 0 });
@@ -182,6 +186,12 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     const item = toItem();
     if (!item) return buy();
     bag.add(item);
+    pixelTrack("AddToCart", {
+      content_type: "product",
+      content_ids: [String(item.productId)],
+      content_name: game.slug,
+      ...(item.price != null ? { value: item.price, currency: "BRL" } : {}),
+    });
     track("links_clique", { item_name: `Sacola: adicionou ${game.slug}`, item_url: productUrl(game) });
     onClose();
   };
@@ -652,6 +662,12 @@ function SimilarCard({ game, onOpen }: { game: Game; onOpen: () => void }) {
             price: cheapest.price,
             from: cheapest.from,
             image: live.images[0] ? sized(live.images[0], 480) : "",
+          });
+          pixelTrack("AddToCart", {
+            content_type: "product",
+            content_ids: [String(live.id)],
+            content_name: game.slug,
+            ...(cheapest.price != null ? { value: cheapest.price, currency: "BRL" } : {}),
           });
           track("links_clique", { item_name: `Sacola: leve junto ${game.slug}` });
         }}

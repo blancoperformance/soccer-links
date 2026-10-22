@@ -29,6 +29,46 @@ declare global {
   interface Window {
     dataLayer?: Record<string, unknown>[];
     clarity?: ((...args: unknown[]) => void) & { q?: unknown[] };
+    fbq?: ((...args: unknown[]) => void) & { queue?: unknown[]; loaded?: boolean; version?: string; push?: unknown; callMethod?: (...a: unknown[]) => void };
+    _fbq?: unknown;
+  }
+}
+
+/**
+ * Pixel da Meta da loja (instalado pela integração nativa da Nuvemshop, não pelo GTM).
+ * O links carrega o mesmo pixel direto aqui, só no domínio real e nunca nos aparelhos da equipe.
+ * Se um dia o pixel for para o GTM, desligue aqui (VITE_META_PIXEL_ID=off) para não contar dobrado.
+ */
+const PIXEL_ENV = (import.meta.env["VITE_META_PIXEL_ID"] as string | undefined)?.trim();
+const PIXEL_ID = PIXEL_ENV === "off" ? "" : PIXEL_ENV || "1041567744035436";
+export function loadPixel() {
+  if (typeof window === "undefined" || !/^\d{10,17}$/.test(PIXEL_ID) || !shouldSend()) return;
+  if (window.fbq) return;
+  const n = function (...args: unknown[]) {
+    if (n.callMethod) n.callMethod(...args);
+    else (n.queue = n.queue || []).push(args);
+  } as NonNullable<Window["fbq"]>;
+  n.push = n;
+  n.loaded = true;
+  n.version = "2.0";
+  n.queue = [];
+  window.fbq = n;
+  window._fbq = n;
+  const t = document.createElement("script");
+  t.async = true;
+  t.src = "https://connect.facebook.net/en_US/fbevents.js";
+  document.head.appendChild(t);
+  n("init", PIXEL_ID);
+  n("track", "PageView");
+}
+
+/** Evento padrão da Meta (ViewContent, AddToCart, InitiateCheckout...). Nunca quebra a página. */
+export function pixelTrack(name: string, data: Record<string, unknown> = {}) {
+  if (typeof window === "undefined" || !shouldSend()) return;
+  try {
+    window.fbq?.("track", name, data);
+  } catch {
+    /* ignore */
   }
 }
 
@@ -253,6 +293,13 @@ export function track(event: TrackEvent, payload: Payload = {}) {
     /* ignore */
   }
   sendToBackend(event, payload);
+  if (event === "checkout_click") {
+    pixelTrack("InitiateCheckout", {
+      content_type: "product",
+      content_name: String(payload["product"] ?? ""),
+      ...(typeof payload["value"] === "number" ? { value: payload["value"], currency: "BRL" } : {}),
+    });
+  }
   try {
     // Lets Clarity filter recordings by what the visitor did (e.g. quiz_complete, search_no_result).
     window.clarity?.("event", event);

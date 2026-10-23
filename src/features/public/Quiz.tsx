@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, RotateCcw, X } from "lucide-react";
-import { memory, track, pixelTrack } from "@/lib/tracking";
+import { memory, pixelTrack, sessionId, track } from "@/lib/tracking";
 import { InsertError, insertRow, logInsertError } from "@/lib/backend";
 import type { QuizQuestion } from "./content";
 import { activeQuestions, scoreQuiz, type QuizResult } from "./quiz-score";
@@ -601,14 +601,21 @@ function LeadStep({
           if (opt) labeled[qq.id] = opt.label;
         }
         try {
-          await insertRow("leads", {
+          const lead = {
             name: nm,
             whatsapp: phone,
             answers: labeled,
             result: resultSlug,
             source: new URLSearchParams(window.location.search).get("utm_source") ?? "bio",
             consent: true,
-          });
+          };
+          try {
+            await insertRow("leads", { ...lead, session_id: sessionId() });
+          } catch (e) {
+            // Banco ainda sem a coluna session_id (SQL não rodado): grava sem ela.
+            if (e instanceof InsertError && e.status === 400) await insertRow("leads", lead);
+            else throw e;
+          }
           track("links_clique", { item_name: "Quiz: contato enviado" });
           pixelTrack("Lead", { content_name: "Quiz Soccer" });
         } catch (err) {

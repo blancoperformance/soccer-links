@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { withUtm } from "@/lib/utm";
 import { isPubliclyVisible } from "@/lib/schedule";
-import { loadClarity, loadGtm, loadPixel, memory, track } from "@/lib/tracking";
+import { loadClarity, loadGtm, loadPixel, memory, storeLink, track } from "@/lib/tracking";
 import type { IconName, LinkItem, QuizQuestion } from "./content";
 import { Quiz } from "./Quiz";
 import { GameSheet } from "./GameSheet";
@@ -579,6 +579,12 @@ export function PublicPage({
     const campaignClock = setInterval(() => setNow(new Date()), 30000);
     loadGtm();
     loadPixel();
+    // Links fixos da página são montados no servidor, sem o fbclid da visita: completa na hora do clique.
+    const keepClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (a && /(^|\.)lojasoccergames\.com\.br$/.test(a.hostname)) a.href = storeLink(a.href);
+    };
+    document.addEventListener("click", keepClick, true);
     loadClarity();
     void loadCatalog();
     track("page_view");
@@ -625,6 +631,7 @@ export function PublicPage({
       clearInterval(campaignClock);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("popstate", onPop);
+      document.removeEventListener("click", keepClick, true);
       io.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -5,7 +5,7 @@
  */
 import { useSyncExternalStore } from "react";
 import { STORE } from "./games";
-import { visitOrigin, withMetaClick } from "@/lib/tracking";
+import { storeLink, visitOrigin } from "@/lib/tracking";
 import { bioCoupon } from "./content";
 
 export interface BagItem {
@@ -115,7 +115,7 @@ export function bagUrl(list: BagItem[], content: string) {
  * navegador e entra quando o produto vai para o carrinho.
  */
 export function withCoupon(rawPath: string) {
-  const path = withMetaClick(rawPath);
+  const path = storeLink(rawPath);
   if (!bioCoupon) return `${STORE}${path}`;
   return `${STORE}/discount/${encodeURIComponent(bioCoupon)}?redirect_to=${encodeURIComponent(path)}`;
 }

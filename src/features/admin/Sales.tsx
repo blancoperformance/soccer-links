@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import type { SalesReport } from "@/lib/sales";
-import { sourceName } from "./data";
+import { loadSalesReport, sourceName, type SalesError } from "./data";
 import { When } from "./when";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -9,7 +8,7 @@ const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", curren
 type State =
   | { kind: "loading" }
   | { kind: "ok"; report: SalesReport }
-  | { kind: "error"; reason: "scope" | "token" | "api" | "auth" };
+  | { kind: "error"; reason: SalesError };
 
 /**
  * Vendas pagas na Nuvemshop que vieram do links (primeira página com utm_medium=bio, ou cupom
@@ -21,31 +20,14 @@ export function Sales({ from, to }: { from: Date; to: Date }) {
   useEffect(() => {
     let alive = true;
     setSt({ kind: "loading" });
-    void (async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        const jwt = data.session?.access_token;
-        if (!jwt) return alive && setSt({ kind: "error", reason: "auth" });
-        const q = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
-        const r = await fetch(`/api/vendas?${q.toString()}`, {
-          headers: { Authorization: `Bearer ${jwt}` },
-        });
-        const body = (await r.json()) as SalesReport & { error?: string };
+    loadSalesReport(from, to).then(
+      (report) => alive && setSt({ kind: "ok", report }),
+      (e: unknown) => {
         if (!alive) return;
-        if (r.status === 401) return setSt({ kind: "error", reason: "auth" });
-        if (body.error)
-          return setSt({
-            kind: "error",
-            reason: (["scope", "token"].includes(body.error) ? body.error : "api") as
-              | "scope"
-              | "token"
-              | "api",
-          });
-        setSt({ kind: "ok", report: body });
-      } catch {
-        if (alive) setSt({ kind: "error", reason: "api" });
-      }
-    })();
+        const m = e instanceof Error ? e.message : "";
+        setSt({ kind: "error", reason: (["scope", "token", "auth"].includes(m) ? m : "api") as SalesError });
+      },
+    );
     return () => {
       alive = false;
     };

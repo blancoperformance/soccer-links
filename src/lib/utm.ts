@@ -1,4 +1,4 @@
-import { withMetaClick } from "./tracking";
+import { storeLink } from "./tracking";
 
 export interface UtmContext {
   source?: string;
@@ -28,5 +28,5 @@ export function withUtm(url: string, ctx: UtmContext): string {
   for (const [k, v] of Object.entries(values)) {
     if (!parsed.searchParams.has(k)) parsed.searchParams.set(k, v);
   }
-  return withMetaClick(parsed.toString());
+  return storeLink(parsed.toString());
 }

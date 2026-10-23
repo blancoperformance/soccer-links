@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { withMetaClick } from "@/lib/tracking";
+import { sessionId, storeLink, withMetaClick } from "@/lib/tracking";
 
 const setUrl = (search: string) => window.history.replaceState(null, "", `/${search}`);
 
@@ -29,5 +29,13 @@ describe("withMetaClick", () => {
     setUrl("?fbclid=<script>");
     sessionStorage.clear();
     expect(withMetaClick("https://lojasoccergames.com.br/")).toBe("https://lojasoccergames.com.br/");
+  });
+
+  it("leva o código da visita junto, sem duplicar", () => {
+    setUrl("?fbclid=F1");
+    const url = new URL(storeLink("https://lojasoccergames.com.br/produtos/x/"));
+    expect(url.searchParams.get("fbclid")).toBe("F1");
+    expect(url.searchParams.get("sgs")).toBe(sessionId());
+    expect(storeLink("/comprar/?sgs=abc")).toBe("/comprar/?sgs=abc&fbclid=F1");
   });
 });

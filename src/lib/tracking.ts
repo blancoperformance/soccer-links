@@ -85,6 +85,25 @@ export function pixelTrack(name: "ViewContent" | "Lead", data: Record<string, un
 
 const FBCLID_KEY = "sg:fbclid";
 /**
+ * Link para a loja com o código anônimo da visita (sgs). A Nuvemshop guarda a primeira página no
+ * pedido, então o painel sabe se quem deixou o WhatsApp e tocou em Comprar chegou a pagar.
+ */
+export function withVisit(url: string): string {
+  try {
+    if (typeof window === "undefined") return url;
+    const target = new URL(url, "https://lojasoccergames.com.br");
+    if (target.searchParams.has("sgs")) return url;
+    target.searchParams.set("sgs", sessionId());
+    return /^https?:/.test(url) ? target.toString() : `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return url;
+  }
+}
+
+/** Tudo que um link para a loja precisa levar daqui: clique do anúncio e código da visita. */
+export const storeLink = (url: string) => withVisit(withMetaClick(url));
+
+/**
  * Leva o fbclid real do anúncio até a loja, para a Meta ligar a compra ao clique.
  * Nunca inventa ID, nunca sobrescreve um fbclid que já está no link.
  */
@@ -180,7 +199,8 @@ function shouldSend(): boolean {
 
 const cut = (v: unknown, n: number) => (v == null || v === "" ? null : String(v).slice(0, n));
 
-function sessionId(): string {
+/** Código anônimo da visita (aleatório, só desta aba). */
+export function sessionId(): string {
   try {
     let id = window.sessionStorage.getItem("sg:sid");
     if (!id) {

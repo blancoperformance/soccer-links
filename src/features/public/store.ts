@@ -6,7 +6,7 @@
  * - Sem token, cada jogo é lido da própria página do produto na loja, quando aparece na tela.
  */
 import { STORE, type Game } from "./games";
-import { withMetaClick } from "@/lib/tracking";
+import { storeLink } from "@/lib/tracking";
 import { visitOrigin } from "@/lib/tracking";
 
 export interface LiveVariant {
@@ -108,7 +108,7 @@ export function cartUrl(variantId: number, content: string, slug?: string) {
   });
   q.set("variant", String(variantId));
   q.set("sg", "1");
-  return withMetaClick(slug ? `${STORE}/produtos/${slug}/?${q.toString()}` : `${STORE}/?${q.toString()}`);
+  return storeLink(slug ? `${STORE}/produtos/${slug}/?${q.toString()}` : `${STORE}/?${q.toString()}`);
 }
 
 export const licenseHint: Record<string, string> = {

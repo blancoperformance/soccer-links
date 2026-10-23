@@ -4,11 +4,12 @@ import { fetchLinkSales, landingParams, toLinkSale } from "@/lib/sales";
 describe("vendas do links", () => {
   it("lê as UTMs de dentro do link de cupom", () => {
     const p = landingParams(
-      "https://lojasoccergames.com.br/discount/BIO1?redirect_to=%2Fcomprar%2F%3Fsg%3D1%26utm_source%3Dinstagram%26utm_medium%3Dbio%26utm_content%3Dsacola",
+      "https://lojasoccergames.com.br/discount/BIO1?redirect_to=%2Fcomprar%2F%3Fsg%3D1%26utm_source%3Dinstagram%26utm_medium%3Dbio%26utm_content%3Dsacola%26sgs%3Dvisita-123",
     );
     expect(p?.get("utm_medium")).toBe("bio");
     expect(p?.get("utm_source")).toBe("instagram");
     expect(p?.get("utm_content")).toBe("sacola");
+    expect(p?.get("sgs")).toBe("visita-123");
   });
 
   it("conta pelo link, pelo cupom, e ignora o resto", () => {
@@ -22,7 +23,7 @@ describe("vendas do links", () => {
       },
       "BIO1",
     );
-    expect(viaLink).toMatchObject({ via: "link", source: "tiktok", campaign: "semana3", total: 89.9 });
+    expect(viaLink).toMatchObject({ via: "link", source: "tiktok", campaign: "semana3", total: 89.9, sid: null });
 
     const viaCupom = toLinkSale(
       { number: 102, total: 50, landing_url: "https://lojasoccergames.com.br/", coupon: [{ code: "bio1" }] },

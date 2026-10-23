@@ -17,6 +17,8 @@ export interface LinkSale {
   source: string | null;
   campaign: string | null;
   content: string | null;
+  /** Código anônimo da visita que levou à loja (sgs), para cruzar com os contatos. */
+  sid: string | null;
   items: { name: string; qty: number; price: number | null }[];
 }
 
@@ -81,6 +83,7 @@ export function toLinkSale(o: ApiOrder, bioCoupon: string): LinkSale | null {
     source: fromLink ? cut(p?.get("utm_source"), 60) : null,
     campaign: fromLink ? cut(p?.get("utm_campaign"), 80) : null,
     content: fromLink ? cut(p?.get("utm_content"), 120) : null,
+    sid: cut(p?.get("sgs"), 64),
     items: (o.products ?? []).slice(0, 20).map((it) => ({
       name: String(it.name ?? "").slice(0, 140),
       qty: Math.max(1, Math.round(num(it.quantity)) || 1),

@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { supabase } from "@/integrations/supabase/client";
+import type { SalesReport } from "@/lib/sales";
 import { quiz } from "@/features/public/content";
 import { games, shelves, genreChips } from "@/features/public/games";
 
@@ -474,6 +476,8 @@ export interface LeadRow {
   result: string | null;
   source: string | null;
   status: LeadStatus;
+  /** Código anônimo da visita (só nos contatos salvos depois do SQL 20261023100000). */
+  session_id?: string | null;
 }
 export type LeadStatus = "novo" | "em-contato" | "cliente" | "descartado";
 export const LEAD_STATUS: { id: LeadStatus; label: string }[] = [
@@ -609,4 +613,99 @@ export function leadsDispatchCsv(rows: LeadRow[]) {
     );
   }
   return { csv: [head.map(esc).join(","), ...lines].join("\r\n"), count: lines.length, skipped };
+}
+
+
+/* ---------- vendas da loja (via /api/vendas, no servidor) ---------- */
+
+export type SalesError = "scope" | "token" | "api" | "auth";
+
+/** Pedidos pagos da Nuvemshop que vieram do links. O token da loja nunca passa pelo navegador. */
+export async function loadSalesReport(from: Date, to: Date): Promise<SalesReport> {
+  const { data } = await supabase.auth.getSession();
+  const jwt = data.session?.access_token;
+  if (!jwt) throw new Error("auth");
+  const q = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
+  const r = await fetch(`/api/vendas?${q.toString()}`, { headers: { Authorization: `Bearer ${jwt}` } });
+  if (r.status === 401) throw new Error("auth");
+  const body = (await r.json()) as SalesReport & { error?: string };
+  if (body.error) throw new Error(["scope", "token"].includes(body.error) ? body.error : "api");
+  return body;
+}
+
+/* ---------- foi para a compra e não comprou ---------- */
+
+export interface Recovery {
+  lead: LeadRow;
+  /** Jogo e licença que a pessoa mandou para o carrinho. */
+  product: string;
+  license: string | null;
+  /** Quando tocou em Comprar. */
+  at: string;
+}
+
+/** Espera isso depois do clique antes de listar (a pessoa pode estar pagando). */
+const RECOVERY_WAIT_MS = 30 * 60000;
+/** Só vale chamar quem mostrou interesse há pouco tempo. */
+const RECOVERY_DAYS = 30;
+
+/**
+ * Contatos ainda "A contatar" cuja visita tocou em Comprar e não teve pedido pago na loja.
+ * O cruzamento é pelo código anônimo da visita: só cobre contatos salvos depois do SQL que criou
+ * leads.session_id, e a compra precisa ter começado por um link daquela mesma visita.
+ */
+export async function loadRecovery(leads: LeadRow[], now = Date.now()): Promise<Recovery[]> {
+  const since = now - RECOVERY_DAYS * 86400000;
+  const pending = leads.filter(
+    (l) => l.session_id && l.status === "novo" && Date.parse(l.created_at) >= since,
+  );
+  if (!pending.length) return [];
+  const ids = [...new Set(pending.map((l) => l.session_id as string))];
+  const clicks = new Map<string, { item: string | null; detail: string | null; created_at: string }>();
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100);
+    const ev = await db
+      .from("events")
+      .select("session_id,item,detail,created_at")
+      .eq("event", "checkout_click")
+      .in("session_id", chunk)
+      .order("created_at", { ascending: false });
+    if (ev.error) throw new Error("events");
+    for (const e of (ev.data ?? []) as { session_id: string; item: string | null; detail: string | null; created_at: string }[])
+      if (!clicks.has(e.session_id)) clicks.set(e.session_id, e);
+  }
+  // Sem permissão de pedidos na Nuvemshop ainda, não dá para saber quem pagou: a lista não aparece.
+  const report = await loadSalesReport(new Date(since), new Date(now));
+  const bought = new Set(report.sales.map((s) => s.sid).filter(Boolean) as string[]);
+  const out: Recovery[] = [];
+  for (const lead of pending) {
+    const sid = lead.session_id as string;
+    const c = clicks.get(sid);
+    if (!c || bought.has(sid) || now - Date.parse(c.created_at) < RECOVERY_WAIT_MS) continue;
+    const lic = (c.detail ?? "").trim();
+    out.push({
+      lead,
+      product: c.item ? productName(c.item.split(",")[0] ?? c.item) : "",
+      license: lic && !/sem licen|sacola/i.test(lic) ? lic : null,
+      at: c.created_at,
+    });
+  }
+  // Uma linha por pessoa (o mesmo número em mais de um contato fica com o clique mais recente).
+  const byPhone = new Map<string, Recovery>();
+  for (const r of out.sort((a, b) => Date.parse(b.at) - Date.parse(a.at))) {
+    const k = r.lead.whatsapp.replace(/\D/g, "");
+    if (!byPhone.has(k)) byPhone.set(k, r);
+  }
+  return [...byPhone.values()];
+}
+
+/** O que foi para a loja: "EA Sports FC 26 para PS5, licença primária". */
+export function recoveryPaste(r: Recovery): string {
+  return [r.product, r.license && `licença ${r.license.toLowerCase()}`].filter(Boolean).join(", ");
+}
+
+export function recoveryMessage(r: Recovery): string {
+  const first = r.lead.name.trim().split(/\s+/)[0] ?? "";
+  const what = recoveryPaste(r);
+  return `Oi, ${first}! Aqui é da Soccer Games. Vi que você chegou a escolher ${what ? `o ${what}` : "um jogo"} e não finalizou. Ficou alguma dúvida sobre a licença ou a ativação? Te ajudo por aqui.`;
 }

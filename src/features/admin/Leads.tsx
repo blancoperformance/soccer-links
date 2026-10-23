@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, Download, MessageCircle, Send } from "lucide-react";
+import { Check, Copy, Download, MessageCircle, Send, ShoppingBag } from "lucide-react";
 import { ConfirmDelete } from "./ConfirmDelete";
 import { NewTag, When } from "./when";
 import {
@@ -14,6 +14,10 @@ import {
   type LeadStatus,
   dispatchPhone,
   QUIZ_QUESTION_LABEL,
+  loadRecovery,
+  recoveryMessage,
+  recoveryPaste,
+  type Recovery,
 } from "./data";
 
 /** (18) 99636-6686 */
@@ -58,6 +62,76 @@ const waUrl = (raw: string, name: string, result: string | null) => {
   return `https://wa.me/${n.startsWith("55") ? n : `55${n}`}?text=${encodeURIComponent(text)}`;
 };
 
+/** Deixou o WhatsApp, tocou em Comprar e não pagou: a lista de quem vale chamar primeiro. */
+function RecoveryList({
+  items,
+  onContacted,
+}: {
+  items: Recovery[] | null | undefined;
+  onContacted: (r: LeadRow) => void;
+}) {
+  // Sem a leitura de pedidos da loja (permissão ou SQL pendente) a lista simplesmente não aparece.
+  if (!items) return null;
+  return (
+    <section className="mb-8 border border-neutral-200">
+      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
+          <ShoppingBag className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+          Foi para a compra e não comprou
+          {items.length > 0 && <span className="tabular-nums font-normal text-neutral-500">{items.length}</span>}
+        </h3>
+        <p className="text-xs text-neutral-500">Deixou o WhatsApp, tocou em Comprar e não pagou naquela visita.</p>
+      </header>
+      {items.length === 0 ? (
+        <p className="px-4 py-4 text-sm leading-relaxed text-neutral-500">
+          Ninguém por enquanto. A lista olha os contatos dos últimos 30 dias que ainda estão como
+          “A contatar” e espera 30 minutos depois do clique, para não chamar quem ainda está pagando.
+        </p>
+      ) : (
+        <ul className="divide-y divide-neutral-100">
+          {items.map((r) => {
+            const paste = recoveryPaste(r);
+            const phone = dispatchPhone(r.lead.whatsapp) ?? r.lead.whatsapp.replace(/\D/g, "");
+            return (
+              <li key={r.lead.id} className="grid gap-3 px-4 py-4 md:grid-cols-[1.3fr_1fr_auto] md:items-center">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-neutral-900">{r.lead.name}</p>
+                  <p className="mt-0.5 text-xs text-neutral-500">
+                    Foi para a compra <When iso={r.at} time />
+                    {paste ? ` · ${paste}` : ""}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-sm font-medium tabular-nums text-neutral-900">{prettyPhone(r.lead.whatsapp)}</span>
+                  <CopyButton text={phone} label="Copiar número" />
+                  <a
+                    href={`https://wa.me/${phone}?text=${encodeURIComponent(recoveryMessage(r))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-8 items-center gap-1.5 border border-neutral-300 px-2.5 text-neutral-800 hover:border-neutral-900"
+                    title="Abrir a conversa no WhatsApp com a mensagem pronta"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                    Chamar
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onContacted(r.lead)}
+                  className="h-9 border border-neutral-300 px-3 text-sm text-neutral-800 hover:border-neutral-900"
+                  title="Muda o status para “Em contato” e tira da lista"
+                >
+                  Já chamei
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function Leads({
   from,
   to,
@@ -79,6 +153,30 @@ export function Leads({
   useEffect(() => {
     void loadLeads().then(setRows, () => setFailed(true));
   }, []);
+  const [recovery, setRecovery] = useState<Recovery[] | null | undefined>(undefined);
+  const hasRows = Array.isArray(rows);
+  useEffect(() => {
+    if (!hasRows || !rows) return;
+    let alive = true;
+    void loadRecovery(rows).then(
+      (r) => alive && setRecovery(r),
+      () => alive && setRecovery(null),
+    );
+    return () => {
+      alive = false;
+    };
+    // só na primeira carga: mudar o status de um contato já tira ele da lista aqui embaixo
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRows]);
+  const markContacted = async (lead: LeadRow) => {
+    setRecovery((x) => x?.filter((y) => y.lead.id !== lead.id));
+    setRows((x) => x?.map((y) => (y.id === lead.id ? { ...y, status: "em-contato" } : y)));
+    try {
+      await setLeadStatus(lead.id, "em-contato");
+    } catch {
+      setRows((x) => x?.map((y) => (y.id === lead.id ? { ...y, status: lead.status } : y)));
+    }
+  };
 
   if (failed)
     return (
@@ -110,6 +208,7 @@ export function Leads({
 
   return (
     <div>
+      <RecoveryList items={recovery} onContacted={markContacted} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
         <p className="text-neutral-700">
           {wholeBase ? (

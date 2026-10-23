@@ -15,6 +15,7 @@ import { Route as BlackRouteImport } from './routes/black'
 import { Route as AdminBlackRouteImport } from './routes/admin_.black'
 import { Route as ApiLojaRouteImport } from './routes/api.loja'
 import { Route as ApiNuvemshopRouteImport } from './routes/api.nuvemshop'
+import { Route as ApiVendasRouteImport } from './routes/api.vendas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const ApiNuvemshopRoute = ApiNuvemshopRouteImport.update({
   path: '/api/nuvemshop',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVendasRoute = ApiVendasRouteImport.update({
+  id: '/api/vendas',
+  path: '/api/vendas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/admin/black': typeof AdminBlackRoute
   '/api/loja': typeof ApiLojaRoute
   '/api/nuvemshop': typeof ApiNuvemshopRoute
+  '/api/vendas': typeof ApiVendasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/admin/black': typeof AdminBlackRoute
   '/api/loja': typeof ApiLojaRoute
   '/api/nuvemshop': typeof ApiNuvemshopRoute
+  '/api/vendas': typeof ApiVendasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,14 +79,27 @@ export interface FileRoutesById {
   '/admin_/black': typeof AdminBlackRoute
   '/api/loja': typeof ApiLojaRoute
   '/api/nuvemshop': typeof ApiNuvemshopRoute
+  '/api/vendas': typeof ApiVendasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin' | '/black' | '/admin/black' | '/api/loja' | '/api/nuvemshop'
+    | '/'
+    | '/admin'
+    | '/black'
+    | '/admin/black'
+    | '/api/loja'
+    | '/api/nuvemshop'
+    | '/api/vendas'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/admin' | '/black' | '/admin/black' | '/api/loja' | '/api/nuvemshop'
+    | '/'
+    | '/admin'
+    | '/black'
+    | '/admin/black'
+    | '/api/loja'
+    | '/api/nuvemshop'
+    | '/api/vendas'
   id:
     | '__root__'
     | '/'
@@ -87,6 +108,7 @@ export interface FileRouteTypes {
     | '/admin_/black'
     | '/api/loja'
     | '/api/nuvemshop'
+    | '/api/vendas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -96,6 +118,7 @@ export interface RootRouteChildren {
   AdminBlackRoute: typeof AdminBlackRoute
   ApiLojaRoute: typeof ApiLojaRoute
   ApiNuvemshopRoute: typeof ApiNuvemshopRoute
+  ApiVendasRoute: typeof ApiVendasRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -142,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNuvemshopRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/vendas': {
+      id: '/api/vendas'
+      path: '/api/vendas'
+      fullPath: '/api/vendas'
+      preLoaderRoute: typeof ApiVendasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -152,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminBlackRoute: AdminBlackRoute,
   ApiLojaRoute: ApiLojaRoute,
   ApiNuvemshopRoute: ApiNuvemshopRoute,
+  ApiVendasRoute: ApiVendasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

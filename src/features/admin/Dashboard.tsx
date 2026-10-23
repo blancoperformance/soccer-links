@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isInternalDevice, setInternalDevice } from "@/lib/tracking";
 import { BarList, C, Columns, Funnel, Journey, Kpi, TrendChart } from "./charts";
 import { Leads } from "./Leads";
+import { Sales } from "./Sales";
 import { Live } from "./Live";
 import { LivePage } from "./LivePage";
 import { WorkspaceChooser, WorkspaceSwitch } from "./WorkspaceChooser";
@@ -141,7 +142,7 @@ const SECTIONS = [
     label: "Vendas",
     icon: ShoppingBag,
     title: "Vendas",
-    sub: "Do jogo aberto até o carrinho da loja, e como conferir as vendas.",
+    sub: "As vendas pagas que vieram do links e o caminho até o carrinho.",
   },
   {
     id: "produtos",
@@ -909,6 +910,13 @@ export function Dashboard() {
             {/* ---------------- VENDAS ---------------- */}
             {section === "vendas" && data && t && (
               <>
+                <Card
+                  title="Vendas confirmadas na loja"
+                  hint="Pedidos pagos na Nuvemshop que vieram do links, lidos direto da loja."
+                >
+                  <Sales from={r.from} to={r.to} />
+                </Card>
+
                 <div className="grid grid-cols-2 gap-px overflow-hidden border border-neutral-200 bg-neutral-200 lg:grid-cols-4">
                   <Kpi
                     accent

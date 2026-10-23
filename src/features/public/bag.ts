@@ -5,7 +5,7 @@
  */
 import { useSyncExternalStore } from "react";
 import { STORE } from "./games";
-import { visitOrigin } from "@/lib/tracking";
+import { visitOrigin, withMetaClick } from "@/lib/tracking";
 import { bioCoupon } from "./content";
 
 export interface BagItem {
@@ -114,7 +114,8 @@ export function bagUrl(list: BagItem[], content: string) {
  * Link nativo de cupom da Nuvemshop: /discount/CODIGO?redirect_to=/caminho. O cupom fica salvo no
  * navegador e entra quando o produto vai para o carrinho.
  */
-export function withCoupon(path: string) {
+export function withCoupon(rawPath: string) {
+  const path = withMetaClick(rawPath);
   if (!bioCoupon) return `${STORE}${path}`;
   return `${STORE}/discount/${encodeURIComponent(bioCoupon)}?redirect_to=${encodeURIComponent(path)}`;
 }

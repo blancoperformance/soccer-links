@@ -1,3 +1,5 @@
+import { withMetaClick } from "./tracking";
+
 export interface UtmContext {
   source?: string;
   medium?: string;
@@ -26,5 +28,5 @@ export function withUtm(url: string, ctx: UtmContext): string {
   for (const [k, v] of Object.entries(values)) {
     if (!parsed.searchParams.has(k)) parsed.searchParams.set(k, v);
   }
-  return parsed.toString();
+  return withMetaClick(parsed.toString());
 }

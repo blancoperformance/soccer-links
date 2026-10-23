@@ -186,12 +186,6 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     const item = toItem();
     if (!item) return buy();
     bag.add(item);
-    pixelTrack("AddToCart", {
-      content_type: "product",
-      content_ids: [String(item.productId)],
-      content_name: game.slug,
-      ...(item.price != null ? { value: item.price, currency: "BRL" } : {}),
-    });
     track("links_clique", { item_name: `Sacola: adicionou ${game.slug}`, item_url: productUrl(game) });
     onClose();
   };
@@ -662,12 +656,6 @@ function SimilarCard({ game, onOpen }: { game: Game; onOpen: () => void }) {
             price: cheapest.price,
             from: cheapest.from,
             image: live.images[0] ? sized(live.images[0], 480) : "",
-          });
-          pixelTrack("AddToCart", {
-            content_type: "product",
-            content_ids: [String(live.id)],
-            content_name: game.slug,
-            ...(cheapest.price != null ? { value: cheapest.price, currency: "BRL" } : {}),
           });
           track("links_clique", { item_name: `Sacola: leve junto ${game.slug}` });
         }}

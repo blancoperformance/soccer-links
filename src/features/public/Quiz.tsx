@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, RotateCcw, X } from "lucide-react";
-import { memory, track } from "@/lib/tracking";
+import { memory, track, pixelTrack } from "@/lib/tracking";
 import { InsertError, insertRow, logInsertError } from "@/lib/backend";
 import type { QuizQuestion } from "./content";
 import { activeQuestions, scoreQuiz, type QuizResult } from "./quiz-score";
@@ -610,6 +610,7 @@ function LeadStep({
             consent: true,
           });
           track("links_clique", { item_name: "Quiz: contato enviado" });
+          pixelTrack("Lead", { content_name: "Quiz Soccer" });
         } catch (err) {
           if (!(err instanceof InsertError && err.duplicate)) logInsertError("leads", err);
         }

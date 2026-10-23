@@ -58,17 +58,54 @@ export function loadPixel() {
   t.async = true;
   t.src = "https://connect.facebook.net/en_US/fbevents.js";
   document.head.appendChild(t);
+  // Só eventos explícitos deste site: nada de conversão inferida por clique em botão.
+  n("set", "autoConfig", false, PIXEL_ID);
   n("init", PIXEL_ID);
-  n("track", "PageView");
+  n("trackSingle", PIXEL_ID, "PageView");
 }
 
-/** Evento padrão da Meta (ViewContent, AddToCart, InitiateCheckout...). Nunca quebra a página. */
-export function pixelTrack(name: string, data: Record<string, unknown> = {}) {
+/**
+ * Evento padrão da Meta só para o que acontece aqui (ViewContent, Lead). Carrinho, checkout e
+ * compra NÃO saem do links: a integração da Nuvemshop já manda esses eventos na loja, e mandar
+ * daqui contaria duas vezes. Nunca quebra a página.
+ */
+let leadSent = false;
+export function pixelTrack(name: "ViewContent" | "Lead", data: Record<string, unknown> = {}) {
   if (typeof window === "undefined" || !shouldSend()) return;
+  if (name === "Lead") {
+    if (leadSent) return;
+    leadSent = true;
+  }
   try {
-    window.fbq?.("track", name, data);
+    window.fbq?.("trackSingle", PIXEL_ID, name, data);
   } catch {
     /* ignore */
+  }
+}
+
+const FBCLID_KEY = "sg:fbclid";
+/**
+ * Leva o fbclid real do anúncio até a loja, para a Meta ligar a compra ao clique.
+ * Nunca inventa ID, nunca sobrescreve um fbclid que já está no link.
+ */
+export function withMetaClick(url: string): string {
+  try {
+    if (typeof window === "undefined") return url;
+    const target = new URL(url, "https://lojasoccergames.com.br");
+    if (target.searchParams.has("fbclid")) return url;
+    const current = new URLSearchParams(window.location.search).get("fbclid");
+    let click = current;
+    try {
+      if (current) window.sessionStorage.setItem(FBCLID_KEY, current);
+      else click = window.sessionStorage.getItem(FBCLID_KEY);
+    } catch {
+      /* sem storage: vale só o da URL atual */
+    }
+    if (!click || !/^[A-Za-z0-9._-]{1,500}$/.test(click)) return url;
+    target.searchParams.set("fbclid", click);
+    return /^https?:/.test(url) ? target.toString() : `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return url;
   }
 }
 
@@ -293,13 +330,6 @@ export function track(event: TrackEvent, payload: Payload = {}) {
     /* ignore */
   }
   sendToBackend(event, payload);
-  if (event === "checkout_click") {
-    pixelTrack("InitiateCheckout", {
-      content_type: "product",
-      content_name: String(payload["product"] ?? ""),
-      ...(typeof payload["value"] === "number" ? { value: payload["value"], currency: "BRL" } : {}),
-    });
-  }
   try {
     // Lets Clarity filter recordings by what the visitor did (e.g. quiz_complete, search_no_result).
     window.clarity?.("event", event);

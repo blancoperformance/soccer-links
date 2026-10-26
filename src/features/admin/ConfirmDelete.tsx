@@ -21,17 +21,17 @@ export function ConfirmDelete({
           setFailed(false);
           setAsking(true);
         }}
-        className="flex h-9 w-9 shrink-0 items-center justify-center border border-transparent text-neutral-400 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+        className="sg-btn sg-btn--ghost sg-btn--s sg-btn--icon sg-btn--danger"
         aria-label={`Apagar ${name}`}
         title="Apagar contato"
       >
-        <Trash2 className="h-4 w-4" />
+        <Trash2 aria-hidden />
       </button>
     );
 
   return (
-    <div className="flex shrink-0 items-center gap-2 text-xs">
-      <span className="text-neutral-600">
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, fontSize: 13 }}>
+      <span style={{ color: "var(--sg-text-2)" }}>
         {failed ? "Não apagou. Tentar de novo?" : "Apagar de vez?"}
       </span>
       <button
@@ -46,14 +46,14 @@ export function ConfirmDelete({
             setBusy(false);
           }
         }}
-        className="h-8 bg-red-700 px-3 font-medium text-white hover:opacity-90 disabled:opacity-60"
+        className="sg-btn sg-btn--s sg-btn--danger-solid"
       >
         {busy ? "Apagando..." : "Apagar"}
       </button>
       <button
         type="button"
         onClick={() => setAsking(false)}
-        className="h-8 px-2 text-neutral-500 hover:text-neutral-950"
+        className="sg-btn sg-btn--s sg-btn--ghost"
       >
         Cancelar
       </button>

@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Crown, LayoutGrid, LogOut } from "lucide-react";
 import type { Workspace } from "./workspace";
 
 const OPTIONS: { id: Workspace; title: string; text: string }[] = [
@@ -14,7 +14,7 @@ const OPTIONS: { id: Workspace; title: string; text: string }[] = [
   },
 ];
 
-/** Full-screen choice right after login. Only lists the workspaces this user may open. */
+/** Escolha logo depois do login. Só mostra os painéis que este usuário pode abrir. */
 export function WorkspaceChooser({
   allowed,
   email,
@@ -27,38 +27,48 @@ export function WorkspaceChooser({
   onSignOut: () => void;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#0E0E0E] px-6 font-sans text-white">
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center py-16">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
-          Painel Soccer Games
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">O que você quer abrir?</h1>
-        <p className="mt-2 text-sm text-white/55">
-          A escolha fica salva neste navegador. Dá para trocar depois pelo topo do painel.
-        </p>
-        <div className="mt-10 grid gap-px border border-white/15 bg-white/15 sm:grid-cols-2">
-          {OPTIONS.filter((o) => allowed.includes(o.id)).map((o) => (
-            <button
-              key={o.id}
-              type="button"
-              onClick={() => onChoose(o.id)}
-              className="group flex min-h-[180px] flex-col justify-between bg-[#0E0E0E] p-7 text-left transition-colors hover:bg-[#161616] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#8a00c2]"
-            >
-              <span>
-                <span className="block text-xl font-semibold">{o.title}</span>
-                <span className="mt-2 block text-sm leading-relaxed text-white/55">{o.text}</span>
-              </span>
-              <span className="mt-8 flex items-center gap-2 text-sm font-medium text-white/80 group-hover:text-[#8a00c2]">
-                Abrir <ArrowRight className="h-4 w-4" />
-              </span>
-            </button>
-          ))}
+    <div className="sg-gate">
+      <div className="sg-gate__card sg-gate__card--wide">
+        <div className="sg-gate__logo">
+          <img src="/logo-soccer.png" alt="Soccer Games" width={42} height={42} />
+          <span>Painel Soccer · {email}</span>
         </div>
-      </div>
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between border-t border-white/10 py-5 text-xs text-white/45">
-        <span className="truncate">{email}</span>
-        <button type="button" onClick={onSignOut} className="hover:text-white">
-          Sair
+        <h1>O que você quer abrir?</h1>
+        <p className="sg-gate__sub">
+          A escolha fica salva neste navegador. Dá para trocar depois pelo menu.
+        </p>
+        <div className="sg-choose">
+          {OPTIONS.filter((o) => allowed.includes(o.id)).map((o) => {
+            const Icon = o.id === "links" ? LayoutGrid : Crown;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                className="sg-choose__opt"
+                onClick={() => onChoose(o.id)}
+              >
+                <span
+                  className={`sg-choose__ico ${o.id === "black" ? "sg-choose__ico--brand" : ""}`}
+                  aria-hidden
+                >
+                  <Icon />
+                </span>
+                <span className="sg-choose__text">
+                  <strong>{o.title}</strong>
+                  <span>{o.text}</span>
+                </span>
+                <ArrowRight className="sg-choose__go" aria-hidden />
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={onSignOut}
+          className="sg-btn sg-btn--ghost"
+          style={{ marginTop: 16 }}
+        >
+          <LogOut aria-hidden /> Sair
         </button>
       </div>
     </div>

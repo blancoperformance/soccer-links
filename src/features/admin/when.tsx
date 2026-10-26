@@ -34,8 +34,8 @@ export function When({ iso, time = false, now }: { iso: string; time?: boolean; 
 export function NewTag({ iso, now }: { iso: string; now?: number }) {
   if (!isToday(iso, now)) return null;
   return (
-    <span className="ml-2 inline-block bg-[#8a00c2] px-1.5 py-px align-middle text-[10px] font-semibold uppercase tracking-wide text-white">
-      Novo
+    <span className="sg-chip sg-chip--new" style={{ marginLeft: 6, height: 20 }}>
+      novo
     </span>
   );
 }

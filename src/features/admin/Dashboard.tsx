@@ -2,24 +2,66 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react
 import type { Session } from "@supabase/supabase-js";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  BadgeCheck,
   CalendarDays,
-  Radio,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
   Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
   FileText,
+  Filter,
+  Gamepad2,
+  Globe,
+  HelpCircle,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Info,
   LayoutGrid,
-  LogOut,
+  LifeBuoy,
+  ListChecks,
+  Megaphone,
+  MessageCircle,
+  MonitorSmartphone,
+  MousePointerClick,
+  Palette,
+  Pointer,
+  Radio,
+  Receipt,
   RefreshCw,
+  Route,
   Search,
   Settings,
   ShoppingBag,
+  ShoppingCart,
+  Smartphone,
+  Sparkles,
   Tag,
   Trash2,
+  TrendingUp,
   Users,
-  UserRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isInternalDevice, setInternalDevice } from "@/lib/tracking";
-import { BarList, C, Columns, Funnel, Journey, Kpi, TrendChart } from "./charts";
+import { BarList, Columns, Empty, Funnel, Journey, Kpi, TrendChart } from "./charts";
+import { SettingsPanel } from "./Settings";
+import {
+  Card,
+  Label,
+  Logo,
+  Note,
+  Scoreboard,
+  Shell,
+  ShellBoot,
+  ThemeSwitch,
+  type NavGroup,
+} from "./ui";
 import { Leads } from "./Leads";
 import { Sales } from "./Sales";
 import { Live } from "./Live";
@@ -168,7 +210,7 @@ const SECTIONS = [
   {
     id: "contatos",
     label: "Contatos",
-    icon: UserRound,
+    icon: MessageCircle,
     title: "Contatos",
     sub: "Quem deixou o WhatsApp no fim do quiz.",
   },
@@ -177,69 +219,14 @@ const SECTIONS = [
     label: "Ajustes",
     icon: Settings,
     title: "Ajustes",
-    sub: "Contagem da equipe e limpeza de dados de teste.",
+    sub: "Se cada peça está funcionando, o que está ligado e o que fazer quando algo para.",
   },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-/* ---------- building blocks ---------- */
+/* ---------- peças da tela ---------- */
 
-function Card({
-  title,
-  hint,
-  action,
-  children,
-  className = "",
-  flush = false,
-}: {
-  title?: string;
-  hint?: string | undefined;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-  /** No inner padding (for tables and grids that touch the border). */
-  flush?: boolean;
-}) {
-  return (
-    <section className={`border border-neutral-200 bg-white ${className}`}>
-      {title && (
-        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-neutral-100 px-5 py-4">
-          <div className="min-w-0">
-            <h2 className="text-[14px] font-semibold text-neutral-950">{title}</h2>
-            {hint && <p className="mt-0.5 text-xs leading-relaxed text-neutral-500">{hint}</p>}
-          </div>
-          {action}
-        </header>
-      )}
-      <div className={flush ? "" : "p-5"}>{children}</div>
-    </section>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-400">
-      {children}
-    </p>
-  );
-}
-
-function Logo({ className = "", light = false }: { className?: string; light?: boolean }) {
-  // light = fundo claro (login): logo com o S escuro. No menu preto, a logo com o S branco.
-  return (
-    <span aria-label="Soccer Games" className={`flex shrink-0 items-center ${className}`}>
-      <img
-        src={light ? "/logo-soccer-escura.png" : "/logo-soccer.png"}
-        alt="Soccer Games"
-        width={36}
-        height={36}
-        className="h-9 w-9"
-      />
-    </span>
-  );
-}
-
-/** Two date fields ("De" / "Até") with quick shortcuts. Future days are not selectable. */
+/** Dois campos de data ("De" / "Até") com atalhos. Dias futuros não podem ser escolhidos. */
 function DatePicker({
   initial,
   onApply,
@@ -253,21 +240,16 @@ function DatePicker({
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to > today ? today : initial.to);
   const valid = from && to && from <= to && to <= today;
-  const shortcut = (label: string, a: Date, b: Date) => (
-    <button
-      key={label}
-      type="button"
-      onClick={() => onApply(isoDay(a), isoDay(b))}
-      className="border border-neutral-200 px-2.5 py-1.5 text-left text-xs text-neutral-700 hover:border-neutral-950"
-    >
-      {label}
-    </button>
-  );
   const now = new Date();
   const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+  const shortcut = (label: string, a: Date, b: Date) => (
+    <button key={label} type="button" onClick={() => onApply(isoDay(a), isoDay(b))}>
+      {label}
+    </button>
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -275,66 +257,54 @@ function DatePicker({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const field =
-    "mt-1 h-10 w-full border border-neutral-300 bg-white px-2 text-sm outline-none focus:border-neutral-950";
   return (
     <>
-      <button
-        type="button"
-        aria-label="Fechar"
-        className="fixed inset-0 z-30 cursor-default"
-        onClick={onClose}
-      />
-      <div className="absolute right-0 top-[calc(100%+6px)] z-40 w-[300px] border border-neutral-200 bg-white p-4 shadow-[0_12px_32px_rgba(0,0,0,0.12)]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-400">
-          Atalhos
+      <button type="button" aria-label="Fechar" className="sg-catch" onClick={onClose} />
+      <div className="sg-picker" role="dialog" aria-label="Escolher datas">
+        <p className="sg-label" style={{ margin: 0 }}>
+          atalhos
         </p>
-        <div className="mt-2 grid grid-cols-2 gap-1.5">
+        <div className="sg-picker__quick">
           {shortcut("Ontem", yesterday, yesterday)}
           {shortcut("Este mês", monthStart, now)}
           {shortcut("Mês passado", lastMonthStart, lastMonthEnd)}
           {shortcut("Este ano", new Date(now.getFullYear(), 0, 1), now)}
         </div>
         <form
-          className="mt-4 border-t border-neutral-100 pt-4"
           onSubmit={(e) => {
             e.preventDefault();
             if (valid) onApply(from, to);
           }}
         >
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-xs font-medium text-neutral-700">
-              De
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <label className="sg-field">
+              <span className="sg-field__label">De</span>
               <input
                 type="date"
                 value={from}
                 max={to || today}
                 onChange={(e) => setFrom(e.target.value)}
-                className={field}
+                className="sg-input"
                 required
               />
             </label>
-            <label className="block text-xs font-medium text-neutral-700">
-              Até
+            <label className="sg-field">
+              <span className="sg-field__label">Até</span>
               <input
                 type="date"
                 value={to}
                 min={from}
                 max={today}
                 onChange={(e) => setTo(e.target.value)}
-                className={field}
+                className="sg-input"
                 required
               />
             </label>
           </div>
           {!valid && from && to && (
-            <p className="mt-2 text-xs text-red-700">A data inicial precisa vir antes da final.</p>
+            <p className="sg-gate__err">A data inicial precisa vir antes da final.</p>
           )}
-          <button
-            type="submit"
-            disabled={!valid}
-            className="mt-4 h-10 w-full bg-neutral-950 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
-          >
+          <button type="submit" disabled={!valid} className="sg-btn sg-btn--primary sg-btn--block">
             Ver este período
           </button>
         </form>
@@ -343,81 +313,175 @@ function DatePicker({
   );
 }
 
+/** Vitrine do login: uma estante de jogos abstrata (sem capas, sem dados). Antes de entrar não há número real para mostrar. */
+const SHELF = [
+  ["PS5", "PS4", "PS5", "PS5", "PS4", "PS5", "PS4"],
+  ["PS4", "PS5", "PS4", "PS5", "PS5", "PS4", "PS5"],
+  ["PS5", "PS5", "PS4", "PS4", "PS5", "PS4", "PS5"],
+];
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const field =
-    "h-11 w-full border border-neutral-300 bg-white px-3 text-sm outline-none transition-colors focus:border-neutral-950";
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f5f4f1] px-6">
-      <div className="w-full max-w-sm border border-neutral-200 bg-white p-8">
-        <Logo light />
-        <h1 className="mt-6 text-xl font-semibold text-neutral-950">Painel dos links</h1>
-        <p className="mt-1 text-sm text-neutral-500">Acesso só da equipe Soccer Games.</p>
-        <form
-          className="mt-7 space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setError(null);
-            setBusy(true);
-            const { error: err } = await supabase.auth.signInWithPassword({
-              email: email.trim().toLowerCase(),
-              password,
-            });
-            setBusy(false);
-            if (err) {
-              const msg = err.message.toLowerCase();
-              setError(
-                msg.includes("invalid login credentials")
-                  ? "E-mail ou senha incorretos."
-                  : msg.includes("email not confirmed")
-                    ? "Esse usuário ainda não foi confirmado no Supabase."
-                    : `Não foi possível entrar (${err.message}).`,
-              );
-            }
-          }}
-        >
-          <label className="block text-xs font-medium text-neutral-700" htmlFor="email">
-            E-mail
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="username"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={field}
-          />
-          <label className="block pt-1 text-xs font-medium text-neutral-700" htmlFor="password">
-            Senha
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={field}
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-2 h-11 w-full bg-neutral-950 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
+    <div className="sg-login">
+      <aside className="sg-login__show" aria-hidden>
+        <div className="sg-login__top">
+          <Logo size={40} />
+          <span className="sg-login__tag">
+            <ShieldCheck /> acesso da equipe
+          </span>
+        </div>
+        <div className="sg-shelf">
+          {SHELF.map((row, r) => (
+            <div key={r} className={`sg-shelf__row sg-shelf__row--${r}`}>
+              {[...row, ...row].map((p, i) => (
+                <span
+                  key={i}
+                  className={`sg-shelf__case ${r === 1 && i % 7 === 3 ? "is-pick" : ""}`}
+                >
+                  <i>{p}</i>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="sg-login__pitch">
+          <p className="sg-login__kicker">painel soccer</p>
+          <h2>
+            Cada clique da bio, <em>até o jogo pago.</em>
+          </h2>
+          <p className="sg-login__lead">
+            Quem está na página agora, o que vendeu, quem chamar e a Black do Grupo VIP.
+          </p>
+          <p className="sg-login__press">
+            <kbd>Enter</kbd> para entrar
+          </p>
+        </div>
+      </aside>
+
+      <div className="sg-login__form">
+        <div className="sg-login__box">
+          <div className="sg-login__mlogo">
+            <Logo size={40} />
+          </div>
+          <h1>Entrar no painel</h1>
+          <p className="sg-gate__sub">Bem-vindo de volta. Use o e-mail da equipe Soccer Games.</p>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError(null);
+              setBusy(true);
+              const { error: err } = await supabase.auth.signInWithPassword({
+                email: email.trim().toLowerCase(),
+                password,
+              });
+              setBusy(false);
+              if (err) {
+                const msg = err.message.toLowerCase();
+                setError(
+                  msg.includes("invalid login credentials")
+                    ? "E-mail ou senha incorretos."
+                    : msg.includes("email not confirmed")
+                      ? "Esse usuário ainda não foi confirmado no Supabase."
+                      : `Não foi possível entrar (${err.message}).`,
+                );
+              }
+            }}
           >
-            {busy ? "Entrando..." : "Entrar"}
-          </button>
-          {error && <p className="text-xs text-red-700">{error}</p>}
-        </form>
+            <label className="sg-field">
+              <span className="sg-field__label">E-mail</span>
+              <span className="sg-icon-input">
+                <Mail aria-hidden />
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="username"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="sg-input"
+                  placeholder="voce@lojasoccergames.com.br"
+                />
+              </span>
+            </label>
+            <label className="sg-field">
+              <span className="sg-field__label">Senha</span>
+              <span className="sg-icon-input">
+                <Lock aria-hidden />
+                <input
+                  id="password"
+                  type={show ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="sg-input"
+                  style={{ paddingRight: 46 }}
+                />
+                <button
+                  type="button"
+                  className="sg-btn sg-btn--ghost sg-btn--s sg-btn--icon sg-icon-input__end"
+                  onClick={() => setShow((v) => !v)}
+                  aria-label={show ? "Esconder a senha" : "Mostrar a senha"}
+                >
+                  {show ? <EyeOff /> : <Eye />}
+                </button>
+              </span>
+            </label>
+            {error && (
+              <p className="sg-gate__err" role="alert">
+                {error}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={busy}
+              className="sg-btn sg-btn--primary sg-btn--block"
+              style={{ height: 46, marginTop: 4 }}
+            >
+              {busy ? "Entrando..." : "Entrar"}
+              {!busy && <ArrowRight />}
+            </button>
+          </form>
+          <p className="sg-login__safe">
+            <ShieldCheck aria-hidden /> Conexão protegida. Cada pessoa vê só o que o acesso dela
+            permite.
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
 /* ---------- page ---------- */
+
+function boardSub(d: number | null | undefined, text: string) {
+  if (d === null || d === undefined) return text;
+  return (
+    <>
+      <span className={`sg-chip ${d >= 0 ? "sg-chip--ok" : "sg-chip--bad"}`}>
+        {d >= 0 ? "+" : "−"}
+        {Math.abs(d)}%
+      </span>{" "}
+      {text}
+    </>
+  );
+}
+
+/** Há uma sessão salva neste navegador? (só para escolher entre esqueleto e tela de login) */
+const hasStoredSession = () => {
+  try {
+    return Object.keys(window.localStorage).some(
+      (k) => k.startsWith("sb-") && k.endsWith("-auth-token"),
+    );
+  } catch {
+    return false;
+  }
+};
 
 export function Dashboard() {
   const [session, setSession] = useState<Session | null>(null);
@@ -477,6 +541,8 @@ export function Dashboard() {
     void canOpenBlack(session.user.id).then((ok) => {
       if (!alive) return;
       setBlack(ok);
+      // Deixa o painel da Black já baixado: a troca fica instantânea.
+      if (ok) void import("./black/BlackLeads");
       if (ok && getWorkspace() === "black") void navigate({ to: "/admin/black", replace: true });
     });
     return () => {
@@ -559,9 +625,11 @@ export function Dashboard() {
     if (session) void load();
   }, [session, load]);
 
-  if (!ready) return null;
+  if (!ready) return hasStoredSession() ? <ShellBoot /> : null;
   if (!session) return <Login />;
-  if (black === null || (black && getWorkspace() === "black")) return null;
+  if (black === null)
+    return <ShellBoot workspace={getWorkspace() === "black" ? "black" : "links"} />;
+  if (black && getWorkspace() === "black") return <ShellBoot workspace="black" />;
   if (black && !chosen && getWorkspace() === null)
     return (
       <WorkspaceChooser
@@ -575,7 +643,9 @@ export function Dashboard() {
   if (report && data)
     return (
       <Suspense fallback={null}>
-        <Report data={data} prev={prev} period={periodLabel} onClose={() => setReport(false)} />
+        <div className="sgp" data-theme="light">
+          <Report data={data} prev={prev} period={periodLabel} onClose={() => setReport(false)} />
+        </div>
       </Suspense>
     );
 
@@ -584,7 +654,7 @@ export function Dashboard() {
   const pt = prev?.totals;
   const products = data ? rankedProducts(data) : [];
   const notes = data ? highlights(data, prev) : [];
-  const groups = data ? quizGroups(data) : [];
+  const groups2 = data ? quizGroups(data) : [];
   const story = data && hasPurchaseFunnel(data) ? funnelStory(data) : null;
   const fmtDay = (s: string) => {
     const [, m, d] = s.split("-");
@@ -606,751 +676,698 @@ export function Dashboard() {
   const checkout = t?.checkout_sessions ?? 0;
   const empty = t ? t.visits === 0 : true;
 
-  const nav = (
-    <nav aria-label="Seções do painel" className="space-y-0.5">
-      {SECTIONS.map((x) => {
-        const Icon = x.icon;
-        const on = x.id === section;
-        return (
-          <button
-            key={x.id}
-            type="button"
-            onClick={() => go(x.id)}
-            aria-current={on ? "page" : undefined}
-            className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors ${
-              on
-                ? "bg-white/10 font-medium text-white"
-                : "text-white/60 hover:bg-white/5 hover:text-white"
-            }`}
-          >
-            <Icon className="h-4 w-4 shrink-0" style={on ? { color: C.accent } : undefined} />
-            {x.label}
-          </button>
-        );
-      })}
-    </nav>
-  );
-
-  return (
-    <div className="min-h-screen bg-[#f5f4f1] font-sans text-neutral-900">
-      {/* Sidebar (desktop) */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col bg-neutral-950 px-3 py-6 lg:flex">
-        <div className="flex items-center gap-3 px-3">
-          <Logo />
-          <span className="border-l border-white/15 pl-3 text-xs leading-tight text-white/60">
-            Painel
-            <br />
-            <span className="text-sm font-medium text-white">Links da bio</span>
-          </span>
-        </div>
-        {black && (
-          <div className="mt-6 px-3">
-            <WorkspaceSwitch current="links" onSwitch={openWorkspace} />
-          </div>
-        )}
-        <div className="mt-6 flex-1">{nav}</div>
-        <div className="border-t border-white/10 px-3 pt-4">
-          <p className="truncate text-xs text-white/50">{session.user.email}</p>
-          <button
-            type="button"
-            onClick={signOut}
-            className="mt-2 flex items-center gap-2 text-xs text-white/60 hover:text-white"
-          >
-            <LogOut className="h-3.5 w-3.5" /> Sair
-          </button>
-        </div>
-      </aside>
-
-      <div className="lg:pl-60">
-        {/* Top bar (mobile): logo + horizontal sections */}
-        <div className="bg-neutral-950 lg:hidden">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Logo />
-              {black && <WorkspaceSwitch current="links" onSwitch={openWorkspace} />}
-            </div>
-            <button
-              type="button"
-              onClick={signOut}
-              className="flex h-9 w-9 items-center justify-center text-white/70"
-              aria-label="Sair"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="flex gap-1 overflow-x-auto px-2 pb-2 [scrollbar-width:none]">
-            {SECTIONS.map((x) => (
+  const leadsToCall = leads?.filter((x) => x.status === "novo").length ?? 0;
+  const groups: NavGroup[] = [
+    {
+      label: "acompanhar",
+      items: [
+        { id: "visao", label: "Visão geral", icon: LayoutGrid },
+        { id: "aovivo", label: "Ao vivo", icon: Radio, live: true },
+        { id: "vendas", label: "Vendas", icon: ShoppingBag },
+      ],
+    },
+    {
+      label: "entender",
+      items: [
+        { id: "produtos", label: "Jogos", icon: Gamepad2 },
+        { id: "publico", label: "Público", icon: Users },
+        { id: "busca", label: "Busca e quiz", icon: Search },
+      ],
+    },
+    {
+      label: "agir",
+      items: [
+        { id: "contatos", label: "Contatos", icon: MessageCircle, badge: leadsToCall || undefined },
+      ],
+    },
+    { label: "sistema", items: [{ id: "ajustes", label: "Ajustes", icon: Settings }] },
+  ];
+  const periodTools = section !== "aovivo" && section !== "ajustes";
+  const tools = (
+    <>
+      {periodTools && (
+        <div className="sg-tools__period">
+          <div className="sg-seg" role="group" aria-label="Período">
+            {PERIODS.map((p) => (
               <button
-                key={x.id}
+                key={p.id}
                 type="button"
-                onClick={() => go(x.id)}
-                className={`shrink-0 px-3 py-2 text-[13px] ${x.id === section ? "bg-white/10 font-medium text-white" : "text-white/60"}`}
+                className="sg-seg__btn"
+                aria-pressed={period.kind === "preset" && period.days === p.id}
+                onClick={() => setPeriod({ kind: "preset", days: p.id })}
               >
-                {x.label}
+                {p.label}
               </button>
             ))}
-          </div>
-        </div>
-
-        <header className="sticky top-0 z-20 border-b border-neutral-200 bg-[#f5f4f1]/95 backdrop-blur">
-          <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-8">
-            <div className="min-w-0">
-              <h1 className="text-xl font-semibold tracking-tight text-neutral-950">
-                {current.title}
-              </h1>
-              <p className="mt-0.5 text-xs text-neutral-500">
-                {section === "aovivo" ? (
-                  "Tempo real · últimos 30 minutos"
-                ) : (
-                  <>
-                    {periodLabel}
-                    {prev ? " · setas comparam com o período anterior" : ""}
-                  </>
-                )}
-              </p>
-            </div>
-            <div
-              className={`flex flex-wrap items-center gap-2 ${section === "aovivo" ? "hidden" : ""}`}
+            <button
+              type="button"
+              className="sg-seg__btn"
+              aria-pressed={period.kind === "custom"}
+              aria-expanded={picker}
+              onClick={() => setPicker((v) => !v)}
             >
-              <div className="relative flex border border-neutral-300 bg-white">
-                {PERIODS.map((p) => {
-                  const on = period.kind === "preset" && period.days === p.id;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setPeriod({ kind: "preset", days: p.id })}
-                      className={`h-9 px-3 text-[13px] transition-colors ${on ? "bg-neutral-950 font-medium text-white" : "text-neutral-600 hover:text-neutral-950"}`}
-                    >
-                      {p.label}
-                    </button>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => setPicker((v) => !v)}
-                  aria-expanded={picker}
-                  className={`flex h-9 items-center gap-1.5 border-l border-neutral-300 px-3 text-[13px] transition-colors ${period.kind === "custom" ? "bg-neutral-950 font-medium text-white" : "text-neutral-600 hover:text-neutral-950"}`}
-                >
-                  <CalendarDays className="h-4 w-4" />
-                  {period.kind === "custom" ? "Datas" : "Escolher datas"}
-                </button>
-                {picker && (
-                  <DatePicker
-                    initial={
-                      period.kind === "custom" ? period : { from: isoDay(r.from), to: isoDay(r.to) }
-                    }
-                    onApply={(from, to) => setPeriod({ kind: "custom", from, to })}
-                    onClose={() => setPicker(false)}
-                  />
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => void load()}
-                className="flex h-9 w-9 items-center justify-center border border-neutral-300 bg-white text-neutral-600 hover:text-neutral-950"
-                aria-label="Atualizar"
-                title="Atualizar"
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              </button>
-              {data && (
+              <CalendarDays aria-hidden />
+              {period.kind === "custom" ? "Datas" : "Datas"}
+            </button>
+          </div>
+          {picker && (
+            <DatePicker
+              initial={
+                period.kind === "custom" ? period : { from: isoDay(r.from), to: isoDay(r.to) }
+              }
+              onApply={(from, to) => setPeriod({ kind: "custom", from, to })}
+              onClose={() => setPicker(false)}
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="sg-btn sg-btn--icon"
+            aria-label="Atualizar os números"
+            title="Atualizar"
+          >
+            <RefreshCw className={loading ? "animate-spin" : ""} />
+          </button>
+        </div>
+      )}
+      {data && periodTools && (
+        <>
+          <a
+            className="sg-btn"
+            download={`soccer-links-${fileTag}.csv`}
+            href={`data:text/csv;charset=utf-8,${encodeURIComponent(toCsv(data, periodLabel))}`}
+          >
+            <Download aria-hidden /> Planilha
+          </a>
+          <button type="button" onClick={() => setReport(true)} className="sg-btn sg-btn--primary">
+            <FileText aria-hidden /> Apresentação
+          </button>
+        </>
+      )}
+    </>
+  );
+
+  const goBtn = (id: SectionId, label: string) => (
+    <button type="button" className="sg-pill-link" onClick={() => go(id)}>
+      {label} <ChevronRight aria-hidden />
+    </button>
+  );
+  const maxDaily = Math.max(1, ...(data?.daily ?? []).map((d) => d.visits));
+  const peakDaily = data?.daily.findIndex((d) => d.visits === maxDaily) ?? -1;
+
+  return (
+    <Shell
+      workspace="links"
+      canSwitch={Boolean(black)}
+      onSwitch={openWorkspace}
+      product="Links da bio"
+      email={session.user.email}
+      onSignOut={signOut}
+      groups={groups}
+      current={section}
+      onNav={(id) => go(id as SectionId)}
+      tabs={["visao", "aovivo", "vendas", "contatos"]}
+      eyebrow={
+        section === "aovivo" ? (
+          <>
+            <span className="sg-dot sg-dot--live" aria-hidden /> tempo real · últimos 30 minutos
+          </>
+        ) : (
+          <>
+            <CalendarDays aria-hidden /> {periodLabel}
+          </>
+        )
+      }
+      title={current.title}
+      sub={current.sub}
+      tools={tools}
+    >
+      <div className="sg-stack sg-loading" data-busy={loading}>
+        {error && section !== "aovivo" && (
+          <Note tone="bad" icon={AlertTriangle}>
+            {error}
+          </Note>
+        )}
+        {notice && (
+          <Note tone="ok" icon={CheckCircle2} onClose={() => setNotice(null)}>
+            {notice}
+          </Note>
+        )}
+        {!data && !error && !["contatos", "ajustes", "aovivo"].includes(section) && (
+          <div className="sg-stack" aria-label="Carregando">
+            <div className="sg-skel" style={{ height: 230 }} />
+            <div className="sg-kpis">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="sg-skel" style={{ height: 150 }} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ---------------- VISÃO GERAL ---------------- */}
+        {section === "visao" && data && t && (
+          <>
+            <Scoreboard
+              label={`placar · ${periodLabel}`}
+              live={{ text: "ver quem está agora", onClick: () => go("aovivo") }}
+              actions={
                 <>
-                  <a
-                    className="flex h-9 items-center gap-2 border border-neutral-300 bg-white px-3 text-[13px] text-neutral-800 hover:border-neutral-950"
-                    download={`mts-links-${fileTag}.csv`}
-                    href={`data:text/csv;charset=utf-8,${encodeURIComponent(toCsv(data, periodLabel))}`}
-                  >
-                    <Download className="h-4 w-4" /> Planilha
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => setReport(true)}
-                    className="flex h-9 items-center gap-2 bg-neutral-950 px-3 text-[13px] font-medium text-white hover:opacity-90"
-                  >
-                    <FileText className="h-4 w-4" /> Apresentação
+                  <button type="button" className="sg-hero__btn" onClick={() => go("vendas")}>
+                    Ver vendas <ArrowRight aria-hidden />
                   </button>
                 </>
-              )}
-            </div>
-          </div>
-        </header>
+              }
+              cells={[
+                {
+                  label: "Visitas",
+                  value: fmt(t.visits),
+                  sub: boardSub(
+                    delta(t.visits, pt?.visits),
+                    `${fmt(t.product_clicks)} cliques em jogos`,
+                  ),
+                },
+                {
+                  label: "Abriram um jogo",
+                  value: fmt(t.product_viewers ?? 0),
+                  sub: boardSub(
+                    delta(t.product_viewers ?? 0, pt?.product_viewers),
+                    `${pctLabel(t.product_viewers ?? 0, t.visits)} das visitas`,
+                  ),
+                  onClick: () => go("produtos"),
+                },
+                {
+                  label: "Foram ao carrinho",
+                  value: fmt(checkout),
+                  accent: true,
+                  sub: boardSub(
+                    delta(checkout, pt?.checkout_sessions),
+                    `${pctLabel(checkout, t.visits)} das visitas`,
+                  ),
+                  onClick: () => go("vendas"),
+                },
+                {
+                  label: "Contatos do quiz",
+                  value: leads ? fmt(leadsNow.length) : "–",
+                  sub: leads
+                    ? boardSub(
+                        delta(leadsNow.length, leadsBefore.length),
+                        leadsToCall ? `${fmt(leadsToCall)} esperando contato` : "no fim do quiz",
+                      )
+                    : leadsFailed
+                      ? leadsFailedNote
+                      : undefined,
+                  onClick: () => go("contatos"),
+                },
+              ]}
+              bars={data.daily.map((d) => ({ key: d.day, label: fmtDay(d.day), value: d.visits }))}
+              barsLabel={
+                <>
+                  visitas por dia
+                  <br />
+                  pico {peakDaily >= 0 ? fmtDay(data.daily[peakDaily]!.day) : "–"}
+                </>
+              }
+            />
 
-        <main className="mx-auto max-w-[1240px] px-4 pb-24 pt-6 sm:px-8">
-          <p className="mb-5 text-sm text-neutral-500">{current.sub}</p>
-
-          {error && section !== "aovivo" && (
-            <p className="mb-6 border border-red-200 bg-red-50 p-5 text-sm leading-relaxed text-red-700">
-              {error}
-            </p>
-          )}
-          {notice && (
-            <p className="mb-6 border border-neutral-200 bg-white p-5 text-sm text-neutral-700">
-              {notice}
-            </p>
-          )}
-          {!data && !error && !["contatos", "ajustes", "aovivo"].includes(section) && (
-            <p className="text-sm text-neutral-400">Carregando...</p>
-          )}
-
-          <div className={`space-y-6 transition-opacity ${loading ? "opacity-60" : ""}`}>
-            {/* ---------------- VISÃO GERAL ---------------- */}
-            {section === "visao" && data && t && (
-              <>
-                <div className="grid grid-cols-2 gap-px overflow-hidden border border-neutral-200 bg-neutral-200 lg:grid-cols-4">
-                  <Kpi
-                    label="Visitas"
-                    value={fmt(t.visits)}
-                    delta={delta(t.visits, pt?.visits)}
-                    sub={`${pctLabel(t.engaged, t.visits)} interagiram`}
-                    spark={spark}
-                  />
-                  <Kpi
-                    label="Abriram um jogo"
-                    value={fmt(t.product_viewers ?? 0)}
-                    delta={delta(t.product_viewers ?? 0, pt?.product_viewers)}
-                    sub={`${pctLabel(t.product_viewers ?? 0, t.visits)} das visitas`}
-                  />
-                  <Kpi
-                    accent
-                    label="Foram ao carrinho"
-                    value={fmt(checkout)}
-                    delta={delta(checkout, pt?.checkout_sessions)}
-                    sub={`${pctLabel(checkout, t.visits)} das visitas`}
-                  />
-                  <Kpi
-                    label="Contatos captados"
-                    value={leads ? fmt(leadsNow.length) : "–"}
-                    delta={leads ? delta(leadsNow.length, leadsBefore.length) : undefined}
-                    sub={leads ? "No fim do quiz" : leadsFailed ? leadsFailedNote : undefined}
-                  />
-                </div>
-
-                {hasPurchaseFunnel(data) && (
-                  <Card
-                    title="Jornada de compra"
-                    hint="Pessoas, não cliques. A etapa marcada em vermelho é onde mais gente desiste."
-                    action={
-                      <button
-                        type="button"
-                        onClick={() => go("vendas")}
-                        className="text-xs font-medium text-neutral-700 underline underline-offset-4 hover:text-neutral-950"
-                      >
-                        Ver detalhes
-                      </button>
-                    }
-                  >
-                    <Journey steps={purchaseFunnel(data)} />
-                    {story && (
-                      <p className="mt-4 text-sm leading-relaxed text-neutral-700">
-                        {story.headline}
-                      </p>
-                    )}
-                  </Card>
-                )}
-
-                <div className="grid gap-6 lg:grid-cols-3">
-                  <Card
-                    className="lg:col-span-2"
-                    title="Visitas por dia"
-                    hint={
-                      prev
-                        ? "Linha tracejada: período anterior. Passe o mouse para ver cada dia."
-                        : undefined
-                    }
-                  >
-                    <TrendChart
-                      points={data.daily.map((d) => ({
-                        label: fmtDay(d.day),
-                        value: d.visits,
-                        sub: `${fmt(d.clicks)} cliques`,
-                      }))}
-                      {...(prev ? { prev: prev.daily.map((d) => d.visits) } : {})}
-                    />
-                  </Card>
-                  <Card
-                    title="Ao vivo"
-                    hint="Atualiza sozinho a cada 15 segundos."
-                    action={
-                      <button
-                        type="button"
-                        onClick={() => go("aovivo")}
-                        className="text-xs font-medium text-neutral-700 underline underline-offset-4 hover:text-neutral-950"
-                      >
-                        Abrir
-                      </button>
-                    }
-                  >
-                    <Live compact />
-                  </Card>
-                </div>
-
-                {notes.length > 0 && (
-                  <Card title="O que os números dizem" hint="Leitura automática do período.">
-                    <ol className="grid gap-x-10 gap-y-4 md:grid-cols-2">
-                      {notes.map((n, i) => (
-                        <li key={n} className="flex gap-3 text-sm leading-relaxed text-neutral-800">
-                          <span
-                            className="mt-px flex h-5 w-5 shrink-0 items-center justify-center text-[11px] font-semibold tabular-nums text-white"
-                            style={{ background: i === 0 ? C.accent : C.ink }}
-                          >
-                            {i + 1}
-                          </span>
-                          {n}
-                        </li>
-                      ))}
-                    </ol>
-                  </Card>
-                )}
-              </>
-            )}
-
-            {section === "aovivo" && <LivePage />}
-
-            {/* ---------------- VENDAS ---------------- */}
-            {section === "vendas" && data && t && (
-              <>
+            <div className="sg-grid sg-grid--split">
+              {hasPurchaseFunnel(data) && (
                 <Card
-                  title="Vendas confirmadas na loja"
-                  hint="Pedidos pagos na Nuvemshop que vieram do links, lidos direto da loja."
+                  title="Jornada de compra"
+                  hint="Pessoas, não cliques. A etapa marcada em vermelho é onde mais gente desiste."
+                  icon={Route}
+                  action={goBtn("vendas", "Detalhes")}
                 >
-                  <Sales from={r.from} to={r.to} />
-                </Card>
-
-                <div className="grid grid-cols-2 gap-px overflow-hidden border border-neutral-200 bg-neutral-200 lg:grid-cols-4">
-                  <Kpi
-                    accent
-                    label="Foram ao carrinho"
-                    value={fmt(checkout)}
-                    delta={delta(checkout, pt?.checkout_sessions)}
-                    sub={`${pctLabel(checkout, t.product_viewers ?? 0)} de quem abriu um jogo`}
-                  />
-                  <Kpi
-                    label="Escolheram a licença"
-                    value={fmt(t.size_selectors ?? 0)}
-                    delta={delta(t.size_selectors ?? 0, pt?.size_selectors)}
-                    sub={`${pctLabel(t.size_selectors ?? 0, t.product_viewers ?? 0)} de quem abriu um jogo`}
-                  />
-                  <Kpi
-                    label="Contatos do quiz"
-                    value={leads ? fmt(leadsNow.length) : "–"}
-                    delta={leads ? delta(leadsNow.length, leadsBefore.length) : undefined}
-                    sub={leadsFailed ? leadsFailedNote : "Deixaram o WhatsApp no fim do quiz"}
-                  />
-                  <Kpi
-                    label="Carrinho depois do quiz"
-                    value={fmt(t.checkout_from_quiz ?? 0)}
-                    sub={`${pctLabel(t.checkout_from_quiz ?? 0, checkout)} de quem foi ao carrinho`}
-                  />
-                </div>
-
-                <Card
-                  title="Como conferir as vendas de verdade"
-                  hint="O painel vê a pessoa sair para o carrinho da loja. A venda fecha na Nuvemshop, então a confirmação está nos relatórios da loja e do Analytics."
-                >
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="border-l-[3px] pl-4" style={{ borderColor: C.accent }}>
-                      <p className="text-sm font-semibold text-neutral-950">
-                        Do link para o carrinho
-                      </p>
-                      <p className="mt-1 text-sm leading-relaxed text-neutral-600">
-                        Cada Comprar daqui abre o carrinho da loja já com o jogo e a licença
-                        escolhida. O pagamento acontece na Nuvemshop, então o painel conta até o
-                        carrinho e a venda confirmada fica nos relatórios da loja.
-                      </p>
-                    </div>
-                    <div className="border-l-[3px] border-neutral-950 pl-4">
-                      <p className="text-sm font-semibold text-neutral-950">
-                        Todas as vendas do link
-                      </p>
-                      <p className="mt-1 text-sm leading-relaxed text-neutral-600">
-                        Toda compra que sai daqui leva <strong>utm_medium = bio</strong> e a origem
-                        real da visita (Instagram, TikTok, campanha). No Google Analytics, filtre
-                        por esse meio para ver receita e pedidos.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                {hasPurchaseFunnel(data) ? (
-                  <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-                    <Card
-                      title="Funil de compra"
-                      hint="Cada etapa conta pessoas. Embaixo de cada uma, quantos seguiram da etapa anterior."
-                    >
-                      <Funnel steps={purchaseFunnel(data)} stepRate />
-                      {story?.loss && (
-                        <p className="mt-5 border-l-[3px] border-red-600 bg-red-50/50 px-4 py-3 text-sm leading-relaxed text-neutral-800">
-                          {story.loss}
-                        </p>
-                      )}
-                      {(t.no_size_sessions ?? 0) > 0 && (
-                        <p className="mt-4 text-sm leading-relaxed text-neutral-600">
-                          {fmt(t.no_size_sessions ?? 0)}{" "}
-                          {t.no_size_sessions === 1 ? "visita tocou" : "visitas tocaram"} em comprar
-                          sem escolher a licença
-                          {data.no_size_products?.[0]
-                            ? `, mais em ${productName(data.no_size_products[0].item)}`
-                            : ""}
-                          .
-                        </p>
-                      )}
-                    </Card>
-                    <Card title="Quem foi ao checkout" hint="Por jogo, licença e origem da visita.">
-                      <Label>Por jogo</Label>
-                      <BarList
-                        rows={(data.checkout_products ?? []).map((x) => ({
-                          label: productName(x.item),
-                          n: x.sessions,
-                        }))}
-                        max={6}
-                        accent
-                      />
-                      <div className="mt-7 grid grid-cols-2 gap-6 border-t border-neutral-100 pt-5">
-                        <div>
-                          <Label>Licença</Label>
-                          <BarList
-                            rows={(data.checkout_sizes ?? []).map((x) => ({
-                              label: x.size,
-                              n: x.n,
-                            }))}
-                            max={5}
-                          />
-                        </div>
-                        <div>
-                          <Label>Origem</Label>
-                          <BarList
-                            rows={(data.checkout_by_source ?? []).map((x) => ({
-                              label: sourceName(x.source),
-                              n: x.n,
-                            }))}
-                            max={5}
-                          />
-                        </div>
-                      </div>
-                    </Card>
-                  </div>
-                ) : (
-                  <Card>
-                    <p className="text-sm leading-relaxed text-neutral-500">
-                      O funil de compra ainda não está ativo no banco. Rode no SQL Editor do
-                      Supabase os arquivos da pasta supabase/migrations e atualize a página.
+                  <Journey steps={purchaseFunnel(data)} />
+                  {story && (
+                    <p className="sg-inset" style={{ marginTop: 16 }}>
+                      {story.headline}
                     </p>
-                  </Card>
-                )}
-              </>
-            )}
-
-            {/* ---------------- PRODUTOS ---------------- */}
-            {section === "produtos" && data && t && (
-              <>
-                <div className="grid grid-cols-2 gap-px overflow-hidden border border-neutral-200 bg-neutral-200 lg:grid-cols-4">
-                  <Kpi
-                    label="Cliques em produtos"
-                    value={fmt(t.product_clicks)}
-                    delta={delta(t.product_clicks, pt?.product_clicks)}
-                  />
-                  <Kpi
-                    label="Foram ao site"
-                    value={pctLabel(t.to_site, t.visits)}
-                    sub={`${fmt(t.to_site)} visitas`}
-                    delta={delta(t.to_site, pt?.to_site)}
-                  />
-                  <Kpi
-                    label="Cliques no total"
-                    value={fmt(t.clicks)}
-                    delta={delta(t.clicks, pt?.clicks)}
-                  />
-                  <Kpi
-                    label="Atendimento"
-                    value={fmt(t.support_clicks)}
-                    sub="Cliques em WhatsApp e ajuda"
-                    delta={delta(t.support_clicks, pt?.support_clicks)}
-                  />
-                </div>
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <Card
-                    title="Produtos mais clicados"
-                    hint="Na vitrine, na busca e no resultado do quiz."
-                  >
-                    <BarList rows={products} max={10} accent />
-                  </Card>
-                  <Card title="Botões e links" hint="Atendimento, site, redes e banners.">
-                    <BarList
-                      rows={data.top_links.map((x) => ({ label: x.item, n: x.n }))}
-                      max={10}
-                      total={t.clicks}
-                    />
-                  </Card>
-                  <Card title="Categorias abertas" hint="Visitas que abriram cada categoria.">
-                    <BarList
-                      rows={data.categories.map((c) => ({ label: categoryName(c.item), n: c.n }))}
-                    />
-                  </Card>
-                  <Card title="Funil da página" hint="Uma contagem por pessoa.">
-                    <Funnel
-                      steps={[
-                        { label: "Visitaram", value: t.visits },
-                        { label: "Interagiram", value: t.engaged },
-                        { label: "Exploraram loja, busca ou quiz", value: t.explored },
-                        { label: "Foram ao site", value: t.to_site },
-                      ]}
-                    />
-                  </Card>
-                </div>
-              </>
-            )}
-
-            {/* ---------------- PÚBLICO ---------------- */}
-            {section === "publico" && data && t && (
-              <div className="grid gap-6 lg:grid-cols-3">
-                <Card
-                  className="lg:col-span-2"
-                  title="Horário das visitas"
-                  hint={
-                    peakHour && peakHour.visits > 0
-                      ? `Pico por volta das ${peakHour.hour}h. Bom horário para postar e responder.`
-                      : undefined
-                  }
-                >
-                  <Columns
-                    data={data.hours.map((h) => ({
-                      label: `${h.hour}h`,
-                      value: h.visits,
-                      title: `${h.hour}h: ${fmt(h.visits)}`,
-                    }))}
-                  />
-                </Card>
-                <Card
-                  title="Dia da semana"
-                  hint={
-                    peakDay && peakDay.visits > 0
-                      ? `Mais visitas: ${WEEKDAYS[peakDay.dow]?.toLowerCase()}.`
-                      : undefined
-                  }
-                >
-                  <Columns
-                    data={data.weekdays.map((w) => ({
-                      label: WEEKDAYS_SHORT[w.dow] ?? "",
-                      value: w.visits,
-                      title: fmt(w.visits),
-                    }))}
-                  />
-                </Card>
-                <Card title="De onde vieram">
-                  <BarList
-                    rows={data.sources.map((x) => ({ label: sourceName(x.source), n: x.n }))}
-                    max={6}
-                    total={t.visits}
-                  />
-                </Card>
-                <Card title="Aparelho">
-                  <BarList
-                    rows={data.devices.map((x) => ({ label: deviceName(x.device), n: x.n }))}
-                    max={3}
-                    total={t.visits}
-                  />
-                </Card>
-                <Card title="Campanhas" hint="Links com utm_campaign.">
-                  <BarList
-                    rows={data.campaigns.map((x) => ({ label: x.campaign, n: x.n }))}
-                    max={6}
-                  />
-                </Card>
-              </div>
-            )}
-
-            {/* ---------------- BUSCA E QUIZ ---------------- */}
-            {section === "busca" && data && t && (
-              <>
-                <div className="grid grid-cols-2 gap-px overflow-hidden border border-neutral-200 bg-neutral-200 lg:grid-cols-4">
-                  <Kpi
-                    label="Começaram o quiz"
-                    value={fmt(t.quiz_start)}
-                    delta={delta(t.quiz_start, pt?.quiz_start)}
-                  />
-                  <Kpi
-                    label="Chegaram ao resultado"
-                    value={pctLabel(t.quiz_complete, t.quiz_start)}
-                    sub={`${fmt(t.quiz_complete)} pessoas`}
-                  />
-                  <Kpi
-                    label="Clicaram no indicado"
-                    value={fmt(t.quiz_result_click)}
-                    sub={`${pctLabel(t.quiz_result_click, t.quiz_complete)} de quem terminou`}
-                  />
-                  <Kpi
-                    label="Buscas"
-                    value={fmt(t.searches)}
-                    sub={`${fmt(t.searches_no_result)} sem resultado`}
-                  />
-                </div>
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <Card
-                    title="O que buscaram"
-                    hint="Termos digitados letra por letra contam uma vez."
-                  >
-                    {data.searches.length === 0 ? (
-                      <p className="py-2 text-sm text-neutral-400">Sem buscas no período.</p>
-                    ) : (
-                      <ul className="divide-y divide-neutral-100 text-sm">
-                        {data.searches.slice(0, 12).map((s) => (
-                          <li key={s.term} className="flex items-center justify-between gap-3 py-2">
-                            <span className="truncate">{s.term}</span>
-                            <span className="flex shrink-0 items-center gap-3">
-                              {s.no_result && (
-                                <span className="bg-red-50 px-1.5 py-0.5 text-[11px] text-red-700">
-                                  sem resultado
-                                </span>
-                              )}
-                              <span className="tabular-nums text-neutral-500">{fmt(s.n)}</span>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Card>
-                  <Card title="Peças mais indicadas pelo quiz">
-                    <BarList
-                      rows={data.quiz_results.map((q) => ({
-                        label: productName(q.product),
-                        n: q.n,
-                      }))}
-                      max={8}
-                      accent
-                    />
-                  </Card>
-                </div>
-                {groups.length > 0 && (
-                  <Card title="Respostas do quiz" hint="O que o público escolhe em cada pergunta.">
-                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                      {groups.map(([q, rows]) => (
-                        <div key={q}>
-                          <Label>{QUIZ_QUESTION_LABEL[q] ?? q}</Label>
-                          <BarList rows={rows} max={5} total={rows.reduce((a, x) => a + x.n, 0)} />
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-                {data.questions.length > 0 && (
-                  <Card title="Perguntas escritas para o assistente">
-                    <ul className="divide-y divide-neutral-100 text-sm">
-                      {data.questions.map((q, i) => (
-                        <li key={i} className="flex justify-between gap-4 py-2">
-                          {q.question}
-                          <span className="shrink-0 text-xs text-neutral-400">
-                            {new Date(q.created_at).toLocaleDateString("pt-BR")}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-              </>
-            )}
-
-            {data &&
-              empty &&
-              ["visao", "vendas", "produtos", "publico", "busca"].includes(section) && (
-                <p className="border border-neutral-200 bg-white p-5 text-sm leading-relaxed text-neutral-500">
-                  Nenhuma visita registrada neste período. As visitas são contadas apenas em
-                  links.lojasoccergames.com.br e não incluem aparelhos da equipe.
-                </p>
-              )}
-
-            {/* ---------------- CONTATOS ---------------- */}
-            {section === "contatos" && (
-              <>
-                <Card
-                  title="Contatos do quiz"
-                  hint="Quem deixou nome e WhatsApp no fim do quiz, com as respostas e o jogo indicado. Todos aceitaram receber mensagens."
-                >
-                  <Leads
-                    from={r.from}
-                    to={r.to}
-                    periodLabel={periodLabel}
-                    onChange={() => void load()}
-                  />
-                </Card>
-              </>
-            )}
-
-            {/* ---------------- AJUSTES ---------------- */}
-            {section === "ajustes" && (
-              <div className="grid gap-6 md:grid-cols-2">
-                <Card title="Visitas da equipe">
-                  <p className="text-sm leading-relaxed text-neutral-600">
-                    {internal
-                      ? "Este navegador não entra nas estatísticas. "
-                      : "Este navegador está sendo contado. "}
-                    Para tirar o seu celular da contagem, abra uma vez{" "}
-                    <span className="font-medium text-neutral-950">
-                      links.lojasoccergames.com.br/?interno=1
-                    </span>{" "}
-                    nele.
-                  </p>
-                  <button
-                    type="button"
-                    className="mt-3 text-sm underline underline-offset-4 hover:text-neutral-950"
-                    onClick={() => {
-                      setInternalDevice(!internal);
-                      setInternal(!internal);
-                    }}
-                  >
-                    {internal ? "Voltar a contar este navegador" : "Não contar este navegador"}
-                  </button>
-                </Card>
-                <Card title="Limpar dados de teste">
-                  <p className="text-sm leading-relaxed text-neutral-600">
-                    Apaga as estatísticas de visitas e cliques e começa do zero. Contatos e
-                    cadastros da Black continuam. Não dá para desfazer.
-                  </p>
-                  {confirmReset ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        className="flex h-9 items-center gap-2 bg-red-700 px-4 text-sm font-medium text-white hover:opacity-90"
-                        onClick={async () => {
-                          setConfirmReset(false);
-                          try {
-                            const n = await resetEvents();
-                            setNotice(
-                              `Pronto: ${fmt(n)} registros apagados. A contagem começa do zero agora.`,
-                            );
-                            void load();
-                          } catch {
-                            setNotice(
-                              "Não foi possível limpar. Confira se o SQL de atualização foi rodado no Supabase.",
-                            );
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" /> Apagar tudo
-                      </button>
-                      <button
-                        type="button"
-                        className="text-sm"
-                        onClick={() => setConfirmReset(false)}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="mt-3 text-sm underline underline-offset-4 hover:text-red-700"
-                      onClick={() => setConfirmReset(true)}
-                    >
-                      Limpar dados
-                    </button>
                   )}
                 </Card>
-              </div>
+              )}
+              <Card
+                title="Ao vivo"
+                hint="Quem está na página agora."
+                icon={Radio}
+                brand
+                action={goBtn("aovivo", "Abrir")}
+              >
+                <Live compact />
+              </Card>
+            </div>
+
+            <Card
+              title="Visitas por dia"
+              hint={
+                prev
+                  ? "Linha tracejada: período anterior. Passe o mouse ou o dedo para ver cada dia."
+                  : undefined
+              }
+              icon={TrendingUp}
+            >
+              <TrendChart
+                points={data.daily.map((d) => ({
+                  label: fmtDay(d.day),
+                  value: d.visits,
+                  sub: `${fmt(d.clicks)} cliques`,
+                }))}
+                {...(prev ? { prev: prev.daily.map((d) => d.visits) } : {})}
+              />
+            </Card>
+
+            {notes.length > 0 && (
+              <Card
+                title="O que os números dizem"
+                hint="Leitura automática do período."
+                icon={Sparkles}
+                brand
+              >
+                <ol className="sg-notes">
+                  {notes.map((n, i) => (
+                    <li key={n}>
+                      <span className="sg-notes__n">{i + 1}</span>
+                      <span>{n}</span>
+                    </li>
+                  ))}
+                </ol>
+              </Card>
             )}
-          </div>
-        </main>
+          </>
+        )}
+
+        {section === "aovivo" && <LivePage />}
+
+        {/* ---------------- VENDAS ---------------- */}
+        {section === "vendas" && data && t && (
+          <>
+            <Card
+              title="Vendas confirmadas na loja"
+              hint="Pedidos pagos na Nuvemshop que vieram do links, lidos direto da loja."
+              icon={Receipt}
+              brand
+            >
+              <Sales from={r.from} to={r.to} />
+            </Card>
+
+            <div className="sg-kpis">
+              <Kpi
+                accent
+                icon={ShoppingCart}
+                label="Foram ao carrinho"
+                value={fmt(checkout)}
+                delta={delta(checkout, pt?.checkout_sessions)}
+                sub={`${pctLabel(checkout, t.product_viewers ?? 0)} de quem abriu um jogo`}
+              />
+              <Kpi
+                icon={BadgeCheck}
+                label="Escolheram a licença"
+                value={fmt(t.size_selectors ?? 0)}
+                delta={delta(t.size_selectors ?? 0, pt?.size_selectors)}
+                sub={`${pctLabel(t.size_selectors ?? 0, t.product_viewers ?? 0)} de quem abriu um jogo`}
+              />
+              <Kpi
+                icon={MessageCircle}
+                label="Contatos do quiz"
+                value={leads ? fmt(leadsNow.length) : "–"}
+                delta={leads ? delta(leadsNow.length, leadsBefore.length) : undefined}
+                sub={leadsFailed ? leadsFailedNote : "Deixaram o WhatsApp no fim do quiz"}
+              />
+              <Kpi
+                icon={Sparkles}
+                label="Carrinho depois do quiz"
+                value={fmt(t.checkout_from_quiz ?? 0)}
+                sub={`${pctLabel(t.checkout_from_quiz ?? 0, checkout)} de quem foi ao carrinho`}
+              />
+            </div>
+
+            {hasPurchaseFunnel(data) ? (
+              <div className="sg-grid sg-grid--2">
+                <Card
+                  title="Funil de compra"
+                  hint="Cada etapa conta pessoas. Embaixo, quantos seguiram da etapa anterior."
+                  icon={Filter}
+                >
+                  <Funnel steps={purchaseFunnel(data)} stepRate />
+                  {story?.loss && (
+                    <p className="sg-inset sg-inset--bad" style={{ marginTop: 18 }}>
+                      {story.loss}
+                    </p>
+                  )}
+                  {(t.no_size_sessions ?? 0) > 0 && (
+                    <p className="sg-card__hint" style={{ marginTop: 14 }}>
+                      {fmt(t.no_size_sessions ?? 0)}{" "}
+                      {t.no_size_sessions === 1 ? "visita tocou" : "visitas tocaram"} em comprar sem
+                      escolher a licença
+                      {data.no_size_products?.[0]
+                        ? `, mais em ${productName(data.no_size_products[0].item)}`
+                        : ""}
+                      .
+                    </p>
+                  )}
+                </Card>
+                <Card
+                  title="Quem foi ao carrinho"
+                  hint="Por jogo, licença e origem da visita."
+                  icon={ShoppingCart}
+                >
+                  <Label>por jogo</Label>
+                  <BarList
+                    rows={(data.checkout_products ?? []).map((x) => ({
+                      label: productName(x.item),
+                      n: x.sessions,
+                    }))}
+                    max={6}
+                    accent
+                  />
+                  <div
+                    className="sg-grid sg-grid--2"
+                    style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--sg-line)" }}
+                  >
+                    <div>
+                      <Label>licença</Label>
+                      <BarList
+                        rows={(data.checkout_sizes ?? []).map((x) => ({ label: x.size, n: x.n }))}
+                        max={5}
+                      />
+                    </div>
+                    <div>
+                      <Label>origem</Label>
+                      <BarList
+                        rows={(data.checkout_by_source ?? []).map((x) => ({
+                          label: sourceName(x.source),
+                          n: x.n,
+                        }))}
+                        max={5}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            ) : (
+              <Note tone="warn" icon={AlertTriangle}>
+                O funil de compra ainda não está ativo no banco. Rode no SQL Editor do Supabase os
+                arquivos da pasta supabase/migrations e atualize a página.
+              </Note>
+            )}
+
+            <Card title="Como conferir as vendas" hint="Onde cada número nasce." icon={HelpCircle}>
+              <div className="sg-grid sg-grid--2">
+                <div className="sg-inset">
+                  <strong style={{ color: "var(--sg-ink)" }}>Do link para o carrinho.</strong> Cada
+                  Comprar daqui abre o carrinho da loja já com o jogo e a licença. O painel conta
+                  até o carrinho; a venda paga aparece no quadro de vendas acima.
+                </div>
+                <div className="sg-inset">
+                  <strong style={{ color: "var(--sg-ink)" }}>No Google Analytics.</strong> Toda
+                  compra que sai daqui leva <span className="sg-mono">utm_medium=bio</span> e a
+                  origem real da visita. Filtre por esse meio para ver receita e pedidos.
+                </div>
+              </div>
+            </Card>
+          </>
+        )}
+
+        {/* ---------------- JOGOS ---------------- */}
+        {section === "produtos" && data && t && (
+          <>
+            <div className="sg-kpis">
+              <Kpi
+                icon={MousePointerClick}
+                label="Cliques em jogos"
+                value={fmt(t.product_clicks)}
+                delta={delta(t.product_clicks, pt?.product_clicks)}
+              />
+              <Kpi
+                accent
+                icon={ExternalLink}
+                label="Foram ao site"
+                value={pctLabel(t.to_site, t.visits)}
+                sub={`${fmt(t.to_site)} visitas`}
+                delta={delta(t.to_site, pt?.to_site)}
+              />
+              <Kpi
+                icon={Pointer}
+                label="Cliques no total"
+                value={fmt(t.clicks)}
+                delta={delta(t.clicks, pt?.clicks)}
+              />
+              <Kpi
+                icon={LifeBuoy}
+                label="Atendimento"
+                value={fmt(t.support_clicks)}
+                sub="Cliques em ajuda e central"
+                delta={delta(t.support_clicks, pt?.support_clicks)}
+              />
+            </div>
+            <div className="sg-grid sg-grid--2">
+              <Card
+                title="Jogos mais clicados"
+                hint="Na vitrine, na busca e no resultado do quiz."
+                icon={Gamepad2}
+                brand
+              >
+                <BarList rows={products} max={10} accent />
+              </Card>
+              <Card
+                title="Botões e links"
+                hint="Atendimento, site, redes e banners."
+                icon={Pointer}
+              >
+                <BarList
+                  rows={data.top_links.map((x) => ({ label: x.item, n: x.n }))}
+                  max={10}
+                  total={t.clicks}
+                />
+              </Card>
+              <Card
+                title="Categorias abertas"
+                hint="Visitas que abriram cada categoria."
+                icon={Tag}
+              >
+                <BarList
+                  rows={data.categories.map((c) => ({ label: categoryName(c.item), n: c.n }))}
+                />
+              </Card>
+              <Card title="Funil da página" hint="Uma contagem por pessoa." icon={Filter}>
+                <Funnel
+                  steps={[
+                    { label: "Visitaram", value: t.visits },
+                    { label: "Interagiram", value: t.engaged },
+                    { label: "Exploraram loja, busca ou quiz", value: t.explored },
+                    { label: "Foram ao site", value: t.to_site },
+                  ]}
+                />
+              </Card>
+            </div>
+          </>
+        )}
+
+        {/* ---------------- PÚBLICO ---------------- */}
+        {section === "publico" && data && t && (
+          <>
+            <div className="sg-grid sg-grid--hero">
+              <Card
+                title="Horário das visitas"
+                hint={
+                  peakHour && peakHour.visits > 0
+                    ? `Pico por volta das ${peakHour.hour}h. Bom horário para postar e responder.`
+                    : undefined
+                }
+                icon={Clock}
+                brand
+              >
+                <Columns
+                  data={data.hours.map((h) => ({
+                    label: `${h.hour}h`,
+                    value: h.visits,
+                    title: `${h.hour}h: ${fmt(h.visits)}`,
+                  }))}
+                  height={180}
+                />
+              </Card>
+              <Card
+                title="Dia da semana"
+                hint={
+                  peakDay && peakDay.visits > 0
+                    ? `Mais visitas: ${WEEKDAYS[peakDay.dow]?.toLowerCase()}.`
+                    : undefined
+                }
+                icon={CalendarDays}
+              >
+                <Columns
+                  data={data.weekdays.map((w) => ({
+                    label: WEEKDAYS_SHORT[w.dow] ?? "",
+                    value: w.visits,
+                    title: fmt(w.visits),
+                  }))}
+                  height={180}
+                />
+              </Card>
+            </div>
+            <div className="sg-grid sg-grid--3">
+              <Card title="De onde vieram" icon={Globe}>
+                <BarList
+                  rows={data.sources.map((x) => ({ label: sourceName(x.source), n: x.n }))}
+                  max={6}
+                  total={t.visits}
+                  accent
+                />
+              </Card>
+              <Card title="Aparelho" icon={Smartphone}>
+                <BarList
+                  rows={data.devices.map((x) => ({ label: deviceName(x.device), n: x.n }))}
+                  max={3}
+                  total={t.visits}
+                />
+              </Card>
+              <Card title="Campanhas" hint="Links com utm_campaign." icon={Megaphone}>
+                <BarList
+                  rows={data.campaigns.map((x) => ({ label: x.campaign, n: x.n }))}
+                  max={6}
+                />
+              </Card>
+            </div>
+          </>
+        )}
+
+        {/* ---------------- BUSCA E QUIZ ---------------- */}
+        {section === "busca" && data && t && (
+          <>
+            <div className="sg-kpis">
+              <Kpi
+                icon={Sparkles}
+                label="Começaram o quiz"
+                value={fmt(t.quiz_start)}
+                delta={delta(t.quiz_start, pt?.quiz_start)}
+              />
+              <Kpi
+                accent
+                icon={BadgeCheck}
+                label="Chegaram ao resultado"
+                value={pctLabel(t.quiz_complete, t.quiz_start)}
+                sub={`${fmt(t.quiz_complete)} pessoas`}
+              />
+              <Kpi
+                icon={MousePointerClick}
+                label="Clicaram no indicado"
+                value={fmt(t.quiz_result_click)}
+                sub={`${pctLabel(t.quiz_result_click, t.quiz_complete)} de quem terminou`}
+              />
+              <Kpi
+                icon={Search}
+                label="Buscas"
+                value={fmt(t.searches)}
+                sub={`${fmt(t.searches_no_result)} sem resultado`}
+              />
+            </div>
+            <div className="sg-grid sg-grid--2">
+              <Card
+                title="O que buscaram"
+                hint="Termos digitados letra por letra contam uma vez."
+                icon={Search}
+              >
+                {data.searches.length === 0 ? (
+                  <Empty>Sem buscas no período.</Empty>
+                ) : (
+                  <ul className="sg-list">
+                    {data.searches.slice(0, 12).map((s) => (
+                      <li key={s.term}>
+                        <span className="sg-list__main">{s.term}</span>
+                        <span className="sg-list__side">
+                          {s.no_result && (
+                            <span className="sg-chip sg-chip--bad">sem resultado</span>
+                          )}
+                          {fmt(s.n)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+              <Card title="Jogos mais indicados pelo quiz" icon={Sparkles} brand>
+                <BarList
+                  rows={data.quiz_results.map((q) => ({ label: productName(q.product), n: q.n }))}
+                  max={8}
+                  accent
+                />
+              </Card>
+            </div>
+            {groups2.length > 0 && (
+              <Card
+                title="Respostas do quiz"
+                hint="O que o público escolhe em cada pergunta."
+                icon={ListChecks}
+              >
+                <div className="sg-grid sg-grid--3">
+                  {groups2.map(([q, rows]) => (
+                    <div key={q}>
+                      <Label>{(QUIZ_QUESTION_LABEL[q] ?? q).toLowerCase()}</Label>
+                      <BarList rows={rows} max={5} total={rows.reduce((a, x) => a + x.n, 0)} />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+            {data.questions.length > 0 && (
+              <Card title="Perguntas escritas para o assistente" icon={MessageCircle}>
+                <ul className="sg-list">
+                  {data.questions.map((q, i) => (
+                    <li key={i}>
+                      <span style={{ minWidth: 0 }}>{q.question}</span>
+                      <span className="sg-list__side">
+                        {new Date(q.created_at).toLocaleDateString("pt-BR")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+          </>
+        )}
+
+        {data && empty && ["visao", "vendas", "produtos", "publico", "busca"].includes(section) && (
+          <Note icon={Info}>
+            Nenhuma visita registrada neste período. As visitas são contadas só em
+            links.lojasoccergames.com.br e não incluem aparelhos da equipe.
+          </Note>
+        )}
+
+        {/* ---------------- CONTATOS ---------------- */}
+        {section === "contatos" && (
+          <Card
+            title="Contatos do quiz"
+            hint="Quem deixou nome e WhatsApp no fim do quiz, com as respostas e o jogo indicado. Todos aceitaram receber mensagens."
+            icon={MessageCircle}
+            brand
+          >
+            <Leads from={r.from} to={r.to} periodLabel={periodLabel} onChange={() => void load()} />
+          </Card>
+        )}
+
+        {/* ---------------- AJUSTES ---------------- */}
+        {section === "ajustes" && (
+          <SettingsPanel
+            email={session.user.email}
+            internal={internal}
+            onToggleInternal={() => {
+              setInternalDevice(!internal);
+              setInternal(!internal);
+            }}
+            onSignOut={signOut}
+            onReset={async () => {
+              try {
+                const n = await resetEvents();
+                setNotice(`Pronto: ${fmt(n)} registros apagados. A contagem começa do zero agora.`);
+                void load();
+              } catch {
+                setNotice(
+                  "Não foi possível zerar. Confira se o SQL de atualização foi rodado no Supabase.",
+                );
+              }
+            }}
+          />
+        )}
       </div>
-    </div>
+    </Shell>
   );
 }

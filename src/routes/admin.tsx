@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
+import { PanelRoot, ShellBoot } from "@/features/admin/ui";
+import "@/features/admin/painel.css";
 
 const Dashboard = lazy(() =>
   import("@/features/admin/Dashboard").then((m) => ({ default: m.Dashboard })),
@@ -7,7 +9,10 @@ const Dashboard = lazy(() =>
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
-    meta: [{ title: "Painel | Links Soccer Games" }, { name: "robots", content: "noindex, nofollow" }],
+    meta: [
+      { title: "Painel | Links Soccer Games" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
   }),
   ssr: false,
   component: AdminPage,
@@ -15,10 +20,10 @@ export const Route = createFileRoute("/admin")({
 
 function AdminPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <Suspense fallback={null}>
+    <PanelRoot>
+      <Suspense fallback={<ShellBoot workspace="links" />}>
         <Dashboard />
       </Suspense>
-    </div>
+    </PanelRoot>
   );
 }

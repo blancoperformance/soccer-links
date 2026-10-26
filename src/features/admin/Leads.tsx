@@ -19,6 +19,19 @@ import {
   recoveryPaste,
   type Recovery,
 } from "./data";
+import { Select, type SelectOption, type SelectTone } from "./Select";
+
+const STATUS_TONE: Record<LeadStatus, SelectTone> = {
+  novo: "brand",
+  "em-contato": "warn",
+  cliente: "ok",
+  descartado: "muted",
+};
+const STATUS_OPTIONS: SelectOption<LeadStatus>[] = LEAD_STATUS.map((s) => ({
+  value: s.id,
+  label: s.label,
+  tone: STATUS_TONE[s.id],
+}));
 
 /** (18) 99636-6686 */
 const prettyPhone = (raw: string) => {
@@ -41,13 +54,22 @@ function CopyButton({ text, label }: { text: string; label: string }) {
           /* ignore */
         }
       }}
-      className={`flex h-8 items-center gap-1.5 border px-2.5 text-xs transition-colors ${done ? "border-[#8a00c2] text-[#8a00c2]" : "border-neutral-300 text-neutral-800 hover:border-neutral-900"}`}
+      className={`sg-btn sg-btn--s ${done ? "sg-chip--brand" : ""}`}
+      aria-live="polite"
     >
-      {done ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {done ? <Check aria-hidden /> : <Copy aria-hidden />}
       {done ? "Copiado" : label}
     </button>
   );
 }
+
+const initialsOf = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
 
 /** Quem é a pessoa, pelas respostas do quiz (rótulo da pergunta: resposta). */
 const profileOf = (answers: Record<string, string> | null) =>
@@ -73,56 +95,69 @@ function RecoveryList({
   // Sem a leitura de pedidos da loja (permissão ou SQL pendente) a lista simplesmente não aparece.
   if (!items) return null;
   return (
-    <section className="mb-8 border border-neutral-200">
-      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
-          <ShoppingBag className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-          Foi para a compra e não comprou
-          {items.length > 0 && <span className="tabular-nums font-normal text-neutral-500">{items.length}</span>}
-        </h3>
-        <p className="text-xs text-neutral-500">Deixou o WhatsApp, tocou em Comprar e não pagou naquela visita.</p>
+    <section className="sg-recover">
+      <header className="sg-recover__head">
+        <span className="sg-card__icon sg-card__icon--brand" aria-hidden>
+          <ShoppingBag />
+        </span>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <h3 className="sg-card__title">
+            Foi para a compra e não comprou{" "}
+            {items.length > 0 && (
+              <span className="sg-chip sg-chip--new" style={{ marginLeft: 6 }}>
+                {items.length}
+              </span>
+            )}
+          </h3>
+          <p className="sg-card__hint">
+            Deixou o WhatsApp, tocou em Comprar e não pagou naquela visita. Chame primeiro quem está
+            aqui.
+          </p>
+        </div>
       </header>
       {items.length === 0 ? (
-        <p className="px-4 py-4 text-sm leading-relaxed text-neutral-500">
-          Ninguém por enquanto. A lista olha os contatos dos últimos 30 dias que ainda estão como
-          “A contatar” e espera 30 minutos depois do clique, para não chamar quem ainda está pagando.
+        <p className="sg-empty" style={{ padding: "14px 18px" }}>
+          Ninguém por enquanto. A lista olha os contatos dos últimos 30 dias ainda em “A contatar” e
+          espera 30 minutos depois do clique, para não chamar quem está pagando.
         </p>
       ) : (
-        <ul className="divide-y divide-neutral-100">
+        <ul className="sg-recover__list">
           {items.map((r) => {
             const paste = recoveryPaste(r);
             const phone = dispatchPhone(r.lead.whatsapp) ?? r.lead.whatsapp.replace(/\D/g, "");
             return (
-              <li key={r.lead.id} className="grid gap-3 px-4 py-4 md:grid-cols-[1.3fr_1fr_auto] md:items-center">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-neutral-900">{r.lead.name}</p>
-                  <p className="mt-0.5 text-xs text-neutral-500">
+              <li key={r.lead.id}>
+                <span className="sg-avatar sg-avatar--soft" aria-hidden>
+                  {initialsOf(r.lead.name)}
+                </span>
+                <div className="sg-recover__who">
+                  <strong>{r.lead.name}</strong>
+                  <span>
                     Foi para a compra <When iso={r.at} time />
                     {paste ? ` · ${paste}` : ""}
-                  </p>
+                  </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="text-sm font-medium tabular-nums text-neutral-900">{prettyPhone(r.lead.whatsapp)}</span>
-                  <CopyButton text={phone} label="Copiar número" />
+                <div className="sg-recover__act">
+                  <span className="sg-mono">{prettyPhone(r.lead.whatsapp)}</span>
+                  <CopyButton text={phone} label="Copiar" />
                   <a
                     href={`https://wa.me/${phone}?text=${encodeURIComponent(recoveryMessage(r))}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-8 items-center gap-1.5 border border-neutral-300 px-2.5 text-neutral-800 hover:border-neutral-900"
+                    className="sg-btn sg-btn--s sg-btn--brand"
                     title="Abrir a conversa no WhatsApp com a mensagem pronta"
                   >
-                    <MessageCircle className="h-3.5 w-3.5" aria-hidden />
-                    Chamar
+                    <MessageCircle aria-hidden /> Chamar
                   </a>
+                  <button
+                    type="button"
+                    onClick={() => onContacted(r.lead)}
+                    className="sg-btn sg-btn--s"
+                    title="Muda o status para “Em contato” e tira da lista"
+                  >
+                    Já chamei
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onContacted(r.lead)}
-                  className="h-9 border border-neutral-300 px-3 text-sm text-neutral-800 hover:border-neutral-900"
-                  title="Muda o status para “Em contato” e tira da lista"
-                >
-                  Já chamei
-                </button>
               </li>
             );
           })}
@@ -180,14 +215,14 @@ export function Leads({
 
   if (failed)
     return (
-      <p className="text-sm leading-relaxed text-neutral-500">
+      <p className="sg-empty">
         Não foi possível carregar os contatos. Atualize a página para tentar de novo.
       </p>
     );
-  if (rows === undefined) return null;
+  if (rows === undefined) return <div className="sg-skel" style={{ height: 240 }} />;
   if (rows === null)
     return (
-      <p className="text-sm leading-relaxed text-neutral-500">
+      <p className="sg-empty">
         A tabela de contatos ainda não existe. Rode no SQL Editor do Supabase o arquivo da pasta
         supabase/migrations e atualize a página.
       </p>
@@ -207,32 +242,11 @@ export function Leads({
   );
 
   return (
-    <div>
+    <div className="sg-stack">
       <RecoveryList items={recovery} onContacted={markContacted} />
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
-        <p className="text-neutral-700">
-          {wholeBase ? (
-            <>
-              Mostrando <strong>a base inteira</strong>: {scoped.length}{" "}
-              {scoped.length === 1 ? "contato" : "contatos"} desde o início.
-            </>
-          ) : (
-            <>
-              Mostrando só quem respondeu em <strong>{periodLabel}</strong>: {scoped.length}{" "}
-              {scoped.length === 1 ? "contato" : "contatos"}.
-            </>
-          )}
-        </p>
-        <button
-          type="button"
-          onClick={() => setWholeBase((v) => !v)}
-          className="text-neutral-900 underline underline-offset-4 hover:no-underline"
-        >
-          {wholeBase ? "Ver só o período escolhido" : `Ver a base inteira (${rows.length})`}
-        </button>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1 bg-neutral-100 p-1 text-sm">
+
+      <div className="sg-leadbar">
+        <div className="sg-seg" role="group" aria-label="Filtrar por status">
           {[
             { id: "todos" as const, label: "Todos", n: scoped.length },
             ...LEAD_STATUS.map((s) => ({ ...s, n: count(s.id) })),
@@ -240,149 +254,162 @@ export function Leads({
             <button
               key={s.id}
               type="button"
+              className="sg-seg__btn"
+              aria-pressed={filter === s.id}
               onClick={() => setFilter(s.id)}
-              className={`h-8 px-3 ${filter === s.id ? "bg-white font-medium text-neutral-900" : "text-neutral-500 hover:text-neutral-900"}`}
             >
-              {s.label} <span className="tabular-nums text-neutral-400">{s.n}</span>
+              {s.label} <span className="sg-seg__count">{s.n}</span>
             </button>
           ))}
         </div>
         {scoped.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             <a
-              className="flex h-9 items-center gap-2 border border-neutral-300 px-3 text-sm text-neutral-800 hover:border-neutral-900"
+              className="sg-btn sg-btn--s"
               download={`contatos-quiz-soccer-${new Date().toISOString().slice(0, 10)}.csv`}
               href={`data:text/csv;charset=utf-8,${encodeURIComponent(leadsCsv(scoped))}`}
             >
-              <Download className="h-4 w-4" /> Planilha
+              <Download aria-hidden /> Planilha
             </a>
             {dispatch.count > 0 && (
               <a
-                className="flex h-9 items-center gap-2 bg-neutral-900 px-3 text-sm text-white hover:bg-neutral-700"
+                className="sg-btn sg-btn--s sg-btn--primary"
                 download={`disparo-quiz-soccer-${new Date().toISOString().slice(0, 10)}.csv`}
                 href={`data:text/csv;charset=utf-8,${encodeURIComponent(dispatch.csv)}`}
                 title="Telefone com 55 + DDD, um contato por número, pronto para subir na plataforma de disparo"
               >
-                <Send className="h-4 w-4" /> Para disparo ({dispatch.count})
+                <Send aria-hidden /> Para disparo · {dispatch.count}
               </a>
             )}
           </div>
         )}
       </div>
-      {dispatch.skipped > 0 && (
-        <p className="mt-2 text-xs text-neutral-500">
-          {dispatch.skipped} {dispatch.skipped === 1 ? "contato ficou" : "contatos ficaram"} fora do
-          arquivo de disparo por número inválido.
-        </p>
-      )}
-      <p className="mt-2 text-xs leading-relaxed text-neutral-500">
-        Como usar: copie o número e cole na Huggy, copie o nome do jogo para o espaço livre da
-        mensagem pronta, envie e mude o status para <strong>Em contato</strong>, para não mandar
-        duas vezes para a mesma pessoa.
-      </p>
-      <p className="mt-1 text-xs leading-relaxed text-neutral-500">
-        <strong>Descartado</strong> só marca para não chamar a pessoa de novo: o contato continua
-        guardado e fica fora do arquivo "Para disparo". Para tirar alguém da base de vez (por
-        exemplo, quando pedir para ser removido), use a lixeira.
+
+      <p className="sg-card__hint" style={{ margin: 0 }}>
+        {wholeBase ? (
+          <>
+            Mostrando <strong>a base inteira</strong>: {scoped.length}{" "}
+            {scoped.length === 1 ? "contato" : "contatos"} desde o início.{" "}
+          </>
+        ) : (
+          <>
+            Mostrando quem respondeu em <strong>{periodLabel}</strong>: {scoped.length}{" "}
+            {scoped.length === 1 ? "contato" : "contatos"}.{" "}
+          </>
+        )}
+        <button
+          type="button"
+          className="sg-link"
+          style={{ background: "none", border: 0, padding: 0 }}
+          onClick={() => setWholeBase((v) => !v)}
+        >
+          {wholeBase ? "Ver só o período escolhido" : `Ver a base inteira (${rows.length})`}
+        </button>
+        {dispatch.skipped > 0 &&
+          ` · ${dispatch.skipped} ${dispatch.skipped === 1 ? "contato ficou" : "contatos ficaram"} fora do disparo por número inválido.`}
       </p>
 
       {shown.length === 0 ? (
-        <p className="py-6 text-sm text-neutral-400">
-          {wholeBase ? "Nenhum contato aqui ainda." : "Nenhum contato neste período."}
+        <p className="sg-empty">
+          {wholeBase
+            ? "Nenhum contato aqui ainda."
+            : "Nenhum contato neste período. Tente ver a base inteira."}
         </p>
       ) : (
-        <ul className="mt-4 divide-y divide-neutral-100">
+        <ul className="sg-leads">
           {shown.map((r) => (
-            <li
-              key={r.id}
-              className="grid gap-4 py-5 md:grid-cols-[1.5fr_1.2fr_auto_auto] md:items-start"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-neutral-900">
-                  {r.name}
-                  <NewTag iso={r.created_at} />
-                </p>
-                <p className="mt-0.5 text-xs text-neutral-400">
-                  <When iso={r.created_at} />
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-sm tabular-nums text-neutral-800">
-                    {prettyPhone(r.whatsapp)}
-                  </span>
-                  {dispatchPhone(r.whatsapp) && (
-                    <CopyButton text={dispatchPhone(r.whatsapp)!} label="Copiar número" />
-                  )}
-                  <a
-                    href={waUrl(r.whatsapp, r.name, r.result)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Abrir conversa no WhatsApp"
-                    aria-label={`Abrir conversa com ${r.name} no WhatsApp`}
-                    className="flex h-8 w-8 items-center justify-center border border-neutral-300 text-neutral-800 hover:border-neutral-900"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                  </a>
+            <li key={r.id} className={`sg-lead sg-lead--${r.status}`}>
+              <div className="sg-lead__who">
+                <span className="sg-avatar sg-avatar--soft" aria-hidden>
+                  {initialsOf(r.name)}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <p className="sg-lead__name">
+                    {r.name}
+                    <NewTag iso={r.created_at} />
+                  </p>
+                  <p className="sg-lead__when">
+                    <When iso={r.created_at} />
+                  </p>
+                  <div className="sg-lead__phone">
+                    <span className="sg-mono">{prettyPhone(r.whatsapp)}</span>
+                    {dispatchPhone(r.whatsapp) && (
+                      <CopyButton text={dispatchPhone(r.whatsapp)!} label="Copiar" />
+                    )}
+                    <a
+                      href={waUrl(r.whatsapp, r.name, r.result)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Abrir conversa no WhatsApp"
+                      aria-label={`Abrir conversa com ${r.name} no WhatsApp`}
+                      className="sg-btn sg-btn--s sg-btn--icon"
+                    >
+                      <MessageCircle aria-hidden />
+                    </a>
+                  </div>
                 </div>
               </div>
-              <div className="min-w-0 text-xs">
+              <div className="sg-lead__profile">
                 {r.answers?.["origem"] ? (
-                  <p className="text-neutral-600">Cadastrou em: {r.answers["origem"]}</p>
+                  <span className="sg-chip">Cadastrou em: {r.answers["origem"]}</span>
                 ) : (
-                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  <div className="sg-chips">
                     {profileOf(r.answers).map(({ k, v }) => (
-                      <div key={k} className="contents">
-                        <dt className="text-neutral-400">{k}</dt>
-                        <dd className="text-neutral-800">{v}</dd>
-                      </div>
+                      <span key={k} className="sg-chip" title={k}>
+                        <span className="sg-muted">{k}:</span> {v}
+                      </span>
                     ))}
-                    {r.result && (
-                      <div className="contents">
-                        <dt className="text-neutral-400">Jogo indicado</dt>
-                        <dd className="font-medium text-neutral-900">{productName(r.result)}</dd>
-                      </div>
-                    )}
-                  </dl>
+                  </div>
                 )}
                 {r.result && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-neutral-100 pt-3">
-                    <span className="text-neutral-400">Para colar na mensagem:</span>
-                    <span className="font-medium text-neutral-900">{productName(r.result)}</span>
-                    <CopyButton text={productName(r.result)} label="Copiar" />
+                  <div className="sg-lead__game">
+                    <span className="sg-label" style={{ margin: 0 }}>
+                      jogo indicado
+                    </span>
+                    <strong>{productName(r.result)}</strong>
+                    <CopyButton text={productName(r.result)} label="Copiar nome" />
                   </div>
                 )}
               </div>
-              <select
-                value={r.status}
-                onChange={async (e) => {
-                  const status = e.target.value as LeadStatus;
-                  setRows((x) => x?.map((y) => (y.id === r.id ? { ...y, status } : y)));
-                  try {
-                    await setLeadStatus(r.id, status);
-                  } catch {
-                    setRows((x) => x?.map((y) => (y.id === r.id ? { ...y, status: r.status } : y)));
-                  }
-                }}
-                className="h-9 border border-neutral-300 bg-white px-2 text-sm"
-                aria-label={`Status de ${r.name}`}
-              >
-                {LEAD_STATUS.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-              <ConfirmDelete
-                name={r.name}
-                onConfirm={async () => {
-                  await deleteContact("leads", r.id);
-                  setRows((x) => x?.filter((y) => y.id !== r.id));
-                  onChange?.();
-                }}
-              />
+              <div className="sg-lead__end">
+                <Select
+                  size="s"
+                  className="sg-lead__status"
+                  label={`Status de ${r.name}`}
+                  value={r.status}
+                  options={STATUS_OPTIONS}
+                  onChange={async (status) => {
+                    setRows((x) => x?.map((y) => (y.id === r.id ? { ...y, status } : y)));
+                    try {
+                      await setLeadStatus(r.id, status);
+                    } catch {
+                      setRows((x) =>
+                        x?.map((y) => (y.id === r.id ? { ...y, status: r.status } : y)),
+                      );
+                    }
+                  }}
+                />
+                <ConfirmDelete
+                  name={r.name}
+                  onConfirm={async () => {
+                    await deleteContact("leads", r.id);
+                    setRows((x) => x?.filter((y) => y.id !== r.id));
+                    onChange?.();
+                  }}
+                />
+              </div>
             </li>
           ))}
         </ul>
       )}
+
+      <div className="sg-inset">
+        <strong style={{ color: "var(--sg-ink)" }}>Como usar.</strong> Copie o número e cole na
+        Huggy, copie o nome do jogo para o espaço livre da mensagem pronta, envie e mude o status
+        para <strong>Em contato</strong>, para não mandar duas vezes. <strong>Descartado</strong> só
+        marca para não chamar de novo: o contato continua guardado e fica fora do arquivo de
+        disparo. Para tirar alguém da base de vez (pedido de remoção), use a lixeira.
+      </div>
     </div>
   );
 }

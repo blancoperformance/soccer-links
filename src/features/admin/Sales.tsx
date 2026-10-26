@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Coins, PieChart, Receipt, Wallet } from "lucide-react";
 import type { SalesReport } from "@/lib/sales";
 import { loadSalesReport, sourceName, type SalesError } from "./data";
 import { When } from "./when";
@@ -6,9 +7,7 @@ import { When } from "./when";
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 type State =
-  | { kind: "loading" }
-  | { kind: "ok"; report: SalesReport }
-  | { kind: "error"; reason: SalesError };
+  { kind: "loading" } | { kind: "ok"; report: SalesReport } | { kind: "error"; reason: SalesError };
 
 /**
  * Vendas pagas na Nuvemshop que vieram do links (primeira página com utm_medium=bio, ou cupom
@@ -25,7 +24,10 @@ export function Sales({ from, to }: { from: Date; to: Date }) {
       (e: unknown) => {
         if (!alive) return;
         const m = e instanceof Error ? e.message : "";
-        setSt({ kind: "error", reason: (["scope", "token", "auth"].includes(m) ? m : "api") as SalesError });
+        setSt({
+          kind: "error",
+          reason: (["scope", "token", "auth"].includes(m) ? m : "api") as SalesError,
+        });
       },
     );
     return () => {
@@ -33,10 +35,16 @@ export function Sales({ from, to }: { from: Date; to: Date }) {
     };
   }, [from, to]);
 
-  if (st.kind === "loading") return <p className="text-sm text-neutral-400">Lendo os pedidos da loja...</p>;
+  if (st.kind === "loading")
+    return (
+      <div className="sg-skel" style={{ height: 180 }} aria-label="Lendo os pedidos da loja" />
+    );
   if (st.kind === "error")
     return (
-      <p className="text-sm leading-relaxed text-neutral-500">
+      <p
+        className={`sg-inset ${st.reason === "scope" ? "" : "sg-inset--bad"}`}
+        style={{ margin: 0 }}
+      >
         {st.reason === "scope"
           ? "O app Soccer Links na Nuvemshop ainda não tem permissão para ler pedidos. No painel de parceiros, marque a permissão de pedidos (leitura), reinstale o app na loja e troque o NUVEMSHOP_TOKEN na Vercel."
           : st.reason === "token"
@@ -59,76 +67,77 @@ export function Sales({ from, to }: { from: Date; to: Date }) {
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-2 gap-px border border-neutral-200 bg-neutral-200 md:grid-cols-4">
+    <div className="sg-stack" style={{ gap: 16 }}>
+      <div className="sg-sales">
         {[
-          { l: "Pedidos pagos", v: sales.length.toLocaleString("pt-BR") },
-          { l: "Faturamento", v: brl(total) },
-          { l: "Ticket médio", v: sales.length ? brl(total / sales.length) : "–" },
+          { l: "Pedidos pagos", v: sales.length.toLocaleString("pt-BR"), icon: Receipt },
+          { l: "Faturamento", v: brl(total), icon: Wallet, accent: true },
+          { l: "Ticket médio", v: sales.length ? brl(total / sales.length) : "–", icon: Coins },
           {
             l: "Fatia da loja",
             v: storeOrders ? `${share.toLocaleString("pt-BR")}%` : "–",
+            icon: PieChart,
           },
         ].map((k) => (
-          <div key={k.l} className="bg-white p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500">{k.l}</p>
-            <p className="mt-2 text-2xl font-semibold tabular-nums text-neutral-950">{k.v}</p>
+          <div key={k.l} className={`sg-sales__k ${k.accent ? "is-accent" : ""}`}>
+            <span className="sg-sales__l">
+              <k.icon aria-hidden /> {k.l}
+            </span>
+            <span className="sg-sales__v">{k.v}</span>
           </div>
         ))}
       </div>
 
-      <p className="mt-3 text-xs leading-relaxed text-neutral-500">
+      <p className="sg-card__hint" style={{ margin: 0 }}>
         Só pedidos com pagamento aprovado. Conta como venda do links quando a pessoa entrou na loja
-        por um link daqui (utm_medium=bio) ou usou o cupom BIO1.
+        por um link daqui (<span className="sg-mono">utm_medium=bio</span>) ou usou o cupom BIO1.
         {storeOrders > 0 &&
           ` A loja teve ${storeOrders.toLocaleString("pt-BR")} pedidos pagos no período (${brl(storeRevenue)}).`}
-        {multi > 0 && ` ${multi} ${multi === 1 ? "pedido levou" : "pedidos levaram"} mais de um jogo.`}
-        {truncated && " Muitos pedidos no período: os totais da loja podem estar incompletos, escolha um período menor."}
+        {multi > 0 &&
+          ` ${multi} ${multi === 1 ? "pedido levou" : "pedidos levaram"} mais de um jogo.`}
+        {truncated &&
+          " Muitos pedidos no período: os totais da loja podem estar incompletos, escolha um período menor."}
       </p>
 
       {sales.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-500">
-          Nenhuma venda paga do links neste período.
+        <p className="sg-empty">
+          <strong>Nenhuma venda paga do links neste período</strong>
+          As vendas aparecem aqui assim que alguém que veio da bio paga o pedido.
         </p>
       ) : (
         <>
           {bySource.size > 0 && (
-            <p className="mt-4 text-sm text-neutral-600">
+            <div className="sg-chips">
               {[...bySource.entries()]
                 .sort((a, b) => b[1].v - a[1].v)
-                .map(([k, x]) => `${k}: ${x.n} ${x.n === 1 ? "pedido" : "pedidos"} (${brl(x.v)})`)
-                .join(" · ")}
-            </p>
+                .map(([k, x]) => (
+                  <span key={k} className="sg-chip">
+                    <b style={{ color: "var(--sg-ink)", fontWeight: 600 }}>{k}</b> {x.n}{" "}
+                    {x.n === 1 ? "pedido" : "pedidos"} · {brl(x.v)}
+                  </span>
+                ))}
+            </div>
           )}
-          <ul className="mt-4 divide-y divide-neutral-100">
+          <ul className="sg-orders">
             {sales.slice(0, 100).map((s) => (
-              <li
-                key={String(s.number)}
-                className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3 text-sm"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium text-neutral-900">
-                    Pedido #{s.number}
-                    <span className="ml-2 text-xs font-normal text-neutral-400">
-                      <When iso={s.createdAt} time />
-                    </span>
-                  </p>
-                  <p className="mt-0.5 text-xs text-neutral-500">
+              <li key={String(s.number)}>
+                <span className="sg-orders__n sg-mono">#{s.number}</span>
+                <div className="sg-orders__main">
+                  <p className="sg-orders__items">
                     {s.items.map((i) => `${i.qty > 1 ? `${i.qty}x ` : ""}${i.name}`).join(", ") ||
                       "Itens não informados"}
                   </p>
-                  <p className="mt-0.5 text-xs text-neutral-400">
+                  <p className="sg-orders__meta">
+                    <When iso={s.createdAt} time />
+                    {" · "}
                     {s.via === "cupom"
-                      ? "Identificada pelo cupom"
-                      : `Origem: ${sourceName(s.source ?? "direto")}`}
+                      ? "identificada pelo cupom"
+                      : sourceName(s.source ?? "direto")}
                     {s.campaign ? ` · ${s.campaign}` : ""}
-                    {s.content ? ` · ${s.content}` : ""}
                     {s.coupon ? ` · cupom ${s.coupon}` : ""}
                   </p>
                 </div>
-                <span className="shrink-0 text-base font-semibold tabular-nums text-neutral-950">
-                  {brl(s.total)}
-                </span>
+                <span className="sg-orders__v">{brl(s.total)}</span>
               </li>
             ))}
           </ul>

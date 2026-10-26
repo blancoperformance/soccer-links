@@ -1,4 +1,3 @@
-import { C } from "./charts";
 import {
   categoryName,
   deviceName,
@@ -60,9 +59,12 @@ const ago = (iso: string, now: number) => {
 export function Live({ compact = false }: { compact?: boolean }) {
   const { events, fetchedAt: now } = useRecentEvents(REFRESH_MS);
 
-  if (events === undefined) return <p className="text-sm text-neutral-400">Carregando...</p>;
+  if (events === undefined)
+    return <div className="sg-skel" style={{ height: compact ? 220 : 320 }} />;
   if (events === null)
-    return <p className="text-sm text-neutral-500">Não foi possível ler os dados agora.</p>;
+    return (
+      <p className="sg-empty">Não foi possível ler os dados agora. Tente atualizar a página.</p>
+    );
 
   const cutoff = now - WINDOW_MIN * 60000;
   const active = new Map<string, Ev>();
@@ -78,61 +80,44 @@ export function Live({ compact = false }: { compact?: boolean }) {
   const feed = events.filter((e) => e.event !== "quiz_answer").slice(0, compact ? 5 : 12);
 
   return (
-    <div className={compact ? "space-y-5" : "grid gap-8 md:grid-cols-[220px_1fr]"}>
-      <div>
-        <div className="flex items-center gap-2 text-xs text-neutral-500">
-          <span className="relative flex h-2 w-2">
-            <span
-              className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
-              style={{ background: active.size ? C.accent : C.faint }}
-            />
-            <span
-              className="relative inline-flex h-2 w-2 rounded-full"
-              style={{ background: active.size ? C.accent : C.faint }}
-            />
-          </span>
-          Agora
-        </div>
-        <p className="mt-2 text-6xl font-semibold tabular-nums tracking-tight">
-          {fmt(active.size)}
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+    <div className={compact ? "sg-live sg-live--compact" : "sg-live"}>
+      <div className="sg-live__now">
+        <span className="sg-eyebrow">
+          <span className={`sg-dot ${active.size ? "sg-dot--live" : ""}`} aria-hidden /> agora
+        </span>
+        <p className="sg-live__n">{fmt(active.size)}</p>
+        <p className="sg-live__what">
           {active.size === 1 ? "pessoa" : "pessoas"} na página nos últimos {WINDOW_MIN} minutos
         </p>
-        {byDevice.size > 0 && (
-          <p className="mt-3 text-xs text-neutral-500">
-            {[...byDevice.entries()]
-              .map(([d, n]) => `${n} no ${deviceName(d).toLowerCase()}`)
-              .join(" · ")}
-          </p>
-        )}
-        <p className="mt-4 border-t border-neutral-100 pt-3 text-xs text-neutral-500">
-          {fmt(sessions30)} visitas na última meia hora
-        </p>
+        <div className="sg-live__meta">
+          {byDevice.size > 0 && (
+            <span>
+              {[...byDevice.entries()]
+                .map(([d, n]) => `${n} no ${deviceName(d).toLowerCase()}`)
+                .join(" · ")}
+            </span>
+          )}
+          <span>{fmt(sessions30)} visitas na última meia hora</span>
+        </div>
       </div>
-      <div>
-        <p className="mb-2 text-xs text-neutral-500">
-          O que estão fazendo (últimos {FEED_MIN} min)
-        </p>
+      <div className="sg-live__feed">
+        <p className="sg-label">o que estão fazendo · últimos {FEED_MIN} min</p>
         {feed.length === 0 ? (
-          <p className="py-4 text-sm text-neutral-400">Ninguém na página na última meia hora.</p>
+          <p className="sg-empty">Ninguém na página na última meia hora.</p>
         ) : (
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="sg-list">
             {feed.map((e, i) => (
-              <li
-                key={`${e.created_at}-${i}`}
-                className="flex items-baseline justify-between gap-4 py-2"
-              >
-                <span className="min-w-0 truncate text-neutral-800">{describe(e)}</span>
-                <span className="shrink-0 text-xs tabular-nums text-neutral-400">
-                  {ago(e.created_at, now)}
-                </span>
+              <li key={`${e.created_at}-${i}`}>
+                <span className="sg-list__main">{describe(e)}</span>
+                <span className="sg-list__side">{ago(e.created_at, now)}</span>
               </li>
             ))}
           </ul>
         )}
         {!compact && (
-          <p className="mt-3 text-[11px] text-neutral-400">Atualiza sozinho a cada 15 segundos.</p>
+          <p className="sg-card__hint" style={{ marginTop: 12 }}>
+            Atualiza sozinho a cada 15 segundos.
+          </p>
         )}
       </div>
     </div>

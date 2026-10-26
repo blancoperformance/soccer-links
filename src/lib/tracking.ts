@@ -29,7 +29,13 @@ declare global {
   interface Window {
     dataLayer?: Record<string, unknown>[];
     clarity?: ((...args: unknown[]) => void) & { q?: unknown[] };
-    fbq?: ((...args: unknown[]) => void) & { queue?: unknown[]; loaded?: boolean; version?: string; push?: unknown; callMethod?: (...a: unknown[]) => void };
+    fbq?: ((...args: unknown[]) => void) & {
+      queue?: unknown[];
+      loaded?: boolean;
+      version?: string;
+      push?: unknown;
+      callMethod?: (...a: unknown[]) => void;
+    };
     _fbq?: unknown;
   }
 }
@@ -94,7 +100,9 @@ export function withVisit(url: string): string {
     const target = new URL(url, "https://lojasoccergames.com.br");
     if (target.searchParams.has("sgs")) return url;
     target.searchParams.set("sgs", sessionId());
-    return /^https?:/.test(url) ? target.toString() : `${target.pathname}${target.search}${target.hash}`;
+    return /^https?:/.test(url)
+      ? target.toString()
+      : `${target.pathname}${target.search}${target.hash}`;
   } catch {
     return url;
   }
@@ -122,7 +130,9 @@ export function withMetaClick(url: string): string {
     }
     if (!click || !/^[A-Za-z0-9._-]{1,500}$/.test(click)) return url;
     target.searchParams.set("fbclid", click);
-    return /^https?:/.test(url) ? target.toString() : `${target.pathname}${target.search}${target.hash}`;
+    return /^https?:/.test(url)
+      ? target.toString()
+      : `${target.pathname}${target.search}${target.hash}`;
   } catch {
     return url;
   }
@@ -132,7 +142,8 @@ export function withMetaClick(url: string): string {
  * Microsoft Clarity (gravação de sessões). Opcional: crie um projeto "Links Soccer" no Clarity e
  * coloque o ID em VITE_CLARITY_ID na Vercel. Carrega só no domínio real e nunca nos aparelhos da equipe.
  */
-const CLARITY_ID = (import.meta.env["VITE_CLARITY_ID"] as string | undefined)?.trim() || "yz9fgomtef";
+const CLARITY_ID =
+  (import.meta.env["VITE_CLARITY_ID"] as string | undefined)?.trim() || "yz9fgomtef";
 export function loadClarity() {
   if (typeof window === "undefined" || !CLARITY_ID || !shouldSend() || window.clarity) return;
   const c = function (...args: unknown[]) {
@@ -375,4 +386,12 @@ export const memory = {
       /* ignore */
     }
   },
+};
+
+/** O que está ligado neste build (para a tela de Ajustes do painel). */
+export const trackingConfig = {
+  pixel: PIXEL_ID,
+  gtm: GTM_ID,
+  clarity: CLARITY_ID,
+  hosts: TRACKED_HOSTS,
 };

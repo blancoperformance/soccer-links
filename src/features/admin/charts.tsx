@@ -1,31 +1,40 @@
 import { useId, useRef, useState } from "react";
+import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from "lucide-react";
 import { fmt, type Ranked } from "./data";
 
+/** Cores do tema do painel (variáveis CSS: seguem claro e escuro). */
 export const C = {
-  ink: "#0f0f0f",
-  muted: "#6b6b6b",
-  faint: "#a8a49d",
-  line: "#e7e4df",
-  track: "#f1efeb",
-  accent: "#8a00c2",
-  accentSoft: "rgba(138, 0, 194,0.10)",
-  prev: "#bdb8b0",
+  ink: "var(--sg-ink)",
+  muted: "var(--sg-muted)",
+  faint: "var(--sg-faint)",
+  line: "var(--sg-line)",
+  track: "var(--sg-surface-2)",
+  accent: "var(--sg-brand)",
+  accentText: "var(--sg-brand-text)",
+  accentSoft: "var(--sg-brand-soft)",
+  prev: "var(--sg-faint)",
+  neon: "var(--sg-neon)",
 };
 
 export function Empty({ children = "Sem dados no período." }: { children?: React.ReactNode }) {
-  return <p className="py-4 text-sm text-neutral-400">{children}</p>;
+  return <p className="sg-empty">{children}</p>;
 }
 
 export function Delta({ value, suffix = "" }: { value: number | null; suffix?: string }) {
   if (value === null) return null;
   const up = value > 0;
   const flat = value === 0;
+  const Icon = flat ? Minus : up ? ArrowUpRight : ArrowDownRight;
   return (
     <span
-      className={`whitespace-nowrap px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${flat ? "bg-neutral-100 text-neutral-500" : up ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}
+      className={`sg-chip sg-delta ${flat ? "" : up ? "sg-chip--ok" : "sg-chip--bad"}`}
       title="Comparado ao período anterior"
     >
-      {flat ? "=" : up ? "↑" : "↓"} {Math.abs(value)}%{suffix}
+      <Icon aria-hidden />
+      {Math.abs(value)}%{suffix}
+      <span className="sg-sr">
+        {flat ? "igual" : up ? "a mais" : "a menos"} que o período anterior
+      </span>
     </span>
   );
 }
@@ -37,65 +46,89 @@ export function Kpi({
   delta,
   spark,
   accent,
+  icon: Icon,
+  onClick,
 }: {
   label: string;
   value: string;
   sub?: string | undefined;
   delta?: number | null | undefined;
-  /** Daily values for the small trend line under the number. */
+  /** Valores diários para a linha pequena embaixo do número. */
   spark?: number[] | undefined;
-  /** Orange top rule: the number this page exists for. */
+  /** O número principal da tela (ícone e número em violeta). */
   accent?: boolean;
-  /** Kept for older callers (presentation). */
+  icon?: LucideIcon;
+  /** Leva para a tela com o detalhe. */
+  onClick?: () => void;
+  /** Mantido para chamadas antigas (apresentação). */
   big?: boolean;
 }) {
-  return (
-    <div className="relative flex min-h-[148px] flex-col bg-white p-5">
-      {accent && (
-        <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: C.accent }} />
-      )}
-      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500">
-        {label}
-      </p>
-      <div className="mt-3 flex items-baseline gap-3">
-        <p className="text-[32px] font-semibold leading-none tabular-nums tracking-tight text-neutral-950">
-          {value}
-        </p>
+  const inner = (
+    <>
+      <span className="sg-kpi__head">
+        {Icon && (
+          <span className="sg-kpi__icon" aria-hidden>
+            <Icon />
+          </span>
+        )}
+        <span className="sg-kpi__label">{label}</span>
+        {onClick && <ArrowUpRight className="sg-kpi__go" aria-hidden />}
+      </span>
+      <span className="sg-kpi__row">
+        <span className="sg-kpi__value">{value}</span>
         {delta !== undefined && <Delta value={delta} />}
-      </div>
-      {sub && <p className="mt-2 text-xs leading-snug text-neutral-500">{sub}</p>}
-      {spark && spark.length > 1 && spark.some(Boolean) && (
-        <div className="mt-auto pt-3">
+      </span>
+      {spark && spark.length > 1 && spark.some(Boolean) ? (
+        <span className="sg-kpi__spark">
           <Spark values={spark} />
-        </div>
+          {sub && (
+            <span className="sg-kpi__foot" style={{ display: "block", marginTop: 6 }}>
+              {sub}
+            </span>
+          )}
+        </span>
+      ) : (
+        sub && <span className="sg-kpi__foot">{sub}</span>
       )}
-    </div>
+    </>
+  );
+  const cls = `sg-kpi ${accent ? "sg-kpi--accent" : ""}`;
+  return onClick ? (
+    <button type="button" className={cls} onClick={onClick}>
+      {inner}
+    </button>
+  ) : (
+    <div className={cls}>{inner}</div>
   );
 }
 
-/** Tiny trend line, no axes. */
-export function Spark({ values, height = 28 }: { values: number[]; height?: number }) {
+/** Linha pequena de tendência, sem eixos. */
+export function Spark({ values, height = 30 }: { values: number[]; height?: number }) {
+  const id = useId();
   const W = 200;
   const max = Math.max(1, ...values);
   const n = values.length;
-  const pts = values.map((v, i) => `${(i / (n - 1)) * W},${height - 2 - (v / max) * (height - 4)}`);
+  const pts = values.map((v, i) => `${(i / (n - 1)) * W},${height - 2 - (v / max) * (height - 5)}`);
   return (
     <svg
       viewBox={`0 0 ${W} ${height}`}
       preserveAspectRatio="none"
-      className="block h-7 w-full"
+      style={{ display: "block", width: "100%", height }}
       aria-hidden
     >
+      <defs>
+        <linearGradient id={`${id}-s`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" style={{ stopColor: C.accent, stopOpacity: 0.22 }} />
+          <stop offset="1" style={{ stopColor: C.accent, stopOpacity: 0 }} />
+        </linearGradient>
+      </defs>
       <polyline
         points={`0,${height} ${pts.join(" ")} ${W},${height}`}
-        fill={C.accentSoft}
-        stroke="none"
+        style={{ fill: `url(#${id}-s)`, stroke: "none" }}
       />
       <polyline
         points={pts.join(" ")}
-        fill="none"
-        stroke={C.accent}
-        strokeWidth="1.5"
+        style={{ fill: "none", stroke: C.accent, strokeWidth: 1.6 }}
         vectorEffect="non-scaling-stroke"
       />
     </svg>
@@ -103,8 +136,8 @@ export function Spark({ values, height = 28 }: { values: number[]; height?: numb
 }
 
 /**
- * The buying journey as a row of steps: big number, share of visitors, and how many
- * moved on to the next step. The weakest passage is marked, that is where to act.
+ * A jornada de compra em etapas: número grande, parte das visitas e quantos seguiram da etapa
+ * anterior. A passagem mais fraca fica marcada: é ali que vale agir.
  */
 export function Journey({ steps }: { steps: { label: string; value: number; hint?: string }[] }) {
   const first = steps[0]?.value ?? 0;
@@ -119,48 +152,39 @@ export function Journey({ steps }: { steps: { label: string; value: number; hint
     }
   });
   return (
-    <ol className="grid gap-px overflow-hidden border border-neutral-200 bg-neutral-200 sm:grid-cols-2 lg:grid-cols-4">
+    <ol className="sg-journey">
       {steps.map((s, i) => {
         const prev = steps[i - 1]?.value ?? 0;
         const rate = i > 0 && prev > 0 ? Math.round((s.value / prev) * 100) : null;
         const last = i === steps.length - 1;
+        const share = (s.value / first) * 100;
         return (
-          <li key={s.label} className="relative bg-white p-5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-400">
-                Etapa {i + 1}
-              </span>
+          <li key={s.label} className={`sg-step ${last ? "sg-step--last" : ""}`}>
+            <div className="sg-step__top">
+              <span className="sg-step__n">etapa {i + 1}</span>
               {rate !== null && (
                 <span
-                  className={`px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${i === worst ? "bg-red-50 text-red-700" : "bg-neutral-100 text-neutral-600"}`}
+                  className={`sg-chip ${i === worst ? "sg-chip--bad" : ""}`}
                   title="Quantos seguiram da etapa anterior para esta"
                 >
                   {rate}% seguiram
                 </span>
               )}
             </div>
-            <p className="mt-3 text-sm font-medium text-neutral-800">{s.label}</p>
-            <p
-              className="mt-1 text-[34px] font-semibold leading-none tabular-nums tracking-tight"
-              style={{ color: last ? C.accent : C.ink }}
-            >
-              {fmt(s.value)}
-            </p>
-            <p className="mt-2 text-xs text-neutral-500">
+            <span className="sg-step__label">{s.label}</span>
+            <span className="sg-step__value">{fmt(s.value)}</span>
+            <span className="sg-step__share">
               {i === 0
                 ? "100% das visitas"
-                : `${Math.round((s.value / first) * 1000) / 10}% das visitas`}
-            </p>
-            <div className="mt-3 h-1" style={{ background: C.track }}>
+                : `${(Math.round(share * 10) / 10).toLocaleString("pt-BR")}% das visitas`}
+            </span>
+            <div className="sg-track sg-track--thin">
               <div
-                className="h-full transition-[width] duration-500"
-                style={{
-                  width: `${Math.max(1, (s.value / first) * 100)}%`,
-                  background: last ? C.accent : C.ink,
-                }}
+                className={`sg-track__fill ${last ? "sg-track__fill--brand" : ""}`}
+                style={{ width: `${Math.max(1.5, share)}%` }}
               />
             </div>
-            {s.hint && <p className="mt-2 text-[11px] leading-snug text-neutral-400">{s.hint}</p>}
+            {s.hint && <span className="sg-step__share">{s.hint}</span>}
           </li>
         );
       })}
@@ -168,7 +192,7 @@ export function Journey({ steps }: { steps: { label: string; value: number; hint
   );
 }
 
-/** Ranked list with a thin bar under each row. Values are always printed, so color is never the only cue. */
+/** Ranking com trilho pontilhado. O valor está sempre escrito: a cor nunca é a única pista. */
 export function BarList({
   rows,
   max = 8,
@@ -184,30 +208,25 @@ export function BarList({
   const shown = rows.slice(0, max);
   const top = Math.max(1, ...shown.map((r) => r.n));
   return (
-    <ul className="space-y-3">
+    <ul className="sg-bars">
       {shown.map((r, i) => (
-        <li key={`${r.label}-${i}`} className="group">
-          <div className="flex items-baseline justify-between gap-4 text-sm">
-            <span className="min-w-0 truncate text-neutral-800">
+        <li key={`${r.label}-${i}`}>
+          <div className="sg-bars__top">
+            <span className="sg-bars__name" title={r.label}>
               {r.label}
-              {r.note && <span className="ml-2 text-xs text-neutral-400">{r.note}</span>}
+              {r.note && <span className="sg-bars__note">{r.note}</span>}
             </span>
-            <span className="shrink-0 tabular-nums text-neutral-900">
+            <span className="sg-bars__val">
               {fmt(r.n)}
               {total ? (
-                <span className="ml-2 inline-block w-9 text-right text-xs text-neutral-400">
-                  {Math.round((r.n / total) * 100)}%
-                </span>
+                <span className="sg-bars__pct">{Math.round((r.n / total) * 100)}%</span>
               ) : null}
             </span>
           </div>
-          <div className="mt-1.5 h-1.5" style={{ background: C.track }}>
+          <div className="sg-track">
             <div
-              className="h-full transition-[width] duration-500"
-              style={{
-                width: `${Math.max(2, (r.n / top) * 100)}%`,
-                background: accent && i === 0 ? C.accent : C.ink,
-              }}
+              className={`sg-track__fill ${accent && i === 0 ? "sg-track__fill--brand" : ""}`}
+              style={{ width: `${Math.max(2, (r.n / top) * 100)}%` }}
             />
           </div>
         </li>
@@ -216,11 +235,11 @@ export function BarList({
   );
 }
 
-/** Daily visits: area + line, previous period as a dashed gray line, crosshair tooltip on hover. */
+/** Visitas por dia: área + linha; período anterior tracejado; mira com valores ao passar o dedo/mouse. */
 export function TrendChart({
   points,
   prev,
-  height = 220,
+  height = 230,
   hover = true,
 }: {
   points: { label: string; value: number; sub?: string }[];
@@ -236,10 +255,10 @@ export function TrendChart({
 
   const W = 800;
   const H = height;
-  const padL = 36;
+  const padL = 40;
   const padR = 12;
-  const padT = 14;
-  const padB = 26;
+  const padT = 16;
+  const padB = 28;
   const maxV = Math.max(1, ...points.map((p) => p.value), ...(prev ?? []));
   const nice = niceMax(maxV);
   const n = points.length;
@@ -249,8 +268,11 @@ export function TrendChart({
   const path = (vals: number[]) => vals.map((v, i) => `${i ? "L" : "M"}${x(i)},${y(v)}`).join(" ");
   const line = path(points.map((p) => p.value));
   const area = `${line} L${x(n - 1)},${y(0)} L${x(0)},${y(0)} Z`;
-  const ticks = [0, nice / 2, nice];
-  const labelIdx = n <= 8 ? points.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
+  const ticks = [0, nice / 4, nice / 2, (nice * 3) / 4, nice];
+  const labelIdx =
+    n <= 8
+      ? points.map((_, i) => i)
+      : [0, Math.floor((n - 1) / 3), Math.floor(((n - 1) * 2) / 3), n - 1];
 
   const onMove = (e: React.PointerEvent) => {
     const r = ref.current?.getBoundingClientRect();
@@ -260,57 +282,83 @@ export function TrendChart({
     setHi(Math.min(n - 1, Math.max(0, i)));
   };
   const p = hi !== null ? points[hi] : null;
+  const axis = { fontFamily: "var(--sg-mono)", fontSize: 11, fill: C.muted } as const;
 
   return (
-    <div className="relative">
+    <div style={{ position: "relative" }}>
       <svg
         ref={ref}
         viewBox={`0 0 ${W} ${H}`}
-        className="block h-auto w-full touch-none select-none"
+        style={{
+          display: "block",
+          width: "100%",
+          height: "auto",
+          touchAction: "pan-y",
+          userSelect: "none",
+        }}
         onPointerMove={hover ? onMove : undefined}
         onPointerLeave={() => setHi(null)}
         role="img"
-        aria-label="Visitas por dia"
+        aria-label={`Visitas por dia: de ${fmt(Math.min(...points.map((q) => q.value)))} a ${fmt(Math.max(...points.map((q) => q.value)))} por dia`}
       >
         <defs>
           <linearGradient id={`${id}-g`} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor={C.accent} stopOpacity="0.16" />
-            <stop offset="1" stopColor={C.accent} stopOpacity="0" />
+            <stop offset="0" style={{ stopColor: C.accent, stopOpacity: 0.2 }} />
+            <stop offset="1" style={{ stopColor: C.accent, stopOpacity: 0 }} />
           </linearGradient>
+          <pattern id={`${id}-d`} width="8" height="8" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" style={{ fill: C.line }} />
+          </pattern>
         </defs>
-        {ticks.map((t) => (
+        <rect
+          x={padL}
+          y={padT}
+          width={W - padL - padR}
+          height={H - padT - padB}
+          fill={`url(#${id}-d)`}
+        />
+        {ticks.map((t, i) => (
           <g key={t}>
-            <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke={C.line} strokeWidth="1" />
-            <text x={padL - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill={C.faint}>
-              {fmt(Math.round(t))}
-            </text>
+            {(i === 0 || i === 2 || i === 4) && (
+              <>
+                <line
+                  x1={padL}
+                  x2={W - padR}
+                  y1={y(t)}
+                  y2={y(t)}
+                  style={{ stroke: C.line, strokeWidth: 1 }}
+                />
+                <text x={padL - 10} y={y(t) + 4} textAnchor="end" style={axis}>
+                  {fmt(Math.round(t))}
+                </text>
+              </>
+            )}
           </g>
         ))}
         {prev && prev.length > 1 && (
           <path
             d={path(prev.slice(0, n))}
-            fill="none"
-            stroke={C.prev}
-            strokeWidth="1.5"
-            strokeDasharray="4 4"
+            style={{ fill: "none", stroke: C.prev, strokeWidth: 1.5, strokeDasharray: "4 5" }}
           />
         )}
-        <path d={area} fill={`url(#${id}-g)`} />
-        <path d={line} fill="none" stroke={C.accent} strokeWidth="2.25" strokeLinejoin="round" />
-        {n <= 31 &&
-          points.map((pt, i) =>
-            pt.value > 0 ? (
-              <circle key={i} cx={x(i)} cy={y(pt.value)} r="2.5" fill={C.accent} />
-            ) : null,
-          )}
+        <path d={area} style={{ fill: `url(#${id}-g)` }} />
+        <path
+          d={line}
+          style={{
+            fill: "none",
+            stroke: C.accent,
+            strokeWidth: 2.4,
+            strokeLinejoin: "round",
+            strokeLinecap: "round",
+          }}
+        />
         {labelIdx.map((i) => (
           <text
             key={i}
             x={x(i)}
-            y={H - 6}
+            y={H - 8}
             textAnchor={i === 0 && n > 1 ? "start" : i === n - 1 && n > 1 ? "end" : "middle"}
-            fontSize="11"
-            fill={C.faint}
+            style={axis}
           >
             {points[i]?.label}
           </text>
@@ -322,45 +370,37 @@ export function TrendChart({
               x2={x(hi)}
               y1={padT}
               y2={H - padB}
-              stroke={C.ink}
-              strokeWidth="1"
-              opacity="0.25"
+              style={{ stroke: C.ink, strokeWidth: 1, opacity: 0.22 }}
             />
             <circle
               cx={x(hi)}
               cy={y(p.value)}
-              r="5"
-              fill={C.accent}
-              stroke="#fff"
-              strokeWidth="2"
+              r="5.5"
+              style={{ fill: C.accent, stroke: "var(--sg-surface)", strokeWidth: 2.5 }}
             />
           </g>
         )}
       </svg>
       {p && hi !== null && (
         <div
-          className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap bg-neutral-900 px-3 py-2 text-xs text-white shadow"
-          style={{ left: `${(x(hi) / W) * 100}%` }}
+          className="sg-tip"
+          style={{ left: `${Math.min(88, Math.max(12, (x(hi) / W) * 100))}%` }}
         >
-          <p className="font-medium">{p.label}</p>
-          <p className="mt-0.5 tabular-nums">
+          <p style={{ fontWeight: 600 }}>{p.label}</p>
+          <p className="sg-mono">
             {fmt(p.value)} visitas{p.sub ? ` · ${p.sub}` : ""}
           </p>
-          {prev?.[hi] !== undefined && (
-            <p className="mt-0.5 tabular-nums text-neutral-400">
-              período anterior: {fmt(prev[hi] ?? 0)}
-            </p>
-          )}
+          {prev?.[hi] !== undefined && <p className="sg-mono">antes: {fmt(prev[hi] ?? 0)}</p>}
         </div>
       )}
     </div>
   );
 }
 
-/** Vertical columns for a small fixed axis (hours of the day, weekdays). The peak is labeled. */
+/** Colunas para um eixo curto e fixo (horas do dia, dias da semana). O pico fica marcado. */
 export function Columns({
   data,
-  height = 140,
+  height = 150,
 }: {
   data: { label: string; value: number; title: string }[];
   height?: number;
@@ -372,42 +412,42 @@ export function Columns({
   const every = data.length > 12 ? 3 : 1;
   return (
     <div>
-      <div className="relative flex items-end gap-[3px]" style={{ height }}>
+      <div
+        className="sg-cols"
+        style={{ height, paddingTop: 22 }}
+        role="img"
+        aria-label={data.map((d) => `${d.label}: ${fmt(d.value)}`).join("; ")}
+      >
         {data.map((d, i) => (
           <div
             key={d.label}
-            className="relative flex h-full flex-1 items-end"
+            className={`sg-cols__col ${i === peakIdx ? "sg-cols__col--peak" : ""}`}
             onPointerEnter={() => setHi(i)}
             onPointerLeave={() => setHi(null)}
           >
-            {(i === peakIdx || i === hi) && d.value > 0 && (
-              <span className="absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap text-[11px] font-medium tabular-nums text-neutral-900">
-                {i === hi ? d.title : fmt(d.value)}
-              </span>
+            {(i === hi || (hi === null && i === peakIdx)) && d.value > 0 && (
+              <span className="sg-cols__tip">{i === hi ? d.title : fmt(d.value)}</span>
             )}
             <div
-              className="w-full transition-[height] duration-500"
+              className="sg-cols__bar"
               style={{
-                height: `${Math.max(d.value > 0 ? 3 : 1, (d.value / max) * (height - 18))}px`,
-                background: d.value === 0 ? C.track : i === peakIdx ? C.accent : C.ink,
-                opacity: hi !== null && hi !== i ? 0.55 : 1,
+                height: `${Math.max(d.value > 0 ? 4 : 0, (d.value / max) * 100)}%`,
+                opacity: hi !== null && hi !== i ? 0.5 : 1,
               }}
             />
           </div>
         ))}
       </div>
-      <div className="mt-2 flex gap-[3px]">
+      <div className="sg-cols__axis" aria-hidden>
         {data.map((d, i) => (
-          <span key={d.label} className="flex-1 text-center text-[10px] text-neutral-400">
-            {i % every === 0 ? d.label : ""}
-          </span>
+          <span key={d.label}>{i % every === 0 ? d.label : ""}</span>
         ))}
       </div>
     </div>
   );
 }
 
-/** Funnel: each step as a share of the first. `stepRate` also shows each step vs. the previous one. */
+/** Funil: cada etapa como parte da primeira. `stepRate` também mostra cada etapa sobre a anterior. */
 export function Funnel({
   steps,
   stepRate = false,
@@ -418,35 +458,35 @@ export function Funnel({
   const first = steps[0]?.value ?? 0;
   if (first === 0) return <Empty />;
   return (
-    <ol className="space-y-3">
+    <ol className="sg-bars" style={{ gap: 16 }}>
       {steps.map((s, i) => {
         const w = (s.value / first) * 100;
         const prev = steps[i - 1]?.value ?? 0;
         return (
           <li key={s.label}>
-            <div className="flex items-baseline justify-between gap-4 text-sm">
-              <span className="text-neutral-800">
-                <span className="mr-2 text-xs tabular-nums text-neutral-400">{i + 1}</span>
+            <div className="sg-bars__top">
+              <span className="sg-bars__name">
+                <span
+                  className="sg-mono"
+                  style={{ marginRight: 10, color: "var(--sg-muted)", fontSize: 12 }}
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
                 {s.label}
               </span>
-              <span className="tabular-nums text-neutral-900">
+              <span className="sg-bars__val">
                 {fmt(s.value)}
-                <span className="ml-2 inline-block w-10 text-right text-xs text-neutral-400">
-                  {Math.round(w)}%
-                </span>
+                <span className="sg-bars__pct">{Math.round(w)}%</span>
               </span>
             </div>
-            <div className="mt-1.5 h-2" style={{ background: C.track }}>
+            <div className="sg-track" style={{ height: 10 }}>
               <div
-                className="h-full transition-[width] duration-500"
-                style={{
-                  width: `${Math.max(1, w)}%`,
-                  background: i === steps.length - 1 ? C.accent : C.ink,
-                }}
+                className={`sg-track__fill ${i === steps.length - 1 ? "sg-track__fill--brand" : ""}`}
+                style={{ width: `${Math.max(1.5, w)}%` }}
               />
             </div>
             {stepRate && i > 0 && (
-              <p className="mt-1 text-xs tabular-nums text-neutral-500">
+              <p className="sg-bars__note" style={{ margin: "6px 0 0" }}>
                 {prev > 0 ? `${Math.round((s.value / prev) * 100)}%` : "–"} de quem estava na etapa
                 anterior
               </p>
@@ -458,9 +498,9 @@ export function Funnel({
   );
 }
 
-/** Rounded-up axis maximum (1, 2, 5 × 10^n). */
+/** Máximo do eixo arredondado para cima (1, 2, 5 × 10^n). */
 function niceMax(v: number) {
   const p = 10 ** Math.floor(Math.log10(v));
-  for (const m of [1, 2, 5, 10]) if (m * p >= v) return m * p;
+  for (const m of [1, 2, 4, 5, 10]) if (m * p >= v) return m * p;
   return 10 * p;
 }

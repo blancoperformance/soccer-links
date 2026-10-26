@@ -615,7 +615,6 @@ export function leadsDispatchCsv(rows: LeadRow[]) {
   return { csv: [head.map(esc).join(","), ...lines].join("\r\n"), count: lines.length, skipped };
 }
 
-
 /* ---------- vendas da loja (via /api/vendas, no servidor) ---------- */
 
 export type SalesError = "scope" | "token" | "api" | "auth";
@@ -626,7 +625,9 @@ export async function loadSalesReport(from: Date, to: Date): Promise<SalesReport
   const jwt = data.session?.access_token;
   if (!jwt) throw new Error("auth");
   const q = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
-  const r = await fetch(`/api/vendas?${q.toString()}`, { headers: { Authorization: `Bearer ${jwt}` } });
+  const r = await fetch(`/api/vendas?${q.toString()}`, {
+    headers: { Authorization: `Bearer ${jwt}` },
+  });
   if (r.status === 401) throw new Error("auth");
   const body = (await r.json()) as SalesReport & { error?: string };
   if (body.error) throw new Error(["scope", "token"].includes(body.error) ? body.error : "api");
@@ -661,7 +662,10 @@ export async function loadRecovery(leads: LeadRow[], now = Date.now()): Promise<
   );
   if (!pending.length) return [];
   const ids = [...new Set(pending.map((l) => l.session_id as string))];
-  const clicks = new Map<string, { item: string | null; detail: string | null; created_at: string }>();
+  const clicks = new Map<
+    string,
+    { item: string | null; detail: string | null; created_at: string }
+  >();
   for (let i = 0; i < ids.length; i += 100) {
     const chunk = ids.slice(i, i + 100);
     const ev = await db
@@ -671,7 +675,12 @@ export async function loadRecovery(leads: LeadRow[], now = Date.now()): Promise<
       .in("session_id", chunk)
       .order("created_at", { ascending: false });
     if (ev.error) throw new Error("events");
-    for (const e of (ev.data ?? []) as { session_id: string; item: string | null; detail: string | null; created_at: string }[])
+    for (const e of (ev.data ?? []) as {
+      session_id: string;
+      item: string | null;
+      detail: string | null;
+      created_at: string;
+    }[])
       if (!clicks.has(e.session_id)) clicks.set(e.session_id, e);
   }
   // Sem permissão de pedidos na Nuvemshop ainda, não dá para saber quem pagou: a lista não aparece.
@@ -708,4 +717,144 @@ export function recoveryMessage(r: Recovery): string {
   const first = r.lead.name.trim().split(/\s+/)[0] ?? "";
   const what = recoveryPaste(r);
   return `Oi, ${first}! Aqui é da Soccer Games. Vi que você chegou a escolher ${what ? `o ${what}` : "um jogo"} e não finalizou. Ficou alguma dúvida sobre a licença ou a ativação? Te ajudo por aqui.`;
+}
+
+/* ---------- checagem do sistema (Ajustes) ---------- */
+
+export type CheckState = "ok" | "warn" | "bad";
+export interface SystemCheck {
+  id: string;
+  state: CheckState;
+  detail: string;
+  /** O que fazer quando não está ok. */
+  fix?: string;
+  at?: string | null;
+}
+
+const lastRow = async (table: "events" | "leads" | "black_vip_leads") => {
+  const { data, error } = await db
+    .from(table)
+    .select("created_at")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return (
+    ((data as unknown as { created_at: string }[] | null)?.[0]?.created_at as string | undefined) ??
+    null
+  );
+};
+
+/** Testes de verdade, um por peça do sistema. Nada aqui é estimado. */
+export async function loadSystemChecks(now = Date.now()): Promise<Record<string, SystemCheck>> {
+  const hrs = (iso: string) => (now - Date.parse(iso)) / 3600e3;
+  const out: Record<string, SystemCheck> = {};
+  const run = async (id: string, fn: () => Promise<Omit<SystemCheck, "id">>) => {
+    try {
+      out[id] = { id, ...(await fn()) };
+    } catch {
+      out[id] = {
+        id,
+        state: "bad",
+        detail: "Não consegui testar agora.",
+        fix: "Atualize a página. Se continuar, confira o Supabase.",
+      };
+    }
+  };
+  await Promise.all([
+    run("visitas", async () => {
+      const at = await lastRow("events");
+      if (!at)
+        return {
+          state: "warn",
+          detail: "Nenhuma visita registrada ainda.",
+          fix: "Abra o links pelo celular (fora da equipe) e veja se aparece aqui.",
+        };
+      return hrs(at) > 24
+        ? {
+            state: "warn",
+            at,
+            detail: "Última visita registrada faz mais de 24 horas.",
+            fix: "Confira se o links está no ar e se a bio aponta para links.lojasoccergames.com.br.",
+          }
+        : { state: "ok", at, detail: "Visitas chegando normalmente." };
+    }),
+    run("quiz", async () => {
+      const { error } = await db.from("leads").select("session_id").limit(1);
+      if (error?.code === "42703")
+        return {
+          state: "warn",
+          detail:
+            'Os contatos do quiz ainda não guardam o código da visita, então a lista "foi para a compra e não comprou" fica vazia.',
+          fix: "Rodar no Supabase (SQL Editor) o arquivo supabase/migrations/20261023100000_soccer_links_leads_session.sql.",
+        };
+      if (error) throw error;
+      const at = await lastRow("leads");
+      return {
+        state: "ok",
+        at,
+        detail: at
+          ? "Contatos do quiz salvando com o código da visita."
+          : "Tabela pronta. Ainda sem contatos.",
+      };
+    }),
+    run("catalogo", async () => {
+      const r = await fetch("/api/loja?status=1");
+      const b = (await r.json()) as {
+        mode?: string;
+        configured?: boolean;
+        count?: number;
+        error?: string;
+      };
+      if (b.mode === "api")
+        return {
+          state: "ok",
+          detail: `Preços e estoque lidos direto da loja (${fmt(b.count ?? 0)} produtos).`,
+        };
+      if (b.configured === false)
+        return {
+          state: "warn",
+          detail: "Sem chave da Nuvemshop: preços vêm da página de cada jogo, mais devagar.",
+          fix: "Na Vercel, cadastrar NUVEMSHOP_STORE_ID e NUVEMSHOP_TOKEN (Settings > Environment Variables) e fazer Redeploy.",
+        };
+      return {
+        state: "bad",
+        detail: "A chave da Nuvemshop está cadastrada, mas a loja recusou.",
+        fix: "Gerar um token novo no app da Nuvemshop e trocar NUVEMSHOP_TOKEN na Vercel.",
+      };
+    }),
+    run("vendas", async () => {
+      try {
+        const rep = await loadSalesReport(new Date(now - 7 * 86400e3), new Date(now));
+        return {
+          state: "ok",
+          detail: `Pedidos pagos sendo lidos da loja (últimos 7 dias: ${fmt(rep.sales.length)} do links de ${fmt(rep.storeOrders)} na loja).`,
+        };
+      } catch (e) {
+        const k = e instanceof Error ? e.message : "";
+        if (k === "scope")
+          return {
+            state: "bad",
+            detail:
+              "O app da Nuvemshop não tem permissão para ler pedidos. A aba Vendas fica sem dados.",
+            fix: 'No app da Nuvemshop, marcar "Pedidos: ler", reinstalar, e trocar NUVEMSHOP_TOKEN na Vercel pelo token novo.',
+          };
+        if (k === "token")
+          return {
+            state: "warn",
+            detail: "Sem token da Nuvemshop na Vercel, então não dá para ler as vendas.",
+            fix: "Cadastrar NUVEMSHOP_TOKEN na Vercel e fazer Redeploy.",
+          };
+        throw e;
+      }
+    }),
+    run("black", async () => {
+      const at = await lastRow("black_vip_leads");
+      return {
+        state: "ok",
+        at,
+        detail: at ? "Cadastros da Black chegando." : "Tabela pronta. Ainda sem cadastros.",
+      };
+    }),
+  ]);
+  return out;
 }

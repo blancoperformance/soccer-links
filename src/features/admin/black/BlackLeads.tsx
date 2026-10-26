@@ -2,10 +2,24 @@ import { NewTag, When } from "../when";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { useNavigate } from "@tanstack/react-router";
-import { X } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  CalendarDays,
+  Crown,
+  Download,
+  Globe,
+  Mail,
+  Radio,
+  RefreshCw,
+  Search,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+import { Card, Note, Scoreboard, Shell, ShellBoot, type NavGroup } from "../ui";
 import { supabase } from "@/integrations/supabase/client";
 import { setInternalDevice } from "@/lib/tracking";
-import { WorkspaceSwitch } from "../WorkspaceChooser";
 import { canOpenBlack, forgetBlackAccess, setWorkspace, type Workspace } from "../workspace";
 import {
   dateTime,
@@ -25,18 +39,6 @@ import {
   sourceOf,
   type BlackLead,
 } from "./data";
-
-/*
- * Visual from painel-leads.html: #0E0E0E, ink #F3F1ED, mute #8E8E8E, hairlines instead of boxes,
- * square corners, white primary button that turns orange on hover, orange only in details.
- */
-const LINE = "border-neutral-200";
-const LINE2 = "border-neutral-300";
-const MUTE = "text-neutral-500";
-const btn = `inline-flex min-h-9 items-center gap-2 whitespace-nowrap border ${LINE2} bg-white px-3 text-[13px] text-neutral-800 transition-colors hover:border-neutral-950 disabled:cursor-wait disabled:opacity-50`;
-const btnPri =
-  "inline-flex min-h-9 items-center gap-2 whitespace-nowrap border border-neutral-950 bg-neutral-950 px-3 text-[13px] font-medium text-white transition-colors hover:opacity-90 disabled:cursor-wait disabled:opacity-50";
-const btnGhost = `inline-flex min-h-10 items-center px-4 py-2 text-sm ${MUTE} hover:text-neutral-950`;
 
 const REFRESH_MS = 60000;
 const MAX_ROWS = 500;
@@ -76,43 +78,51 @@ function Confirm({
     return () => window.removeEventListener("keydown", onKey);
   }, [onCancel]);
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-    >
-      <div className={`w-full max-w-md border ${LINE2} bg-white p-6`}>
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="text-base font-medium">{title}</h3>
+    <>
+      <button type="button" className="sg-veil" aria-label="Fechar" onClick={onCancel} />
+      <div className="sg-dialog" role="dialog" aria-modal="true" aria-label={title}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <h3 className="sg-card__title" style={{ fontSize: 17 }}>
+            {title}
+          </h3>
           <button
             type="button"
             onClick={onCancel}
             aria-label="Fechar"
-            className={`${MUTE} hover:text-neutral-950`}
+            className="sg-btn sg-btn--ghost sg-btn--s sg-btn--icon"
           >
-            <X className="h-4 w-4" />
+            <X />
           </button>
         </div>
-        <p className={`mt-3 text-sm leading-relaxed ${MUTE}`}>{text}</p>
-        <div className="mt-6 flex justify-end gap-2">
-          <button type="button" onClick={onCancel} className={btnGhost}>
+        <p className="sg-card__hint" style={{ marginTop: 10, fontSize: 14 }}>
+          {text}
+        </p>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 22 }}>
+          <button type="button" onClick={onCancel} className="sg-btn sg-btn--ghost">
             Cancelar
           </button>
           <button
             type="button"
             disabled={busy}
             onClick={onConfirm}
-            className={danger ? `${btn} hover:border-[#D8432A] hover:text-[#D8432A]` : btnPri}
+            className={danger ? "sg-btn sg-btn--danger-solid" : "sg-btn sg-btn--primary"}
           >
             {busy ? "Aguarde..." : action}
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
+type BlackSection = "aovivo" | "numeros" | "cadastros";
 type Period = { kind: "preset"; days: 1 | 7 | 30 } | { kind: "custom"; from: string; to: string };
 const PERIOD_KEY = "sg:black:periodo";
 function readPeriod(): Period {
@@ -128,13 +138,10 @@ function readPeriod(): Period {
 
 /** "↑ 20% vs ontem"; nothing when there is no base to compare. */
 function Delta({ now, before, label }: { now: number; before: number; label: string }) {
-  if (before === 0)
-    return now > 0 ? <span className="text-[11px] text-neutral-500">novo {label}</span> : null;
+  if (before === 0) return now > 0 ? <span className="sg-chip sg-delta">novo {label}</span> : null;
   const d = Math.round(((now - before) / before) * 100);
   return (
-    <span
-      className={`text-[11px] ${d > 0 ? "text-emerald-700" : d < 0 ? "text-red-700" : "text-neutral-500"}`}
-    >
+    <span className={`sg-chip sg-delta ${d > 0 ? "sg-chip--ok" : d < 0 ? "sg-chip--bad" : ""}`}>
       {d > 0 ? "↑" : d < 0 ? "↓" : "="} {Math.abs(d)}% {label}
     </span>
   );
@@ -163,6 +170,23 @@ export function BlackLeads() {
   const [period, setPeriodState] = useState<Period>(readPeriod);
   const [recent, setRecent] = useState<BlackLead[]>([]);
   const [clock, setClock] = useState(Date.now());
+  const [sec, setSec] = useState<BlackSection>(() => {
+    try {
+      const v = window.localStorage.getItem("sg:black:secao");
+      return v === "numeros" || v === "cadastros" ? v : "aovivo";
+    } catch {
+      return "aovivo";
+    }
+  });
+  const goSec = (id: BlackSection) => {
+    setSec(id);
+    window.scrollTo({ top: 0 });
+    try {
+      window.localStorage.setItem("sg:black:secao", id);
+    } catch {
+      /* ignore */
+    }
+  };
   const setPeriod = (p: Period) => {
     setPeriodState(p);
     try {
@@ -192,6 +216,7 @@ export function BlackLeads() {
       }
       setInternalDevice(true);
       setSession(s);
+      void import("../Dashboard");
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") void navigate({ to: "/admin", replace: true });
@@ -370,7 +395,7 @@ export function BlackLeads() {
     }
   };
 
-  if (!session) return <div className="min-h-screen bg-[#f5f4f1]" />;
+  if (!session) return <ShellBoot workspace="black" />;
 
   const total = all.length;
   const maxDay = Math.max(1, ...stats.days.map((d) => d.n));
@@ -399,404 +424,384 @@ export function BlackLeads() {
     },
     {
       label: "Com e-mail · no período",
-      value: `${fmt(stats.withEmail)}${stats.inRange ? ` · ${Math.round((stats.withEmail / stats.inRange) * 100)}%` : ""}`,
-      delta: <span className="text-[11px] text-neutral-500">{fmt(total)} inscritos no total</span>,
+      value: fmt(stats.withEmail),
+      delta: (
+        <span>
+          {stats.inRange
+            ? `${Math.round((stats.withEmail / stats.inRange) * 100)}% dos inscritos · `
+            : ""}
+          {fmt(total)} no total
+        </span>
+      ),
     },
   ];
 
-  const logo = (w: string) => (
-    <span
-      aria-label="Soccer Games"
-      className={`block whitespace-nowrap font-bold uppercase leading-none tracking-[0.06em] text-neutral-950 ${w}`}
-      style={{ fontFamily: "Montserrat, sans-serif" }}
-    >
-      <span className="inline-flex items-center gap-[0.4em]">
-        <img src="/logo-soccer-escura.png" alt="" className="h-[1.6em] w-[1.6em]" />
-        <span>
-          Soccer<span style={{ color: "#8a00c2" }}> Games</span>
-        </span>
-      </span>
-    </span>
-  );
-  const NAV = [
-    { id: "ao-vivo", label: "Ao vivo" },
-    { id: "numeros", label: "Números" },
-    { id: "cadastros", label: "Cadastros e exportação" },
+  const groups: NavGroup[] = [
+    {
+      label: "grupo vip",
+      items: [
+        { id: "aovivo", label: "Ao vivo", icon: Radio, live: true },
+        { id: "numeros", label: "Números", icon: BarChart3 },
+        { id: "cadastros", label: "Cadastros", icon: Users, badge: stats.today || undefined },
+      ],
+    },
   ];
-  const card = "border border-neutral-200 bg-white";
+  const titles: Record<BlackSection, { title: string; sub: string }> = {
+    aovivo: {
+      title: "Grupo VIP ao vivo",
+      sub: "Os últimos cadastros na landing da Black, atualizando a cada 15 segundos.",
+    },
+    numeros: { title: "Números da Black", sub: "Inscrições no período, por dia e por origem." },
+    cadastros: {
+      title: "Cadastros e exportação",
+      sub: "Busque, exporte para a Huggy ou para e-mail e marque o que já foi enviado.",
+    },
+  };
+  const period$ = (
+    <div className="sg-tools__period">
+      <div className="sg-seg" role="group" aria-label="Período">
+        {([1, 7, 30] as const).map((d) => (
+          <button
+            key={d}
+            type="button"
+            className="sg-seg__btn"
+            aria-pressed={period.kind === "preset" && period.days === d}
+            onClick={() => setPeriod({ kind: "preset", days: d })}
+          >
+            {d === 1 ? "Hoje" : `${d} dias`}
+          </button>
+        ))}
+      </div>
+      <input
+        type="date"
+        value={range.from}
+        max={range.to}
+        aria-label="De"
+        onChange={(e) =>
+          e.target.value && setPeriod({ kind: "custom", from: e.target.value, to: range.to })
+        }
+        className="sg-input"
+        style={{
+          width: 150,
+          height: 40,
+          borderColor: period.kind === "custom" ? "var(--sg-brand)" : undefined,
+        }}
+      />
+      <input
+        type="date"
+        value={range.to}
+        min={range.from}
+        max={today}
+        aria-label="Até"
+        onChange={(e) =>
+          e.target.value && setPeriod({ kind: "custom", from: range.from, to: e.target.value })
+        }
+        className="sg-input"
+        style={{
+          width: 150,
+          height: 40,
+          borderColor: period.kind === "custom" ? "var(--sg-brand)" : undefined,
+        }}
+      />
+      <button
+        type="button"
+        className="sg-btn sg-btn--icon"
+        onClick={() => void load()}
+        disabled={loading}
+        aria-label="Atualizar"
+        title="Atualizar"
+      >
+        <RefreshCw className={loading ? "animate-spin" : ""} />
+      </button>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#f5f4f1] font-sans text-sm leading-normal text-neutral-950">
-      {/* Sidebar (desktop), same shell as the Links panel */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col bg-neutral-950 px-3 py-6 lg:flex">
-        <div className="flex items-center gap-3 px-3">
-          {logo("text-[14px]")}
-          <span className="border-l border-white/15 pl-3 text-xs leading-tight text-white/60">
-            Painel
-            <br />
-            <span className="text-sm font-medium text-white">Black November</span>
-          </span>
-        </div>
-        <div className="mt-6 px-3">
-          <WorkspaceSwitch current="black" onSwitch={switchTo} />
-        </div>
-        <nav aria-label="Seções" className="mt-6 flex-1 space-y-0.5">
-          {NAV.map((x) => (
-            <a
-              key={x.id}
-              href={`#${x.id}`}
-              className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
-            >
-              <span className="h-1.5 w-1.5 bg-[#8a00c2]" />
-              {x.label}
-            </a>
-          ))}
-        </nav>
-        <div className="border-t border-white/10 px-3 pt-4">
-          <p className="truncate text-xs text-white/50">{session.user.email}</p>
-          <button
-            type="button"
-            onClick={signOut}
-            className="mt-2 text-xs text-white/60 hover:text-white"
-          >
-            Sair
-          </button>
-        </div>
-      </aside>
+    <Shell
+      workspace="black"
+      canSwitch
+      onSwitch={switchTo}
+      product="Black November"
+      email={session.user.email}
+      onSignOut={signOut}
+      groups={groups}
+      current={sec}
+      onNav={(id) => goSec(id as BlackSection)}
+      tabs={["aovivo", "numeros", "cadastros"]}
+      eyebrow={
+        <>
+          <span className="sg-dot sg-dot--live" aria-hidden /> {status} · atualiza sozinho
+        </>
+      }
+      title={titles[sec].title}
+      sub={titles[sec].sub}
+      tools={sec === "aovivo" ? undefined : period$}
+    >
+      <div className="sg-stack">
+        {notice && (
+          <Note tone="brand" onClose={() => setNotice(null)}>
+            {notice}
+          </Note>
+        )}
 
-      <div className="lg:pl-60">
-        {/* Top bar (mobile) */}
-        <div className="flex items-center justify-between gap-3 bg-neutral-950 px-4 py-3 lg:hidden">
-          <div className="flex items-center gap-3">
-            {logo("text-[14px]")}
-            <WorkspaceSwitch current="black" onSwitch={switchTo} />
-          </div>
-          <button type="button" onClick={signOut} className="text-xs text-white/70">
-            Sair
-          </button>
-        </div>
-
-        <header className="sticky top-0 z-20 border-b border-neutral-200 bg-[#f5f4f1]/95 backdrop-blur">
-          <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-8">
-            <div className="min-w-0">
-              <h1 className="text-xl font-semibold tracking-tight">Grupo VIP · Black November</h1>
-              <p className={`mt-0.5 text-xs ${MUTE}`}>{status} · atualiza sozinho</p>
-            </div>
-            <button type="button" className={btn} onClick={() => void load()} disabled={loading}>
-              Atualizar
-            </button>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-[1240px] space-y-6 px-4 pb-24 pt-6 sm:px-8">
-          {notice && (
-            <p className={`flex items-center justify-between gap-4 ${card} px-4 py-3 text-sm`}>
-              {notice}
-              <button
-                type="button"
-                onClick={() => setNotice(null)}
-                aria-label="Fechar"
-                className={MUTE}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </p>
-          )}
-
-          {/* Period */}
-          <div className={`flex flex-wrap items-center gap-2 ${card} px-5 py-4`}>
-            {([1, 7, 30] as const).map((d) => {
-              const on = period.kind === "preset" && period.days === d;
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setPeriod({ kind: "preset", days: d })}
-                  className={`min-h-9 border px-3 text-[13px] ${on ? "border-neutral-950 bg-neutral-950 font-medium text-white" : `${LINE2} ${MUTE} hover:text-neutral-950`}`}
-                >
-                  {d === 1 ? "Hoje" : `${d} dias`}
+        {(sec === "aovivo" || sec === "numeros") && (
+          <>
+            <Scoreboard
+              label={`placar vip · ${periodLabel}`}
+              live={{ text: `${fmt(stats.today)} hoje` }}
+              actions={
+                <button type="button" className="sg-hero__btn" onClick={() => goSec("cadastros")}>
+                  Exportar <ArrowRight aria-hidden />
                 </button>
-              );
-            })}
-            <span className={`ml-2 text-[13px] ${MUTE}`}>De</span>
-            <input
-              type="date"
-              value={range.from}
-              max={range.to}
-              onChange={(e) =>
-                e.target.value && setPeriod({ kind: "custom", from: e.target.value, to: range.to })
               }
-              className={`min-h-9 border bg-white px-2 text-[13px] ${period.kind === "custom" ? "border-[#8a00c2]" : LINE2}`}
-            />
-            <span className={`text-[13px] ${MUTE}`}>até</span>
-            <input
-              type="date"
-              value={range.to}
-              min={range.from}
-              max={today}
-              onChange={(e) =>
-                e.target.value &&
-                setPeriod({ kind: "custom", from: range.from, to: e.target.value })
+              cells={kpis.map((k, i) => ({
+                label: k.label,
+                value: k.value,
+                sub: k.delta,
+                accent: i === 0,
+              }))}
+              bars={stats.days.map((d) => ({
+                key: d.day,
+                label: `${d.day.slice(8, 10)}/${d.day.slice(5, 7)}`,
+                value: d.n,
+              }))}
+              barsLabel={
+                <>
+                  inscrições por dia
+                  <br />
+                  {first ? `${first.slice(8, 10)}/${first.slice(5, 7)}` : ""} a{" "}
+                  {range.to === today ? "hoje" : `${range.to.slice(8, 10)}/${range.to.slice(5, 7)}`}
+                </>
               }
-              className={`min-h-9 border bg-white px-2 text-[13px] ${period.kind === "custom" ? "border-[#8a00c2]" : LINE2}`}
             />
-          </div>
 
-          {/* Live */}
-          <div id="ao-vivo" className={`scroll-mt-24 ${card} p-5`}>
-            <h2 className={`mb-3 flex items-center gap-2 text-[13px] font-medium ${MUTE}`}>
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#8a00c2] opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#8a00c2]" />
-              </span>
-              Ao vivo · últimos cadastros · atualiza a cada 15 segundos
-            </h2>
-            {recent.length === 0 ? (
-              <p className={`text-xs ${MUTE}`}>Nenhum cadastro ainda.</p>
-            ) : (
-              <ul className="grid gap-x-8 md:grid-cols-2">
-                {recent.slice(0, 10).map((l, i) => {
-                  const fresh = clock - new Date(l.created_at).getTime() < 10 * 60000;
-                  return (
-                    <li
-                      key={String(l.id)}
-                      className={`flex items-baseline justify-between gap-3 border-b py-2 ${LINE}`}
-                    >
-                      <span className="min-w-0 truncate">
-                        {fresh && i < 3 && (
-                          <span className="mr-2 text-[11px] text-[#8a00c2]">novo</span>
-                        )}
-                        {l.nome}
-                        <span className={`ml-2 text-xs ${MUTE}`}>
-                          {sourceOf(l)}
-                          {(l.submissions ?? 1) > 1 ? ` · ${l.submissions}x` : ""}
-                          {l.email ? " · com e-mail" : ""}
+            <Card title="Últimos cadastros" hint="Atualiza a cada 15 segundos." icon={Radio} brand>
+              {recent.length === 0 ? (
+                <p className="sg-empty">Nenhum cadastro ainda.</p>
+              ) : (
+                <ul className="sg-list">
+                  {recent.slice(0, sec === "aovivo" ? 10 : 6).map((l, i) => {
+                    const fresh = clock - new Date(l.created_at).getTime() < 10 * 60000;
+                    return (
+                      <li key={String(l.id)}>
+                        <span className="sg-list__main">
+                          {fresh && i < 3 && (
+                            <span className="sg-chip sg-chip--new" style={{ marginRight: 8 }}>
+                              novo
+                            </span>
+                          )}
+                          <span style={{ color: "var(--sg-ink)" }}>{l.nome}</span>
+                          <span className="sg-muted" style={{ marginLeft: 8, fontSize: 12.5 }}>
+                            {sourceOf(l)}
+                            {(l.submissions ?? 1) > 1 ? ` · ${l.submissions}x` : ""}
+                            {l.email ? " · com e-mail" : ""}
+                          </span>
                         </span>
-                      </span>
-                      <span
-                        className={`shrink-0 text-xs tabular-nums ${fresh ? "text-neutral-950" : MUTE}`}
-                      >
-                        {ago(l.created_at, clock)}
-                      </span>
+                        <span className="sg-list__side">{ago(l.created_at, clock)}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Card>
+          </>
+        )}
+
+        {sec === "numeros" && (
+          <>
+            <Card title="De onde vieram" hint="Origem dos cadastros no período." icon={Globe}>
+              {stats.sources.length === 0 ? (
+                <p className="sg-empty">Sem dados no período.</p>
+              ) : (
+                <ul className="sg-bars">
+                  {stats.sources.map(([src, n], i) => (
+                    <li key={src}>
+                      <div className="sg-bars__top">
+                        <span className="sg-bars__name">{src}</span>
+                        <span className="sg-bars__val">
+                          {fmt(n)}
+                          <span className="sg-bars__pct">
+                            {stats.inRange ? Math.round((n / stats.inRange) * 100) : 0}%
+                          </span>
+                        </span>
+                      </div>
+                      <div className="sg-track">
+                        <div
+                          className={`sg-track__fill ${i === 0 ? "sg-track__fill--brand" : ""}`}
+                          style={{
+                            width: `${Math.max(2, (n / (stats.sources[0]?.[1] ?? 1)) * 100)}%`,
+                          }}
+                        />
+                      </div>
                     </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </>
+        )}
 
-          {/* KPIs */}
-          <div id="numeros" className={`grid scroll-mt-24 grid-cols-2 ${card} px-5 md:grid-cols-4`}>
-            {kpis.map((k, i) => (
-              <div
-                key={k.label}
-                className={`py-[22px] pr-5 ${i > 0 ? `md:border-l md:pl-5 ${LINE}` : ""} ${i % 2 === 1 ? `border-l pl-5 ${LINE}` : ""} ${i >= 2 ? `border-t md:border-t-0 ${LINE}` : ""}`}
-              >
-                <span className={`block text-xs ${MUTE}`}>{k.label}</span>
-                <b className="mt-1.5 block whitespace-nowrap text-[28px] font-semibold leading-[1.1] tracking-tight md:text-[32px]">
-                  {k.value}
-                </b>
-                <span className="mt-1.5 block min-h-4">{k.delta}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Chart + sources */}
-          <div className={`grid ${card} px-5 md:grid-cols-[2fr_1fr]`}>
-            <div className="py-[22px] md:pr-6">
-              <h2 className={`mb-4 text-[13px] font-medium ${MUTE}`}>
-                Inscrições por dia · {periodLabel}
-              </h2>
-              <div className="flex h-[120px] items-end gap-1">
-                {stats.days.map((d) => {
-                  const [, m, dd] = d.day.split("-");
-                  const isTodayBar = d.day === today;
-                  return (
-                    <div
-                      key={d.day}
-                      className={`group relative min-w-[6px] flex-1 ${isTodayBar ? "bg-[#8a00c2]" : "bg-neutral-900 hover:bg-neutral-600"}`}
-                      style={{ height: `${Math.max(2, (d.n / maxDay) * 100)}%` }}
-                    >
-                      <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap bg-neutral-900 px-1.5 py-0.5 text-[11px] text-white group-hover:block">
-                        {dd}/{m}: {d.n}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className={`mt-2 flex justify-between text-[11px] ${MUTE}`}>
-                <span>{first ? `${first.slice(8, 10)}/${first.slice(5, 7)}` : ""}</span>
-                <span>
-                  {range.to === today ? "Hoje" : `${range.to.slice(8, 10)}/${range.to.slice(5, 7)}`}
-                </span>
-              </div>
-            </div>
-            <div className={`py-[22px] md:border-l md:pl-6 ${LINE} border-t md:border-t-0`}>
-              <h2 className={`mb-4 text-[13px] font-medium ${MUTE}`}>Origem</h2>
-              <ul>
-                {stats.sources.length === 0 ? (
-                  <li className={`flex justify-between border-b py-2 ${LINE}`}>
-                    <span>Sem dados</span>
-                    <b className="font-medium">0</b>
-                  </li>
-                ) : (
-                  stats.sources.map(([s, n]) => (
-                    <li key={s} className={`flex justify-between border-b py-2 ${LINE}`}>
-                      <span>{s}</span>
-                      <b className="font-medium tabular-nums">{fmt(n)}</b>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          </div>
-
-          <section id="cadastros" className={`scroll-mt-24 ${card} px-5 pb-5`}>
-            {/* Tools */}
-            <div className="flex flex-wrap items-center gap-2.5 py-5">
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar nome, WhatsApp ou e-mail"
-                autoComplete="off"
-                className={`min-h-10 min-w-[220px] flex-1 border-0 border-b ${LINE2} bg-transparent py-2 outline-none placeholder:text-neutral-500 focus:border-[#8a00c2]`}
-              />
-              <label className={`flex items-center gap-2 text-[13px] ${MUTE}`}>
+        {sec === "cadastros" && (
+          <Card
+            title="Cadastros"
+            hint="A exportação leva a base inteira (a busca não entra). Com “Só não exportados”, vai só quem nunca foi enviado."
+            icon={Users}
+            flush
+          >
+            <div className="sg-blacktools">
+              <label className="sg-search">
+                <Search aria-hidden />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar nome, WhatsApp ou e-mail"
+                  autoComplete="off"
+                  className="sg-input"
+                />
+              </label>
+              <label className="sg-check">
                 <input
                   type="checkbox"
                   checked={onlyNew}
                   onChange={(e) => setOnlyNew(e.target.checked)}
-                  className="accent-[#8a00c2]"
                 />
                 Só não exportados
               </label>
-              <button type="button" className={btn} onClick={() => exportTo("huggy")}>
-                Exportar para a Huggy
+              <button type="button" className="sg-btn" onClick={() => exportTo("huggy")}>
+                <Download aria-hidden /> Huggy
               </button>
-              <button type="button" className={btn} onClick={() => exportTo("email")}>
-                Exportar e-mails
+              <button
+                type="button"
+                className="sg-btn sg-btn--primary"
+                onClick={() => exportTo("email")}
+              >
+                <Mail aria-hidden /> E-mails
               </button>
             </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className={`border-b ${LINE2} text-xs ${MUTE}`}>
-                    <th className="whitespace-nowrap py-2.5 pr-3 font-medium">Data</th>
-                    <th className="py-2.5 pr-3 font-medium">Nome</th>
-                    <th className="py-2.5 pr-3 font-medium">WhatsApp</th>
-                    <th className="hidden py-2.5 pr-3 font-medium md:table-cell">E-mail</th>
-                    <th className="hidden py-2.5 pr-3 font-medium md:table-cell">Origem</th>
-                    <th className="hidden py-2.5 pr-3 font-medium md:table-cell">Exportado</th>
-                    <th className="py-2.5" />
+            <table className="sg-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Nome</th>
+                  <th>WhatsApp</th>
+                  <th>E-mail</th>
+                  <th>Origem</th>
+                  <th>Exportado</th>
+                  <th aria-label="Ações" />
+                </tr>
+              </thead>
+              <tbody>
+                {rows === null ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="sg-skel" style={{ height: 120 }} />
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {rows === null ? (
-                    <tr>
-                      <td colSpan={7} className={`py-3 text-xs ${MUTE}`}>
-                        Carregando…
-                      </td>
-                    </tr>
-                  ) : visible.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className={`py-3 text-xs ${MUTE}`}>
-                        Nenhum lead encontrado.
-                      </td>
-                    </tr>
-                  ) : (
-                    visible.slice(0, MAX_ROWS).map((l) => {
-                      const wa = phoneE164(l.whatsapp);
-                      return (
-                        <tr key={String(l.id)} className={`border-b align-top ${LINE}`}>
-                          <td
-                            className={`whitespace-nowrap py-3 pr-3 text-xs tabular-nums ${MUTE}`}
-                          >
-                            <When iso={l.created_at} time now={clock} />
-                          </td>
-                          <td className="py-3 pr-3">
-                            {l.nome}
-                            <NewTag iso={l.created_at} now={clock} />
-                            {(l.submissions ?? 1) > 1 && (
-                              <span
-                                className={`ml-1.5 inline-block border px-1.5 text-[11px] ${LINE2} ${MUTE}`}
-                                title="Enviou o formulário mais de uma vez"
-                              >
-                                {l.submissions}x
-                              </span>
-                            )}
-                          </td>
-                          <td className="whitespace-nowrap py-3 pr-3 tabular-nums">
-                            {wa ? (
-                              <a
-                                href={`https://wa.me/${wa}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`border-b no-underline ${LINE2} hover:border-[#8a00c2]`}
-                              >
-                                {phoneLabel(l.whatsapp)}
-                              </a>
-                            ) : (
-                              l.whatsapp
-                            )}
-                          </td>
-                          <td className="hidden py-3 pr-3 md:table-cell">{l.email ?? ""}</td>
-                          <td
-                            className={`hidden whitespace-nowrap py-3 pr-3 text-xs md:table-cell ${MUTE}`}
-                          >
-                            {sourceOf(l)}
-                          </td>
-                          <td className="hidden py-3 pr-3 md:table-cell">
+                ) : visible.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="sg-muted">
+                      Nenhum cadastro encontrado. Tente outro período ou limpe a busca.
+                    </td>
+                  </tr>
+                ) : (
+                  visible.slice(0, MAX_ROWS).map((l) => {
+                    const wa = phoneE164(l.whatsapp);
+                    return (
+                      <tr key={String(l.id)}>
+                        <td
+                          data-label="Data"
+                          className="sg-muted"
+                          style={{ whiteSpace: "nowrap", fontSize: 12.5 }}
+                        >
+                          <When iso={l.created_at} time now={clock} />
+                        </td>
+                        <td data-label="Nome" style={{ fontWeight: 500 }}>
+                          {l.nome}
+                          <NewTag iso={l.created_at} now={clock} />
+                          {(l.submissions ?? 1) > 1 && (
                             <span
-                              className={`mr-1 inline-block border px-1.5 text-[11px] ${l.exported_huggy_at ? "border-[#8a00c2] bg-[#f5e8ff] text-[#6a0096]" : `${LINE2} ${MUTE}`}`}
+                              className="sg-chip"
+                              style={{ marginLeft: 6 }}
+                              title="Enviou o formulário mais de uma vez"
+                            >
+                              {l.submissions}x
+                            </span>
+                          )}
+                        </td>
+                        <td
+                          data-label="WhatsApp"
+                          className="sg-mono"
+                          style={{ whiteSpace: "nowrap", fontSize: 13 }}
+                        >
+                          {wa ? (
+                            <a
+                              href={`https://wa.me/${wa}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="sg-link"
+                            >
+                              {phoneLabel(l.whatsapp)}
+                            </a>
+                          ) : (
+                            l.whatsapp
+                          )}
+                        </td>
+                        <td data-label="E-mail" style={{ fontSize: 13 }}>
+                          {l.email ?? <span className="sg-muted">sem e-mail</span>}
+                        </td>
+                        <td data-label="Origem" className="sg-muted" style={{ fontSize: 12.5 }}>
+                          {sourceOf(l)}
+                        </td>
+                        <td data-label="Exportado">
+                          <span
+                            className={`sg-chip ${l.exported_huggy_at ? "sg-chip--brand" : ""}`}
+                            title={
+                              l.exported_huggy_at
+                                ? `Exportado em ${dateTime(l.exported_huggy_at)}`
+                                : "Ainda não exportado"
+                            }
+                          >
+                            Huggy
+                          </span>{" "}
+                          {l.email && (
+                            <span
+                              className={`sg-chip ${l.exported_email_at ? "sg-chip--brand" : ""}`}
                               title={
-                                l.exported_huggy_at
-                                  ? `Exportado em ${dateTime(l.exported_huggy_at)}`
+                                l.exported_email_at
+                                  ? `Exportado em ${dateTime(l.exported_email_at)}`
                                   : "Ainda não exportado"
                               }
                             >
-                              Huggy
+                              E-mail
                             </span>
-                            {l.email && (
-                              <span
-                                className={`inline-block border px-1.5 text-[11px] ${l.exported_email_at ? "border-[#8a00c2] bg-[#f5e8ff] text-[#6a0096]" : `${LINE2} ${MUTE}`}`}
-                                title={
-                                  l.exported_email_at
-                                    ? `Exportado em ${dateTime(l.exported_email_at)}`
-                                    : "Ainda não exportado"
-                                }
-                              >
-                                E-mail
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() => setPending({ kind: "delete", lead: l })}
-                              className={`text-xs underline ${MUTE} hover:text-[#D8432A]`}
-                            >
-                              Excluir
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+                          )}
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <button
+                            type="button"
+                            onClick={() => setPending({ kind: "delete", lead: l })}
+                            className="sg-btn sg-btn--ghost sg-btn--s sg-btn--danger"
+                            aria-label={`Excluir ${l.nome ?? "cadastro"}`}
+                          >
+                            <Trash2 aria-hidden />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
             {rows !== null && (
-              <p className={`mt-4 text-xs ${MUTE}`}>
+              <p className="sg-card__hint" style={{ padding: "12px 20px 16px", margin: 0 }}>
                 {visible.length > MAX_ROWS
                   ? `Mostrando 500 de ${fmt(visible.length)}. Use a busca ou a exportação para ver todos.`
-                  : `${fmt(visible.length)} lead(s)`}
+                  : `${fmt(visible.length)} ${visible.length === 1 ? "cadastro" : "cadastros"}`}
               </p>
             )}
-          </section>
-        </main>
+          </Card>
+        )}
       </div>
 
       {pending && (
@@ -808,8 +813,8 @@ export function BlackLeads() {
           }
           text={
             pending.kind === "delete"
-              ? `${pending.lead.nome ?? "Este lead"} (${phoneLabel(pending.lead.whatsapp)}) será apagado de vez. Use só para pedido de exclusão (LGPD).`
-              : `O arquivo com ${fmt(pending.ids.length)} ${pending.ids.length === 1 ? "lead" : "leads"} foi baixado. Marcando agora, eles deixam de aparecer em "Só não exportados".`
+              ? `${pending.lead.nome ?? "Este cadastro"} (${phoneLabel(pending.lead.whatsapp)}) será apagado de vez. Use só para pedido de exclusão (LGPD).`
+              : `O arquivo com ${fmt(pending.ids.length)} ${pending.ids.length === 1 ? "cadastro" : "cadastros"} foi baixado. Marcando agora, eles deixam de aparecer em "Só não exportados".`
           }
           action={pending.kind === "delete" ? "Excluir" : "Marcar como exportados"}
           danger={pending.kind === "delete"}
@@ -818,6 +823,6 @@ export function BlackLeads() {
           onCancel={() => setPending(null)}
         />
       )}
-    </div>
+    </Shell>
   );
 }

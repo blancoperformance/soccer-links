@@ -15,7 +15,7 @@ import {
   Ticket,
   UserRound,
 } from "lucide-react";
-import { C } from "./charts";
+import { Kpi } from "./charts";
 import { deviceName, fmt, productName, sourceName } from "./data";
 import { describe } from "./Live";
 import { useRecentEvents, type Ev } from "./live-feed";
@@ -25,11 +25,11 @@ const REFRESH_MS = 10000;
 
 /** How far the person got, from arriving to leaving for the store checkout. */
 const STAGES = [
-  { label: "Chegou", tone: "bg-neutral-100 text-neutral-600" },
-  { label: "Explorando a página", tone: "bg-neutral-900 text-white" },
-  { label: "Vendo produto", tone: "bg-neutral-900 text-white" },
-  { label: "Escolheu licença", tone: "bg-[#f5e8ff] text-[#6a0096]" },
-  { label: "Foi ao checkout", tone: "bg-[#8a00c2] text-white" },
+  { label: "Chegou", tone: "" },
+  { label: "Explorando", tone: "sg-chip--info" },
+  { label: "Vendo jogo", tone: "sg-chip--info" },
+  { label: "Escolheu licença", tone: "sg-chip--brand" },
+  { label: "Foi ao carrinho", tone: "sg-chip--new" },
 ] as const;
 
 const isProductOpen = (e: Ev) =>
@@ -61,7 +61,7 @@ function iconOf(e: Ev) {
 
 const DeviceIcon = ({ d }: { d: string | null }) => {
   const I = d === "desktop" ? Monitor : d === "tablet" ? Tablet : Smartphone;
-  return <I className="h-3.5 w-3.5" />;
+  return <I aria-hidden style={{ width: 14, height: 14 }} />;
 };
 
 const ago = (ms: number) => {
@@ -135,91 +135,60 @@ function PersonCard({ p, now }: { p: Person; now: number }) {
   const steps = p.events.slice(-6).reverse();
   return (
     <article
-      className={`flex flex-col border bg-white transition-opacity ${p.active ? "border-neutral-200" : "border-neutral-200 opacity-60"}`}
-      style={p.active && p.stage >= 3 ? { borderColor: C.accent } : undefined}
+      className={`sg-person ${p.active ? "" : "sg-person--gone"} ${p.active && p.stage >= 3 ? "sg-person--hot" : ""}`}
     >
-      <header className="flex items-start justify-between gap-3 border-b border-neutral-100 px-4 py-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 text-sm font-semibold text-neutral-950">
-            {p.active && (
-              <span className="relative flex h-2 w-2">
-                <span
-                  className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
-                  style={{ background: C.accent }}
-                />
-                <span
-                  className="relative inline-flex h-2 w-2 rounded-full"
-                  style={{ background: C.accent }}
-                />
-              </span>
-            )}
+      <header className="sg-person__head">
+        <div style={{ minWidth: 0 }}>
+          <p className="sg-person__name">
+            {p.active && <span className="sg-dot sg-dot--live" aria-hidden />}
             Visitante {p.n}
           </p>
-          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-neutral-500">
-            <span className="flex items-center gap-1 whitespace-nowrap">
+          <p className="sg-person__meta">
+            <span>
               <DeviceIcon d={p.device} />
               {deviceName(p.device ?? "desconhecido")}
             </span>
-            <span className="text-neutral-300">·</span>
-            <span className="whitespace-nowrap">
-              {p.source ? sourceName(p.source) : "Sem origem"}
-            </span>
-            <span className="text-neutral-300">·</span>
-            <span className="whitespace-nowrap">
+            <span>{p.source ? sourceName(p.source) : "sem origem"}</span>
+            <span>
               {p.active ? `há ${ago(now - p.first)} na página` : `saiu há ${ago(now - p.last)}`}
             </span>
           </p>
         </div>
-        <span className={`shrink-0 px-2 py-1 text-[11px] font-semibold ${stage.tone}`}>
-          {stage.label}
-        </span>
+        <span className={`sg-chip ${stage.tone}`}>{stage.label}</span>
       </header>
-
-      <div className="px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-400">
-          {p.active ? "Fazendo agora" : "Última coisa que fez"}
+      <div className="sg-person__now">
+        <p className="sg-label" style={{ margin: 0 }}>
+          {p.active ? "fazendo agora" : "última coisa que fez"}
         </p>
-        <p className="mt-1 text-[15px] font-medium leading-snug text-neutral-950">
-          {last ? describe(last) : "–"}
-        </p>
+        <p className="sg-person__doing">{last ? describe(last) : "–"}</p>
         {p.product && (
-          <p className="mt-1.5 text-xs text-neutral-600">
-            De olho em <span className="font-medium text-neutral-900">{p.product}</span>
+          <p className="sg-person__eye">
+            De olho em <strong>{p.product}</strong>
             {p.size ? ` · licença ${p.size}` : ""}
           </p>
         )}
       </div>
-
-      <ol className="mt-auto border-t border-neutral-100 px-4 py-3">
+      <ol className="sg-person__steps">
         {steps.map((e, i) => {
           const Icon = iconOf(e);
           const hot = stageOf(e) >= 3;
           return (
-            <li key={`${e.created_at}-${i}`} className="flex items-start gap-2.5 py-1">
-              <Icon
-                className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                style={{ color: hot ? C.accent : i === 0 ? C.ink : C.faint }}
-              />
-              <span
-                className={`min-w-0 flex-1 text-xs leading-snug ${i === 0 ? "text-neutral-900" : "text-neutral-500"}`}
-              >
-                {describe(e)}
-              </span>
-              <span className="shrink-0 text-[11px] tabular-nums text-neutral-400">
-                {ago(now - new Date(e.created_at).getTime())}
-              </span>
+            <li key={`${e.created_at}-${i}`} className={i === 0 ? "is-first" : ""}>
+              <Icon aria-hidden className={hot ? "is-hot" : ""} />
+              <span className="sg-person__step">{describe(e)}</span>
+              <span className="sg-mono">{ago(now - new Date(e.created_at).getTime())}</span>
             </li>
           );
         })}
         {p.events.length > 6 && (
-          <li className="pt-1 text-[11px] text-neutral-400">+ {p.events.length - 6} ações antes</li>
+          <li className="sg-person__more">+ {p.events.length - 6} ações antes</li>
         )}
       </ol>
     </article>
   );
 }
 
-/** Full "Ao vivo" section: who is on the page now, one card per person, and what they are doing. */
+/** Tela "Ao vivo": quem está na página agora, um cartão por pessoa, e o que cada uma está fazendo. */
 export function LivePage() {
   const { events, fetchedAt } = useRecentEvents(REFRESH_MS);
   const [now, setNow] = useState(Date.now());
@@ -232,12 +201,10 @@ export function LivePage() {
 
   const list = useMemo(() => (events ? people(events, now) : []), [events, now]);
 
-  if (events === undefined) return <p className="text-sm text-neutral-400">Carregando...</p>;
+  if (events === undefined) return <div className="sg-skel" style={{ height: 260 }} />;
   if (events === null)
     return (
-      <p className="border border-neutral-200 bg-white p-5 text-sm text-neutral-500">
-        Não foi possível ler os dados agora. Tente de novo em instantes.
-      </p>
+      <p className="sg-note">Não foi possível ler os dados agora. Tente de novo em instantes.</p>
     );
 
   const active = list.filter((p) => p.active);
@@ -246,79 +213,97 @@ export function LivePage() {
   const checkout30 = list.filter((p) => p.stage === 4).length;
 
   return (
-    <div className="space-y-6">
-      {/* Big numbers */}
-      <div className="grid gap-px overflow-hidden border border-neutral-200 bg-neutral-200 lg:grid-cols-[1.1fr_2fr]">
-        <div className="relative bg-neutral-950 p-6 text-white">
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/60">
-            <span className="relative flex h-2.5 w-2.5">
-              <span
-                className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-70"
-                style={{ background: active.length ? C.accent : "#777" }}
-              />
-              <span
-                className="relative inline-flex h-2.5 w-2.5 rounded-full"
-                style={{ background: active.length ? C.accent : "#777" }}
-              />
+    <div className="sg-stack">
+      <div className="sg-grid sg-grid--hero">
+        <section
+          className="sg-hero sg-hero--console"
+          aria-label={`${active.length} pessoas na página agora`}
+        >
+          <div className="sg-hero__head">
+            <span className="sg-hero__icon" aria-hidden>
+              <span className={`sg-dot ${active.length ? "sg-dot--live" : ""}`} />
             </span>
-            Agora na página
-          </p>
-          <p className="mt-3 text-[72px] font-semibold leading-none tabular-nums tracking-tight">
-            {fmt(active.length)}
-          </p>
-          <p className="mt-3 text-sm text-white/60">
-            {active.length === 1 ? "pessoa ativa" : "pessoas ativas"} nos últimos {ACTIVE_MIN}{" "}
-            minutos
-          </p>
-          <p className="mt-5 border-t border-white/10 pt-3 text-xs text-white/50">
-            {fmt(list.length)} visitas na última meia hora · {fmt(checkout30)} foram ao checkout
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-px bg-neutral-200 sm:grid-cols-4">
-          {[
-            {
-              label: "Explorando a página",
-              n: byStage(0) + byStage(1),
-              hint: "Chegaram, navegam, buscam ou fazem o quiz",
-            },
-            { label: "Vendo um produto", n: byStage(2), hint: "Abriram a ficha de um produto" },
-            { label: "Escolheram a licença", n: byStage(3), hint: "A um clique de comprar" },
-            { label: "Foram ao checkout", n: byStage(4), hint: "Saíram para pagar na loja" },
-          ].map((k, i) => (
-            <div key={k.label} className="bg-white p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500">
-                {k.label}
-              </p>
-              <p
-                className="mt-3 text-[40px] font-semibold leading-none tabular-nums"
-                style={{ color: i >= 2 && k.n > 0 ? C.accent : C.ink }}
-              >
-                {fmt(k.n)}
-              </p>
-              <p className="mt-2 text-xs leading-snug text-neutral-500">{k.hint}</p>
-            </div>
-          ))}
+            <span className="sg-hero__label">Agora na página</span>
+            <span className="sg-hero__delta" style={{ marginLeft: "auto" }}>
+              leitura há {ago(now - fetchedAt)}
+            </span>
+          </div>
+          <div className="sg-hero__nums">
+            <strong className="sg-hero__value">{fmt(active.length)}</strong>
+            <span className="sg-hero__side">
+              <span>
+                {active.length === 1 ? "pessoa ativa" : "pessoas ativas"} nos últimos {ACTIVE_MIN}{" "}
+                minutos
+              </span>
+              <span>
+                <b>{fmt(list.length)}</b> visitas na meia hora · <b>{fmt(checkout30)}</b> foram ao
+                carrinho
+              </span>
+            </span>
+          </div>
+          <div className="sg-hero__foot">
+            <span>atualiza sozinho a cada 10 segundos</span>
+          </div>
+        </section>
+        <div className="sg-kpis" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+          <Kpi
+            icon={LayoutGrid}
+            label="Explorando a página"
+            value={fmt(byStage(0) + byStage(1))}
+            sub="Navegam, buscam ou fazem o quiz"
+          />
+          <Kpi
+            icon={Eye}
+            label="Vendo um jogo"
+            value={fmt(byStage(2))}
+            sub="Abriram a ficha de um jogo"
+          />
+          <Kpi
+            accent={byStage(3) > 0}
+            icon={Ruler}
+            label="Escolheram a licença"
+            value={fmt(byStage(3))}
+            sub="A um toque de comprar"
+          />
+          <Kpi
+            accent={byStage(4) > 0}
+            icon={ShoppingBag}
+            label="Foram ao carrinho"
+            value={fmt(byStage(4))}
+            sub="Saíram para pagar na loja"
+          />
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-[15px] font-semibold text-neutral-950">
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <h2 className="sg-card__title" style={{ fontSize: 16 }}>
           Quem está na página{" "}
-          <span className="font-normal text-neutral-500">
+          <span className="sg-muted" style={{ fontWeight: 400 }}>
             · {active.length === 0 ? "ninguém agora" : `${active.length} agora`}
           </span>
         </h2>
-        <p className="text-xs text-neutral-500">
-          Atualiza sozinho a cada 10 segundos · última leitura há {ago(now - fetchedAt)}
-        </p>
+        <span className="sg-eyebrow">visitantes anônimos · a equipe não aparece</span>
       </div>
 
       {active.length === 0 ? (
-        <p className="border border-dashed border-neutral-300 bg-white p-8 text-center text-sm text-neutral-500">
-          Ninguém navegando neste momento. Assim que alguém abrir o link da bio, aparece aqui.
-        </p>
+        <div className="sg-card">
+          <div className="sg-card__body" style={{ textAlign: "center", padding: 36 }}>
+            <p className="sg-empty" style={{ justifyItems: "center" }}>
+              <strong>Ninguém navegando neste momento</strong>
+              Assim que alguém abrir o link da bio, aparece aqui.
+            </p>
+          </div>
+        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="sg-people">
           {active.map((p) => (
             <PersonCard key={p.id} p={p} now={now} />
           ))}
@@ -326,16 +311,19 @@ export function LivePage() {
       )}
 
       {left.length > 0 && (
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowLeft((v) => !v)}
-            className="text-sm font-medium text-neutral-700 underline underline-offset-4 hover:text-neutral-950"
-          >
-            {showLeft ? "Esconder" : "Mostrar"} quem saiu na última meia hora ({left.length})
-          </button>
+        <div className="sg-stack" style={{ gap: 14 }}>
+          <div>
+            <button
+              type="button"
+              className="sg-btn sg-btn--s"
+              onClick={() => setShowLeft((v) => !v)}
+              aria-expanded={showLeft}
+            >
+              {showLeft ? "Esconder" : "Mostrar"} quem saiu na última meia hora · {left.length}
+            </button>
+          </div>
           {showLeft && (
-            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="sg-people">
               {left.slice(0, 18).map((p) => (
                 <PersonCard key={p.id} p={p} now={now} />
               ))}
@@ -343,10 +331,6 @@ export function LivePage() {
           )}
         </div>
       )}
-      <p className="text-xs leading-relaxed text-neutral-400">
-        Cada visitante é anônimo: o painel não sabe quem é a pessoa, só o que ela faz na página. A
-        equipe não aparece aqui.
-      </p>
     </div>
   );
 }

@@ -53,7 +53,7 @@ export function BagBar() {
         />
       )}
       <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto max-w-[520px] animate-[sg-up_.35s_cubic-bezier(.2,.9,.3,1.2)] overflow-hidden rounded-[24px] bg-white/95 shadow-[0_10px_40px_-12px_rgba(40,0,70,.35)] ring-1 ring-black/5 backdrop-blur-md">
+        <div className="mx-auto max-w-[520px] lg:max-w-[640px] animate-[sg-up_.35s_cubic-bezier(.2,.9,.3,1.2)] overflow-hidden rounded-[24px] bg-white/95 shadow-[0_10px_40px_-12px_rgba(40,0,70,.35)] ring-1 ring-black/5 backdrop-blur-md">
           {open && (
             <div className="border-b border-black/5 px-4 pb-1 pt-4">
               <p className="text-[13px] font-bold text-mts-text">Sua sacola</p>
@@ -61,12 +61,18 @@ export function BagBar() {
                 {list.map((i) => (
                   <li key={i.slug} className="flex items-center gap-3 py-2.5">
                     {i.image ? (
-                      <img src={i.image} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                      <img
+                        src={i.image}
+                        alt=""
+                        className="h-12 w-12 shrink-0 rounded-xl object-cover"
+                      />
                     ) : (
                       <span className="h-12 w-12 shrink-0 rounded-xl bg-mts-column" />
                     )}
                     <span className="min-w-0 flex-1">
-                      <span className="line-clamp-1 text-[13px] font-semibold text-mts-text">{i.name}</span>
+                      <span className="line-clamp-1 text-[13px] font-semibold text-mts-text">
+                        {i.name}
+                      </span>
                       <span className="mt-0.5 flex items-center gap-1.5 text-xs">
                         <span className="rounded-full bg-mts-column px-1.5 py-px text-[10px] font-semibold text-mts-muted">
                           {i.license}
@@ -74,7 +80,9 @@ export function BagBar() {
                         {i.from && i.price != null && i.from > i.price && (
                           <span className="text-mts-muted line-through">{brl(i.from)}</span>
                         )}
-                        {i.price != null && <span className="font-bold text-mts-text">{brl(i.price)}</span>}
+                        {i.price != null && (
+                          <span className="font-bold text-mts-text">{brl(i.price)}</span>
+                        )}
                       </span>
                     </span>
                     <button
@@ -99,12 +107,18 @@ export function BagBar() {
               aria-label={open ? "Fechar a lista da sacola" : "Ver os jogos da sacola"}
               className="flex min-w-0 flex-1 items-center gap-4 text-left"
             >
-              <span className={`relative flex shrink-0 pl-1 ${bump ? "animate-[sg-pop_.45s_ease-out]" : ""}`}>
+              <span
+                className={`relative flex shrink-0 pl-1 ${bump ? "animate-[sg-pop_.45s_ease-out]" : ""}`}
+              >
                 {list.slice(-3).map((i, k, arr) => (
                   <span
                     key={i.slug}
                     className="block h-10 w-10 overflow-hidden rounded-[11px] bg-gradient-to-br from-[#8a00c2] to-[#ff2d87] shadow-[0_2px_6px_rgba(0,0,0,.18)] ring-2 ring-white"
-                    style={{ marginLeft: k === 0 ? 0 : -24, transform: `rotate(${(k - (arr.length - 1) / 2) * 7}deg)`, zIndex: k }}
+                    style={{
+                      marginLeft: k === 0 ? 0 : -24,
+                      transform: `rotate(${(k - (arr.length - 1) / 2) * 7}deg)`,
+                      zIndex: k,
+                    }}
                   >
                     {i.image && <img src={i.image} alt="" className="h-full w-full object-cover" />}
                   </span>
@@ -118,14 +132,21 @@ export function BagBar() {
                   {save > 0 ? (
                     <span className="text-[#178a4c]">Economia de {brl(save)}</span>
                   ) : (
-                    <>{n} {n === 1 ? "jogo" : "jogos"}</>
+                    <>
+                      {n} {n === 1 ? "jogo" : "jogos"}
+                    </>
                   )}
-                  <ChevronUp className={`h-3.5 w-3.5 shrink-0 transition-transform ${open ? "" : "rotate-180"}`} aria-hidden />
+                  <ChevronUp
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform ${open ? "" : "rotate-180"}`}
+                    aria-hidden
+                  />
                 </span>
                 <span className="mt-0.5 block whitespace-nowrap text-[18px] font-extrabold tracking-tight text-mts-text">
                   {brl(total)}
                 </span>
-                <span className="block truncate text-[10.5px] text-mts-muted">ou {INSTALLMENTS}x de {brl(total / INSTALLMENTS)}</span>
+                <span className="block truncate text-[10.5px] text-mts-muted">
+                  ou {INSTALLMENTS}x de {brl(total / INSTALLMENTS)}
+                </span>
               </span>
             </button>
             <button

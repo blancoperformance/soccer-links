@@ -171,7 +171,7 @@ export function GameGrid({
   content?: string;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-7">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-7 lg:grid-cols-3 lg:gap-x-5 2xl:grid-cols-4">
       {games.map((g) => (
         <GameCard
           key={g.slug}

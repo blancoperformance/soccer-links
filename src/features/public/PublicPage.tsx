@@ -722,7 +722,7 @@ export function PublicPage({
         aria-label="Seções"
         className={`fixed inset-x-0 top-0 z-30 flex justify-center border-b border-mts-btn-border bg-mts-column/95 backdrop-blur transition-all duration-300 ${showNav && !quizOpen && !sheet ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-full opacity-0"}`}
       >
-        <div className="flex w-full max-w-[520px] items-center gap-3 py-2 pl-4 pr-3 sm:pl-6">
+        <div className="flex w-full max-w-[520px] items-center gap-3 py-2 pl-4 pr-3 sm:pl-6 lg:max-w-[1240px] lg:px-8">
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -774,205 +774,212 @@ export function PublicPage({
         </div>
       </nav>
 
-      <main className="mx-auto min-h-screen w-full max-w-[520px] pb-28 sm:pt-4">
-        {/* topo preto, como o cabeçalho da loja */}
-        <header
-          className="mts-enter relative overflow-hidden bg-[#0f0f0f] px-5 pb-7 pt-6 text-white sm:rounded-[28px] sm:px-7"
-          style={{
-            backgroundImage:
-              "radial-gradient(120% 90% at 100% 0%, rgba(192,0,255,.45), transparent 55%), radial-gradient(80% 60% at 0% 100%, rgba(192,0,255,.18), transparent 60%)",
-          }}
-        >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[.07] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:28px_28px]"
-          />
-          <div className="relative flex items-center justify-between">
-            <span className="flex items-center gap-2.5">
-              {profile.logo && (
-                <img
-                  src={profile.logo}
-                  alt="Soccer Games"
-                  width={36}
-                  height={36}
-                  className="h-9 w-9"
-                />
-              )}
-            </span>
-            <span className="rounded-full border border-white/25 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85">
-              PS4 · PS5
-            </span>
-          </div>
-          <h1 className="sr-only">{profile.name}</h1>
-          {campaignOn && campaign ? (
-            <CampaignHero
-              c={campaign}
-              onBrowse={() => {
-                setQuery("");
-                setChip(null);
-                setShelf("best-sellers-semana");
-                goTo("loja");
-                track("links_clique", { item_name: "Best Sellers: escolher jogo" });
-              }}
-            />
-          ) : (
-            <>
-              <p className="font-display relative mt-6 text-[32px] font-semibold leading-[1.04]">
-                Seu próximo jogo
-                <br />
-                <span className="text-[#d77bff]">chega no e-mail.</span>
-              </p>
-              <p className="relative mt-3 max-w-[340px] text-[14px] leading-relaxed text-white/70">
-                {profile.tagline}
-              </p>
-            </>
-          )}
-          <form
-            role="search"
-            className="relative mt-5 flex h-12 items-center overflow-hidden rounded-[12px] bg-white"
-            onSubmit={(e) => {
-              e.preventDefault();
-              goTo("loja");
+      <main className="mx-auto min-h-screen w-full max-w-[520px] pb-28 sm:pt-4 lg:grid lg:max-w-[1240px] lg:grid-cols-[minmax(360px,400px)_minmax(0,1fr)] lg:items-start lg:gap-8 lg:px-8 lg:pt-8">
+        {/* No computador: coluna fixa com a capa e os atalhos; o catálogo ocupa o resto da tela. */}
+        <aside className="sg-aside">
+          {/* topo preto, como o cabeçalho da loja */}
+          <header
+            className="mts-enter relative overflow-hidden bg-[#0f0f0f] px-5 pb-7 pt-6 text-white sm:rounded-[28px] sm:px-7"
+            style={{
+              backgroundImage:
+                "radial-gradient(120% 90% at 100% 0%, rgba(192,0,255,.45), transparent 55%), radial-gradient(80% 60% at 0% 100%, rgba(192,0,255,.18), transparent 60%)",
             }}
           >
-            <Search className="ml-4 h-4 w-4 shrink-0 text-[#6b6b73]" aria-hidden />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && goTo("loja")}
-              placeholder="Buscar jogo: FC 26, Hogwarts..."
-              aria-label="Buscar jogo"
-              className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-[#0f0f0f] outline-none placeholder:text-[#8d8b96] [&::-webkit-search-cancel-button]:hidden"
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-[.07] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:28px_28px]"
             />
-            <button
-              type="submit"
-              aria-label="Buscar"
-              className="flex h-full w-12 shrink-0 items-center justify-center bg-[#c000ff] text-white"
+            <div className="relative flex items-center justify-between">
+              <span className="flex items-center gap-2.5">
+                {profile.logo && (
+                  <img
+                    src={profile.logo}
+                    alt="Soccer Games"
+                    width={36}
+                    height={36}
+                    className="h-9 w-9"
+                  />
+                )}
+              </span>
+              <span className="rounded-full border border-white/25 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85">
+                PS4 · PS5
+              </span>
+            </div>
+            <h1 className="sr-only">{profile.name}</h1>
+            {campaignOn && campaign ? (
+              <CampaignHero
+                c={campaign}
+                onBrowse={() => {
+                  setQuery("");
+                  setChip(null);
+                  setShelf("best-sellers-semana");
+                  goTo("loja");
+                  track("links_clique", { item_name: "Best Sellers: escolher jogo" });
+                }}
+              />
+            ) : (
+              <>
+                <p className="font-display relative mt-6 text-[32px] font-semibold leading-[1.04]">
+                  Seu próximo jogo
+                  <br />
+                  <span className="text-[#d77bff]">chega no e-mail.</span>
+                </p>
+                <p className="relative mt-3 max-w-[340px] text-[14px] leading-relaxed text-white/70">
+                  {profile.tagline}
+                </p>
+              </>
+            )}
+            <form
+              role="search"
+              className="relative mt-5 flex h-12 items-center overflow-hidden rounded-[12px] bg-white"
+              onSubmit={(e) => {
+                e.preventDefault();
+                goTo("loja");
+              }}
             >
-              <Search className="h-4 w-4" aria-hidden />
-            </button>
-          </form>
-          <nav className="relative mt-5 flex items-center gap-3" aria-label="Redes sociais">
-            {socials.map((s) => {
-              const Icon = socialIcons[s.platform];
-              return (
-                <a
-                  key={s.platform}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.label}
-                  onClick={() => track("links_clique", { item_name: s.label, item_url: s.url })}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white transition-colors hover:border-[#c000ff] hover:bg-[#c000ff]"
-                >
-                  {Icon ? <Icon /> : s.label}
-                </a>
-              );
-            })}
-          </nav>
-        </header>
+              <Search className="ml-4 h-4 w-4 shrink-0 text-[#6b6b73]" aria-hidden />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && goTo("loja")}
+                placeholder="Buscar jogo: FC 26, Hogwarts..."
+                aria-label="Buscar jogo"
+                className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-[#0f0f0f] outline-none placeholder:text-[#8d8b96] [&::-webkit-search-cancel-button]:hidden"
+              />
+              <button
+                type="submit"
+                aria-label="Buscar"
+                className="flex h-full w-12 shrink-0 items-center justify-center bg-[#c000ff] text-white"
+              >
+                <Search className="h-4 w-4" aria-hidden />
+              </button>
+            </form>
+            <nav className="relative mt-5 flex items-center gap-3" aria-label="Redes sociais">
+              {socials.map((s) => {
+                const Icon = socialIcons[s.platform];
+                return (
+                  <a
+                    key={s.platform}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.label}
+                    onClick={() => track("links_clique", { item_name: s.label, item_url: s.url })}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white transition-colors hover:border-[#c000ff] hover:bg-[#c000ff]"
+                  >
+                    {Icon ? <Icon /> : s.label}
+                  </a>
+                );
+              })}
+            </nav>
+          </header>
 
-        <div className="px-4 sm:px-0">
-          {/* atalhos em blocos */}
-          <div className="mts-enter mt-4 grid grid-cols-2 gap-2.5" style={stagger(1)}>
-            {primary.map((b, i) => {
-              const Icon = TILE_ICONS[i % TILE_ICONS.length]!;
-              const wide = b.strong;
-              const hot = b.hot;
-              const cls = `group relative flex min-h-[112px] flex-col justify-between overflow-hidden rounded-[18px] p-4 text-left transition-transform active:scale-[.99] ${
-                wide
-                  ? "col-span-2 min-h-[96px] bg-[#c000ff] text-white shadow-[0_14px_40px_-16px_rgba(192,0,255,.9)]"
-                  : hot
-                    ? "bg-[radial-gradient(120%_100%_at_100%_0%,#ff2d87_0%,#a400d6_45%,#8a00c2_100%)] text-white"
-                    : "border border-mts-btn-border bg-mts-btn text-mts-text hover:border-mts-ink"
-              }`;
-              const inner = (
-                <>
-                  <span className="relative flex items-start justify-between gap-3">
-                    <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-full ${wide || hot ? "bg-white/20 text-white" : "bg-[var(--mts-glow)] text-mts-accent"}`}
-                    >
-                      <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden />
+          <div className="px-4 sm:px-0">
+            {/* atalhos em blocos */}
+            <div className="mts-enter mt-4 grid grid-cols-2 gap-2.5" style={stagger(1)}>
+              {primary.map((b, i) => {
+                const Icon = TILE_ICONS[i % TILE_ICONS.length]!;
+                const wide = b.strong;
+                const hot = b.hot;
+                const cls = `group relative flex min-h-[112px] flex-col justify-between overflow-hidden rounded-[18px] p-4 text-left transition-transform active:scale-[.99] ${
+                  wide
+                    ? "col-span-2 min-h-[96px] bg-[#c000ff] text-white shadow-[0_14px_40px_-16px_rgba(192,0,255,.9)]"
+                    : hot
+                      ? "bg-[radial-gradient(120%_100%_at_100%_0%,#ff2d87_0%,#a400d6_45%,#8a00c2_100%)] text-white"
+                      : "border border-mts-btn-border bg-mts-btn text-mts-text hover:border-mts-ink"
+                }`;
+                const inner = (
+                  <>
+                    <span className="relative flex items-start justify-between gap-3">
+                      <span
+                        className={`flex h-9 w-9 items-center justify-center rounded-full ${wide || hot ? "bg-white/20 text-white" : "bg-[var(--mts-glow)] text-mts-accent"}`}
+                      >
+                        <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden />
+                      </span>
+                      <span
+                        aria-hidden
+                        className={`text-lg transition-transform group-hover:translate-x-0.5 ${wide || hot ? "text-white" : "text-mts-muted"}`}
+                      >
+                        {b.badge ? (
+                          <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-[#8a00c2]">
+                            {b.badge}
+                          </span>
+                        ) : (
+                          "→"
+                        )}
+                      </span>
                     </span>
-                    <span
-                      aria-hidden
-                      className={`text-lg transition-transform group-hover:translate-x-0.5 ${wide || hot ? "text-white" : "text-mts-muted"}`}
-                    >
-                      {b.badge ? (
-                        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-[#8a00c2]">
-                          {b.badge}
+                    <span className="relative mt-3 block">
+                      <span className="font-display block text-[17px] font-semibold leading-tight">
+                        {b.label}
+                      </span>
+                      {b.sub && (
+                        <span
+                          className={`mt-1 block text-[12px] leading-snug ${wide || hot ? "text-white/85" : "text-mts-muted"}`}
+                        >
+                          {b.sub}
                         </span>
-                      ) : (
-                        "→"
                       )}
                     </span>
-                  </span>
-                  <span className="relative mt-3 block">
-                    <span className="font-display block text-[17px] font-semibold leading-tight">
-                      {b.label}
+                  </>
+                );
+                return b.href ? (
+                  <a
+                    key={b.label}
+                    href={
+                      isInternal(b.href) ? b.href : withUtm(b.href, { content: "botao-principal" })
+                    }
+                    {...(isInternal(b.href)
+                      ? {}
+                      : { target: "_blank", rel: "noopener noreferrer" })}
+                    onClick={() => track("links_clique", { item_name: b.label, item_url: b.href })}
+                    className={cls}
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <button
+                    key={b.label}
+                    type="button"
+                    onClick={() => {
+                      track("links_clique", { item_name: b.label });
+                      b.onClick?.();
+                    }}
+                    className={cls}
+                  >
+                    {inner}
+                  </button>
+                );
+              })}
+            </div>
+
+            {trust.length > 0 && (
+              <ul
+                className="mts-enter mt-4 flex flex-wrap gap-2"
+                style={stagger(2)}
+                aria-label="Garantias"
+              >
+                {trust.map((t) => (
+                  <li
+                    key={t.title}
+                    className="flex items-center gap-2 rounded-full border border-mts-btn-border bg-mts-btn py-1.5 pl-2 pr-3.5"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--mts-glow)]">
+                      <TrustIcon kind={t.icon} />
                     </span>
-                    {b.sub && (
-                      <span
-                        className={`mt-1 block text-[12px] leading-snug ${wide || hot ? "text-white/85" : "text-mts-muted"}`}
-                      >
-                        {b.sub}
-                      </span>
-                    )}
-                  </span>
-                </>
-              );
-              return b.href ? (
-                <a
-                  key={b.label}
-                  href={
-                    isInternal(b.href) ? b.href : withUtm(b.href, { content: "botao-principal" })
-                  }
-                  {...(isInternal(b.href) ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-                  onClick={() => track("links_clique", { item_name: b.label, item_url: b.href })}
-                  className={cls}
-                >
-                  {inner}
-                </a>
-              ) : (
-                <button
-                  key={b.label}
-                  type="button"
-                  onClick={() => {
-                    track("links_clique", { item_name: b.label });
-                    b.onClick?.();
-                  }}
-                  className={cls}
-                >
-                  {inner}
-                </button>
-              );
-            })}
+                    <span className="text-[12px] leading-tight text-mts-text">
+                      <b className="font-semibold">{t.title}</b>{" "}
+                      <span className="text-mts-muted">· {t.text}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
+        </aside>
 
-          {trust.length > 0 && (
-            <ul
-              className="mts-enter mt-4 flex flex-wrap gap-2"
-              style={stagger(2)}
-              aria-label="Garantias"
-            >
-              {trust.map((t) => (
-                <li
-                  key={t.title}
-                  className="flex items-center gap-2 rounded-full border border-mts-btn-border bg-mts-btn py-1.5 pl-2 pr-3.5"
-                >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--mts-glow)]">
-                    <TrustIcon kind={t.icon} />
-                  </span>
-                  <span className="text-[12px] leading-tight text-mts-text">
-                    <b className="font-semibold">{t.title}</b>{" "}
-                    <span className="text-mts-muted">· {t.text}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-
+        <div className="sg-wide px-4 sm:px-0">
           <DealsBanner onGo={() => goTo("ofertas")} weekly={campaignOn} />
           {highlight && (
             <Highlight game={highlight} context={Boolean(context)} onOpen={(g) => openGame(g)} />

@@ -191,9 +191,7 @@ describe("Black November", () => {
   const t = (s: string) => Date.parse(s);
   it("conta até a Pré-Black, depois até a Black", () => {
     expect(phaseAt(t("2026-10-16T12:00:00-03:00")).phase).toBe("antes");
-    expect(phaseAt(t("2026-11-19T12:00:00-03:00")).phase).toBe("lancamento");
     expect(phaseAt(t("2026-11-21T12:00:00-03:00")).phase).toBe("pre");
-    expect(phaseAt(t("2026-11-30T20:00:00-03:00")).phase).toBe("black");
     expect(phaseAt(t("2026-11-24T12:00:00-03:00")).phase).toBe("entre");
     expect(phaseAt(t("2026-11-27T10:00:00-03:00")).phase).toBe("black");
     expect(phaseAt(t("2026-12-02T10:00:00-03:00")).phase).toBe("fim");
@@ -209,14 +207,7 @@ import { games as allGames } from "@/features/public/games";
 describe("caça-ofertas", () => {
   it("só entra oferta real (preço de maior que o por) e ordena pelo desconto", () => {
     const [a, b, c] = allGames.filter((g) => g.kind === "jogo");
-    const v = (price: number, from: number | null, available = true) => ({
-      id: 1,
-      key: "primaria",
-      label: "Primária",
-      price,
-      from,
-      available,
-    });
+    const v = (price: number, from: number | null, available = true) => ({ id: 1, key: "primaria", label: "Primária", price, from, available });
     const d = dealsFrom({
       [a!.slug]: { id: 1, images: [], variants: [v(50, 100)] },
       [b!.slug]: { id: 2, images: [], variants: [v(20, 100), v(90, 100)] },

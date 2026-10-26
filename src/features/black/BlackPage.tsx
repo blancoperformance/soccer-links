@@ -1,5 +1,4 @@
-import "./black.css";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   CalendarPlus,
@@ -7,40 +6,18 @@ import {
   LifeBuoy,
   Mail,
   MessageCircle,
-  Play,
+  Radio,
   ShieldCheck,
+  Zap,
 } from "lucide-react";
 import { callRpc, readRpc } from "@/lib/backend";
 import { loadClarity, loadGtm, loadPixel, track } from "@/lib/tracking";
 import { withUtm } from "@/lib/utm";
-import { getGame } from "@/features/public/games";
-import { useLiveGame } from "@/features/public/GameCard";
-import { sized } from "@/features/public/store";
 import { black, phaseAt, type Phase } from "./config";
 import { blackFaq } from "./faq";
 
 const WA = "5518996366686";
 const STORE = "https://lojasoccergames.com.br";
-const GTA = "gta-6-grand-theft-auto-vi-ps5-midia-digital";
-/** Capinhas que voam no palco e passam na faixa: o que mais vende e o que está chegando. */
-const STAGE = [
-  "ea-sports-fc-26-para-ps5-midia-digital",
-  "marvels-spider-man-2-para-ps5-midia-digital",
-  "red-dead-redemption-2-ps4-midia-digital",
-];
-const SHELF = [
-  GTA,
-  "pre-venda-ea-sports-fc-27-midia-digital-para-ps4-copia-18soh",
-  "marvels-spider-man-2-para-ps5-midia-digital",
-  "god-of-war-ragnarok-ps5-midia-digital",
-  "call-of-duty-black-ops-7-midia-digital-ps5",
-  "hogwarts-legacy-ps5-midia-digital",
-  "gran-turismo-7-ps5-midia-digital",
-  "red-dead-redemption-2-ps4-midia-digital",
-  "ghost-of-yotei-para-ps5-midia-digital",
-  "mortal-kombat-1-ps5-midia-digital",
-  "resident-evil-requiem-para-ps5-rcytd",
-];
 const pad = (n: number) => String(n).padStart(2, "0");
 
 declare global {
@@ -59,103 +36,53 @@ function useNow(ms = 1000) {
   return now;
 }
 
-/** Capinha real do jogo, puxada da loja. Sem foto: um bloco com o nome. */
-function Case({
-  slug,
-  className = "",
-  style,
-  w = 320,
-}: {
-  slug: string;
-  className?: string;
-  style?: CSSProperties;
-  w?: number;
-}) {
-  const game = getGame(slug);
-  const { live } = useLiveGame(slug, true);
-  const src = live?.images[0];
-  const [broken, setBroken] = useState(false);
-  return (
-    <span className={className} style={style}>
-      {src && !broken ? (
-        <img
-          src={sized(src, w)}
-          alt={game?.name ?? ""}
-          loading="lazy"
-          onError={() => setBroken(true)}
-          style={{ display: "block", width: "100%", aspectRatio: "1", objectFit: "cover" }}
-        />
-      ) : (
-        <span
-          style={{
-            display: "grid",
-            placeItems: "center",
-            aspectRatio: "1",
-            padding: 10,
-            background: "linear-gradient(150deg,#2a0f3f,#12081c)",
-            fontSize: 11,
-            fontWeight: 800,
-            textAlign: "center",
-            lineHeight: 1.2,
-          }}
-        >
-          {game?.short ?? game?.name ?? "PS5"}
-        </span>
-      )}
-    </span>
-  );
-}
-
-const LABEL: Record<Phase, { pre: string; when: string }> = {
+const PHASE_LABEL: Record<Phase, { pre: string; when: string }> = {
   antes: {
-    pre: "O GTA 6 chega em",
-    when: "19 de novembro · fim de semana do GTA de 20 a 22/11 · Black de 27 a 30/11",
-  },
-  lancamento: {
-    pre: "O GTA 6 chegou. O fim de semana do GTA começa em",
-    when: "20 de novembro, 00h · live na sexta",
+    pre: "A Pré-Black do GTA VI começa em",
+    when: "20 de novembro, 00h · Black Friday em 27 de novembro",
   },
   pre: {
-    pre: "Fim de semana do GTA rolando. A Black Friday começa em",
-    when: "27 de novembro, 00h · até a Cyber Monday, 30/11",
+    pre: "Pré-Black acontecendo agora. A Black Friday começa em",
+    when: "Live na sexta, 20 de novembro · Black Friday em 27 de novembro",
   },
-  entre: {
-    pre: "A Black Friday da Soccer começa em",
-    when: "27 de novembro, 00h · até a Cyber Monday, 30/11",
-  },
-  black: { pre: "Black Friday rolando. Termina em", when: "Segunda, 30 de novembro, 23h59" },
-  fim: { pre: "A Black 2026 terminou", when: "As ofertas da semana continuam no grupo" },
+  entre: { pre: "A Black Friday começa em", when: "27 de novembro, 00h" },
+  black: { pre: "Black Friday acontecendo agora. Termina em", when: "Hoje, até 23h59" },
+  fim: { pre: "A Black November terminou", when: "As ofertas da semana continuam no grupo" },
 };
 
 function Countdown({ now }: { now: number | null }) {
-  const { phase, target } = phaseAt(now ?? Date.parse("2026-10-26T12:00:00-03:00"));
+  const { phase, target } = phaseAt(now ?? Date.parse("2026-10-16T12:00:00-03:00"));
   const left = target && now ? Math.max(0, target - now) : 0;
   const d = Math.floor(left / 864e5);
   const parts: [string, string][] = [
     [pad(Math.floor((left / 36e5) % 24)), "h"],
     [pad(Math.floor((left / 6e4) % 60)), "min"],
-    [pad(Math.floor((left / 1e3) % 60)), "seg"],
+    [pad(Math.floor((left / 1e3) % 60)), "s"],
   ];
   return (
-    <div role="timer" aria-label="Contagem regressiva" className="bk-count">
-      <span className="bk-count__label">{LABEL[phase].pre}</span>
+    <div role="timer" aria-label="Contagem regressiva" className="border-t border-white/15 pt-5">
+      <p className="text-[12px] text-white/75">{PHASE_LABEL[phase].pre}</p>
       {target && (
-        <>
-          <span className="bk-count__days">
-            <b className="bk-display bk-grad">{now ? d : "··"}</b>
-            <span>{d === 1 ? "dia" : "dias"}</span>
-          </span>
-          <span className="bk-count__hms">
+        <div className="mt-2 flex items-end gap-6">
+          <p className="flex items-end gap-2">
+            <span className="font-display text-[60px] sm:text-[68px] font-semibold leading-[.8] tabular-nums tracking-tight text-white">
+              {now ? d : "··"}
+            </span>
+            <span className="pb-1 text-lg font-medium text-white">{d === 1 ? "dia" : "dias"}</span>
+          </p>
+          <p className="flex gap-4 border-l border-white/15 pb-1 pl-5">
             {parts.map(([v, l]) => (
-              <span key={l}>
-                <b className="bk-display">{now ? v : "··"}</b>
-                <small>{l}</small>
+              <span key={l} className="flex flex-col">
+                <span className="font-display text-[22px] font-semibold leading-none tabular-nums text-white">
+                  {now ? v : "··"}
+                </span>
+                <span className="mt-1 text-[11px] text-white/60">{l}</span>
               </span>
             ))}
-          </span>
-        </>
+          </p>
+        </div>
       )}
-      <span className="bk-count__when">{LABEL[phase].when}</span>
+      <p className="mt-4 text-[12px] text-white/60">{PHASE_LABEL[phase].when}</p>
     </div>
   );
 }
@@ -192,7 +119,8 @@ function SignupForm({ id, compact = false }: { id: string; compact?: boolean }) 
   const [errs, setErrs] = useState<Record<string, boolean>>({});
   const [phone, setPhone] = useState("");
   const started = useRef(0);
-  const field = () => "bk-input";
+  const field = (bad?: boolean) =>
+    `block w-full border-0 border-b bg-transparent px-0 pb-2 pt-1 text-[16px] text-white outline-none transition-colors placeholder:text-white/40 focus:border-white ${bad ? "border-[#ff8fa3]" : "border-white/30"}`;
   return (
     <form
       noValidate
@@ -284,7 +212,7 @@ function SignupForm({ id, compact = false }: { id: string; compact?: boolean }) 
         }
         const group = validGroup(black.groupUrl);
         if (group) {
-          setMsg({ tone: "ok", text: "Pronto! Abrindo o grupo no WhatsApp..." });
+          setMsg({ tone: "ok", text: "Pronto! Abrindo o grupo no WhatsApp…" });
           window.setTimeout(() => window.location.assign(group), 350);
         } else {
           setBusy(false);
@@ -294,22 +222,22 @@ function SignupForm({ id, compact = false }: { id: string; compact?: boolean }) 
           });
         }
       }}
-      className={compact ? "" : "mt-5"}
+      className={compact ? "" : "mt-6"}
     >
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="bk-field">
-          <span>Nome</span>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="block text-[12px] text-white/70">Nome</span>
           <input
             name="nome"
             autoComplete="given-name"
             placeholder="Seu nome"
             maxLength={80}
             aria-invalid={errs["nome"] ? true : undefined}
-            className={field()}
+            className={field(errs["nome"])}
           />
         </label>
-        <label className="bk-field">
-          <span>WhatsApp com DDD</span>
+        <label className="block">
+          <span className="block text-[12px] text-white/70">WhatsApp com DDD</span>
           <input
             name="whats"
             type="tel"
@@ -319,13 +247,13 @@ function SignupForm({ id, compact = false }: { id: string; compact?: boolean }) 
             value={phone}
             onChange={(e) => setPhone(formatPhone(e.target.value))}
             aria-invalid={errs["whats"] ? true : undefined}
-            className={field()}
+            className={field(errs["whats"])}
           />
         </label>
       </div>
-      <label className="bk-field" style={{ marginTop: 12 }}>
-        <span>
-          E-mail <span style={{ opacity: 0.6, fontWeight: 500 }}>opcional</span>
+      <label className="mt-4 block">
+        <span className="block text-[12px] text-white/70">
+          E-mail <span className="text-white/45">opcional</span>
         </span>
         <input
           name="email"
@@ -334,7 +262,7 @@ function SignupForm({ id, compact = false }: { id: string; compact?: boolean }) 
           placeholder="voce@email.com"
           maxLength={254}
           aria-invalid={errs["email"] ? true : undefined}
-          className={field()}
+          className={field(errs["email"])}
         />
       </label>
       <input
@@ -344,25 +272,45 @@ function SignupForm({ id, compact = false }: { id: string; compact?: boolean }) 
         aria-hidden
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
       />
-      <label className={`bk-ok ${errs["ok"] ? "is-bad" : ""}`}>
-        <input name="ok" type="checkbox" />
+      <label
+        className={`mt-5 flex cursor-pointer items-start gap-3 text-[12px] leading-relaxed ${errs["ok"] ? "text-[#ff8fa3]" : "text-white/75"}`}
+      >
+        <input
+          name="ok"
+          type="checkbox"
+          className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[#c000ff]"
+        />
         <span>
           {black.consentText} Você sai quando quiser.{" "}
-          <a href={black.privacyUrl} target="_blank" rel="noopener noreferrer">
+          <a
+            href={black.privacyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2"
+          >
             Privacidade
           </a>
         </span>
       </label>
-      <button type="submit" disabled={busy} className="bk-btn">
-        {busy ? "Entrando..." : "Entrar no Grupo VIP"}
-        <ArrowUpRight aria-hidden />
+      <button
+        type="submit"
+        disabled={busy}
+        className="group mt-6 flex min-h-[54px] w-full items-center justify-between gap-4 bg-[#c000ff] px-5 text-[15px] font-semibold text-white shadow-[0_10px_40px_-10px_rgba(192,0,255,.8)] transition-[background,transform] hover:bg-[#a800e0] active:scale-[.99] disabled:cursor-wait disabled:opacity-70"
+      >
+        {busy ? "Entrando…" : "Entrar no Grupo VIP"}
+        <ArrowUpRight
+          className="h-5 w-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          aria-hidden
+        />
       </button>
-      <p className="bk-fine">Grátis. Só a Soccer manda mensagem no grupo.</p>
+      <p className="mt-3 text-[11px] text-white/55">
+        Grátis. Só os administradores mandam mensagem no grupo.
+      </p>
       {msg && (
         <p
           role="status"
           aria-live="polite"
-          className={`bk-msg ${msg.tone === "err" ? "is-err" : "is-ok"}`}
+          className={`mt-3 text-[13px] leading-relaxed ${msg.tone === "err" ? "text-[#ff8fa3]" : "text-[#e7b8ff]"}`}
         >
           {msg.text}
         </p>
@@ -374,15 +322,15 @@ function SignupForm({ id, compact = false }: { id: string; compact?: boolean }) 
 function Faq() {
   const [open, setOpen] = useState<string | null>(null);
   return (
-    <div className="bk-faq">
+    <div className="grid gap-10 md:grid-cols-[1fr_2.2fr]">
       {blackFaq.map((g) => (
-        <div key={g.group} className="contents" style={{ display: "contents" }}>
-          <p className="bk-faq__group">{g.group}</p>
-          <ul>
+        <div key={g.group} className="contents">
+          <p className="text-[13px] font-medium text-white/70 md:pt-5">{g.group}</p>
+          <ul className="border-t border-white/12">
             {g.items.map((it) => {
               const on = open === it.q;
               return (
-                <li key={it.q}>
+                <li key={it.q} className="border-b border-white/12">
                   <button
                     type="button"
                     aria-expanded={on}
@@ -390,13 +338,28 @@ function Faq() {
                       setOpen(on ? null : it.q);
                       if (!on) track("links_clique", { item_name: `Black FAQ: ${it.q}` });
                     }}
+                    className="flex w-full items-center justify-between gap-6 py-5 text-left text-[15px] text-white"
                   >
-                    <span>{it.q}</span>
-                    <span className="bk-faq__x" aria-hidden />
+                    <span className={on ? "font-medium" : ""}>{it.q}</span>
+                    <span
+                      aria-hidden
+                      className={`relative h-3.5 w-3.5 shrink-0 transition-transform duration-300 ${on ? "rotate-45" : ""}`}
+                    >
+                      <span
+                        className={`absolute left-0 top-1/2 h-px w-3.5 -translate-y-1/2 ${on ? "bg-[#c64bff]" : "bg-white/70"}`}
+                      />
+                      <span
+                        className={`absolute left-1/2 top-0 h-3.5 w-px -translate-x-1/2 ${on ? "bg-[#c64bff]" : "bg-white/70"}`}
+                      />
+                    </span>
                   </button>
-                  <div className={`bk-faq__a ${on ? "is-open" : ""}`}>
-                    <div>
-                      <p>{it.a}</p>
+                  <div
+                    className={`grid transition-[grid-template-rows] duration-300 ${on ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                  >
+                    <div className="overflow-hidden">
+                      <p className="max-w-[680px] pb-5 pr-6 text-[14px] leading-[1.75] text-white/65">
+                        {it.a}
+                      </p>
                     </div>
                   </div>
                 </li>
@@ -410,111 +373,33 @@ function Faq() {
 }
 
 function icsDownload() {
-  const ev = (uid: string, start: string, end: string, title: string, desc: string) => [
-    "BEGIN:VEVENT",
-    `UID:${uid}-${black.year}@lojasoccergames.com.br`,
-    `DTSTART:${start}`,
-    `DTEND:${end}`,
-    `SUMMARY:${title}`,
-    `DESCRIPTION:${desc}`,
-    "URL:https://links.lojasoccergames.com.br/black",
-    "END:VEVENT",
-  ];
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Soccer Games//Black 2026//PT",
-    ...ev(
-      "gta-vi",
-      "20261119T030000Z",
-      "20261119T040000Z",
-      "GTA 6 chega (Soccer Games)",
-      "Lançamento do GTA VI. As ofertas saem primeiro no Grupo VIP.",
-    ),
-    ...ev(
-      "fim-de-semana-gta",
-      "20261120T030000Z",
-      "20261123T025900Z",
-      "Fim de semana do GTA 6 na Soccer",
-      "Ofertas na loja e live na sexta, 20/11.",
-    ),
-    ...ev(
-      "black-friday",
-      "20261127T030000Z",
-      "20261201T025900Z",
-      "Black Friday Soccer Games",
-      "De 27 a 30/11, até a Cyber Monday.",
-    ),
+    "PRODID:-//Soccer Games//Black November//PT",
+    "BEGIN:VEVENT",
+    `UID:pre-black-${black.year}@lojasoccergames.com.br`,
+    "DTSTART:20261120T030000Z",
+    "DTEND:20261120T040000Z",
+    "SUMMARY:Pré-Black Soccer Games (GTA VI)",
+    "DESCRIPTION:Pré-Black da Soccer Games no fim de semana do GTA VI. Live na sexta. Black Friday em 27/11.",
+    "URL:https://links.lojasoccergames.com.br/black",
+    "END:VEVENT",
+    "BEGIN:VEVENT",
+    `UID:black-friday-${black.year}@lojasoccergames.com.br`,
+    "DTSTART:20261127T030000Z",
+    "DTEND:20261127T040000Z",
+    "SUMMARY:Black Friday Soccer Games",
+    "URL:https://links.lojasoccergames.com.br/black",
+    "END:VEVENT",
     "END:VCALENDAR",
   ].join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
-  a.download = "black-soccer-games-2026.ics";
+  a.download = "black-november-soccer-games.ics";
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   track("links_clique", { item_name: "Black: salvar na agenda" });
-}
-
-/** Trailer oficial (canal da Rockstar), incorporado só quando a pessoa toca no play. */
-function Trailer() {
-  const [on, setOn] = useState(false);
-  const id = black.trailerId;
-  return (
-    <div className="bk-player">
-      {on ? (
-        <iframe
-          src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
-          title="Trailer oficial do GTA VI"
-          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          allowFullScreen
-        />
-      ) : (
-        <button
-          type="button"
-          className="bk-player__face"
-          aria-label="Assistir ao trailer oficial do GTA VI"
-          onClick={() => {
-            setOn(true);
-            track("links_clique", { item_name: "Black: trailer GTA VI" });
-          }}
-        >
-          <img src={`https://i.ytimg.com/vi/${id}/maxresdefault.jpg`} alt="" loading="lazy" />
-          <span className="bk-player__play" aria-hidden>
-            <Play />
-          </span>
-          <span className="bk-player__cap">Trailer oficial · Rockstar Games</span>
-        </button>
-      )}
-    </div>
-  );
-}
-
-/** No computador, o trailer roda mudo atrás do topo, depois que a página carregou. */
-function BackdropVideo() {
-  const [ok, setOk] = useState(false);
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    const big = window.matchMedia("(min-width: 1024px)").matches;
-    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const save = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
-      ?.saveData;
-    if (!big || calm || save) return;
-    const t = window.setTimeout(() => setOk(true), 1800);
-    return () => window.clearTimeout(t);
-  }, []);
-  if (!ok) return null;
-  const id = black.trailerId;
-  return (
-    <div className={`bk-video ${on ? "is-on" : ""}`} aria-hidden>
-      <iframe
-        src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&playsinline=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3`}
-        title="Trailer do GTA VI ao fundo"
-        tabIndex={-1}
-        allow="autoplay; encrypted-media"
-        onLoad={() => window.setTimeout(() => setOn(true), 1200)}
-      />
-    </div>
-  );
 }
 
 export function BlackPage() {
@@ -522,7 +407,6 @@ export function BlackPage() {
   const [total, setTotal] = useState<number | null>(null);
   const [bar, setBar] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
-  const finalRef = useRef<HTMLDivElement>(null);
   const phase = useMemo(() => (now ? phaseAt(now).phase : "antes"), [now]);
 
   useEffect(() => {
@@ -533,407 +417,353 @@ export function BlackPage() {
     void readRpc<number>("black_vip_total").then((n) => {
       if (typeof n === "number" && n >= black.socialMin) setTotal(n);
     });
-    if (!("IntersectionObserver" in window)) return;
-    const seen = new Map<Element, boolean>();
-    const io = new IntersectionObserver(
-      (en) => {
-        en.forEach((e) => seen.set(e.target, e.isIntersecting));
-        setBar(![...seen.values()].some(Boolean) && window.scrollY > 300);
-      },
-      { threshold: 0 },
-    );
-    [formRef.current, finalRef.current].forEach((el) => el && io.observe(el));
+    const el = formRef.current;
+    if (!el || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver((en) => setBar(!en[0]!.isIntersecting), { threshold: 0 });
+    io.observe(el);
     return () => io.disconnect();
   }, []);
 
-  const toForm = (from: string) => {
+  const toForm = () => {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    track("links_clique", { item_name: `Black: ir para o cadastro (${from})` });
+    track("links_clique", { item_name: "Black: ir para o cadastro" });
   };
   const daysLeft = now
     ? Math.max(0, Math.floor(((phaseAt(now).target ?? now) - now) / 864e5))
     : null;
 
-  const order: Phase[] = ["antes", "lancamento", "pre", "entre", "black", "fim"];
-  const idx = order.indexOf(phase);
-  const steps: { n: string; when: string; t: string; d: string; from: Phase; to: Phase }[] = [
+  const what = [
     {
       n: "01",
-      when: "Até 18/11",
-      t: "Oferta antes do site",
-      d: "Toda semana a lista de ofertas chega no grupo antes de aparecer na loja.",
-      from: "antes",
-      to: "antes",
+      icon: Zap,
+      t: "Ofertas da semana até lá",
+      d: "Até a Black, toda semana tem oferta temática com preço baixo direto no site, sem cupom. O aviso sai primeiro no grupo.",
     },
     {
       n: "02",
-      when: "19/11",
-      t: "GTA 6 chegou",
-      d: "Dia do lançamento. Quem comprou na pré-venda recebe no e-mail e a gente ajuda a ativar.",
-      from: "lancamento",
-      to: "lancamento",
+      icon: Radio,
+      t: "Pré-Black do GTA VI",
+      d: `De 20 a 22 de novembro, no fim de semana do lançamento, os preços da loja descem. Live na ${black.liveDay}.`,
     },
     {
       n: "03",
-      when: "20 a 22/11",
-      t: "Fim de semana do GTA",
-      d: `Preços da loja descem no fim de semana do lançamento. Live na ${black.liveDay}.`,
-      from: "pre",
-      to: "pre",
-    },
-    {
-      n: "04",
-      when: "27 a 30/11",
-      t: "Black Friday Soccer",
-      d: "A Black de verdade, com o GTA 6 junto, até a Cyber Monday. O grupo vê primeiro.",
-      from: "entre",
-      to: "black",
+      icon: Gamepad2,
+      t: "Black Friday, dia 27",
+      d: "O grande dia da Black November, no mesmo grupo. Quem está dentro recebe cada oferta antes.",
     },
   ];
-  const prog = Math.min(
-    100,
-    Math.max(
-      4,
-      now
-        ? ((now - Date.parse("2026-10-26T00:00:00-03:00")) /
-            (Date.parse(black.bigEnd) - Date.parse("2026-10-26T00:00:00-03:00"))) *
-            100
-        : 4,
-    ),
-  );
-
-  const shelf = (
-    <div className="bk-shelf" aria-label="Jogos da Soccer">
-      <div className="bk-shelf__row">
-        {[0, 1].map((k) => (
-          <div key={k} aria-hidden={k === 1}>
-            {SHELF.map((s, i) => (
-              <span key={s} style={{ display: "contents" }}>
-                <Case slug={s} className="bk-shelf__case" w={240} />
-                {i % 4 === 3 && (
-                  <span className="bk-shelf__word bk-display">
-                    {["Entrega no e-mail", "Garantia vitalícia", "PS4 e PS5"][(i - 3) / 4] ??
-                      "Soccer Games"}
-                    <em>✦</em>
-                  </span>
-                )}
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
-    <div className="bk" data-theme="escuro">
-      <div className="bk-sky" aria-hidden>
-        <BackdropVideo />
+    <div
+      className="min-h-screen overflow-x-hidden bg-[#060608] font-sans text-white"
+      data-theme="escuro"
+    >
+      {/* fundo: grade e brilho roxo */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute inset-0 [background-image:linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(80%_60%_at_50%_20%,#000,transparent)]" />
+        <div className="absolute -top-40 left-1/2 h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(192,0,255,.38),transparent)] blur-2xl" />
+        <div className="absolute bottom-[-30%] right-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(192,0,255,.16),transparent)] blur-2xl" />
       </div>
-      <div className="bk-noise" aria-hidden />
 
-      <div className="bk-wrap">
-        <header className="bk-top">
-          <a
-            href="/"
-            aria-label="Soccer Games"
-            onClick={() => track("links_clique", { item_name: "Black: logo" })}
-          >
-            <img src="/logo-soccer.png" alt="Soccer Games" width={42} height={42} />
-          </a>
-          <span className="bk-chip">
-            <i aria-hidden /> Grupo VIP · Black {black.year}
-          </span>
-        </header>
+      <header className="relative z-10 mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-5">
+        <a
+          href="/"
+          aria-label="Soccer Games"
+          className="flex items-center"
+          onClick={() => track("links_clique", { item_name: "Black: logo" })}
+        >
+          <img src="/logo-soccer.png" alt="Soccer Games" width={40} height={40} className="h-10 w-10" />
+        </a>
+        <span className="flex items-center gap-2 text-[12px] text-white/70">
+          <span className="sg-live-dot h-1.5 w-1.5 rounded-full bg-[#c64bff]" aria-hidden />
+          Black November {black.year}
+        </span>
+      </header>
 
-        <section className="bk-hero">
-          <div className="bk-hero__title">
-            <span className="bk-kick">
-              <b>Grupo VIP</b> É de graça
+      {/* HERO: no celular, título, cadastro e depois a contagem; no computador, cadastro à direita */}
+      <section className="relative z-10 mx-auto grid w-full max-w-[1200px] gap-10 px-6 pb-16 pt-4 lg:grid-cols-[1fr_480px] lg:gap-x-16 lg:gap-y-10 lg:pb-24 lg:pt-14">
+        <div className="lg:col-start-1 lg:row-start-1">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#c64bff]">
+            Acesso antecipado
+          </p>
+          <h1 className="font-display mt-4 text-[clamp(46px,9.5vw,100px)] font-semibold leading-[.95] tracking-[-0.05em]">
+            A Black
+            <br />
+            <span className="bg-gradient-to-r from-white via-[#e9b6ff] to-[#c64bff] bg-clip-text text-transparent">
+              November
             </span>
-            <h1 className="bk-h1 bk-display">
-              <span className="bk-grad">GTA 6</span>
-              <span className="bk-h1__small">
-                na Black
-                <br />
-                da Soccer.
+            <br />
+            {phase === "antes" ? "vem aí." : phase === "fim" ? "foi assim." : "chegou."}
+          </h1>
+          <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-white/75 sm:text-[17px]">
+            Pré-Black no fim de semana do GTA VI e Black Friday no dia 27. As ofertas chegam
+            primeiro no Grupo VIP.
+          </p>
+        </div>
+
+        <div
+          ref={formRef}
+          id="cadastro"
+          className="relative scroll-mt-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center"
+        >
+          <div className="relative border border-white/15 bg-white/[.04] p-6 backdrop-blur-xl sm:p-8">
+            <span aria-hidden className="absolute left-0 top-8 h-7 w-[2px] bg-[#c000ff]" />
+            <p className="text-[12px] text-white/70">Grupo VIP no WhatsApp</p>
+            <h2 className="font-display mt-2 text-[26px] font-semibold leading-tight sm:text-[28px]">
+              Entre antes de todo mundo.
+            </h2>
+            <p className="mt-3 text-[14px] leading-relaxed text-white/70">
+              Avisos de oferta, horário da live e lembretes da Black. Só os administradores mandam
+              mensagem.
+            </p>
+            {total !== null && (
+              <p className="mt-4 text-[13px] text-white/80">
+                <b className="font-display text-[18px] text-white">
+                  {total.toLocaleString("pt-BR")}
+                </b>{" "}
+                pessoas já estão no grupo.
+              </p>
+            )}
+            <SignupForm id="topo" />
+          </div>
+        </div>
+
+        <div className="max-w-[520px] lg:col-start-1 lg:row-start-2">
+          <Countdown now={now} />
+          <button
+            type="button"
+            onClick={icsDownload}
+            className="mt-5 inline-flex items-center gap-2 text-[13px] text-white/70 underline underline-offset-4 hover:text-white"
+          >
+            <CalendarPlus className="h-4 w-4" aria-hidden /> Salvar as datas na agenda
+          </button>
+        </div>
+      </section>
+
+      {/* faixa */}
+      <div className="relative z-10 overflow-hidden border-y border-white/10 py-4 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+        <div className="flex w-max animate-[sg-marquee_36s_linear_infinite] gap-10 whitespace-nowrap motion-reduce:animate-none">
+          {[0, 1].map((k) => (
+            <span key={k} className="flex gap-10" aria-hidden={k === 1}>
+              {[
+                "Pré-Black do GTA VI",
+                "Live na sexta, 20/11",
+                "Black Friday 27/11",
+                "Entrega por e-mail",
+                "Garantia vitalícia",
+                "PS4 e PS5",
+              ].map((t) => (
+                <span
+                  key={t}
+                  className="font-display flex items-center gap-10 text-[20px] font-medium text-white/85"
+                >
+                  {t} <span className="text-[#c64bff]">✦</span>
+                </span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* O QUE VAI TER */}
+      <section
+        className="relative z-10 mx-auto w-full max-w-[1200px] px-6 py-20 lg:py-28"
+        aria-labelledby="bn-what"
+      >
+        <p className="text-[12px] text-white/55">O que vai ter na Black November</p>
+        <h2
+          id="bn-what"
+          className="font-display mt-3 max-w-[720px] text-[clamp(32px,5vw,58px)] font-semibold leading-[1.02]"
+        >
+          Um mês inteiro de oferta. <span className="text-white/40">Primeiro no grupo.</span>
+        </h2>
+        <div className="mt-12 grid border-y border-white/10 md:grid-cols-3">
+          {what.map((w, i) => (
+            <article
+              key={w.n}
+              className={`group relative overflow-hidden px-1 py-8 md:px-8 ${i ? "border-t border-white/10 md:border-l md:border-t-0" : ""}`}
+            >
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 [background:radial-gradient(420px_circle_at_50%_120%,rgba(192,0,255,.22),transparent_65%)] group-hover:opacity-100"
+              />
+              <div className="relative flex items-start justify-between">
+                <w.icon className="h-6 w-6 text-[#c64bff]" strokeWidth={1.4} aria-hidden />
+                <span className="font-display text-[56px] font-semibold leading-none text-white/[.07]">
+                  {w.n}
+                </span>
+              </div>
+              <h3 className="font-display relative mt-6 text-[22px] font-semibold">{w.t}</h3>
+              <p className="relative mt-3 max-w-[320px] text-[14px] leading-relaxed text-white/65">
+                {w.d}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-6 md:flex-row md:items-center md:justify-between">
+        <p className="font-display max-w-[700px] text-[clamp(24px,3.2vw,36px)] font-semibold leading-tight">
+          {daysLeft !== null && phase !== "fim" ? (
+            <>
+              Faltam{" "}
+              <span className="border-b-2 border-[#c000ff]">
+                {daysLeft === 1 ? "1 dia" : `${daysLeft} dias`}
               </span>
-            </h1>
-            <p className="bk-lead">
-              {phase === "antes" ? (
-                <>
-                  O GTA 6 chega dia <b>19/11</b>. O preço do <b>fim de semana do lançamento</b> e da{" "}
-                  <b>Black Friday</b> sai primeiro no Grupo VIP da Soccer.
-                </>
-              ) : (
-                <>
-                  O GTA 6 já chegou. As ofertas do <b>fim de semana do GTA</b> e da{" "}
-                  <b>Black Friday</b> saem primeiro no Grupo VIP da Soccer.
-                </>
-              )}
+              . Quem está no grupo fica sabendo antes.
+            </>
+          ) : (
+            "Quem está no grupo fica sabendo antes."
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={toForm}
+          className="flex min-h-[54px] shrink-0 items-center justify-between gap-6 bg-white px-6 text-[15px] font-semibold text-[#060608] transition-colors hover:bg-[#c000ff] hover:text-white md:min-w-[280px]"
+        >
+          Entrar no Grupo VIP <ArrowUpRight className="h-5 w-5" aria-hidden />
+        </button>
+      </section>
+
+      {/* GARANTIAS */}
+      <section
+        className="relative z-10 mx-auto w-full max-w-[1200px] px-6 py-20"
+        aria-label="Por que comprar na Soccer Games"
+      >
+        <div className="grid border-y border-white/10 sm:grid-cols-3">
+          {[
+            {
+              I: Mail,
+              t: "Chega no seu e-mail",
+              d: "Pix em geral em menos de 30 minutos, no horário de atendimento.",
+            },
+            {
+              I: ShieldCheck,
+              t: "Garantia vitalícia",
+              d: "Em todas as contas, seguindo as regras de utilização.",
+            },
+            {
+              I: Gamepad2,
+              t: "PS4 e PS5",
+              d: "Licença primária, que joga offline, ou secundária, mais barata.",
+            },
+          ].map(({ I, t, d }, i) => (
+            <div
+              key={t}
+              className={`py-7 sm:px-7 ${i ? "border-t border-white/10 sm:border-l sm:border-t-0" : ""}`}
+            >
+              <I className="h-5 w-5 text-[#c64bff]" strokeWidth={1.4} aria-hidden />
+              <p className="mt-4 text-[16px] font-semibold">{t}</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">{d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* DÚVIDAS */}
+      <section
+        className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pb-20"
+        aria-labelledby="bn-faq"
+      >
+        <p className="text-[12px] text-white/55">Antes de entrar</p>
+        <h2 id="bn-faq" className="font-display mt-3 text-[clamp(30px,4.4vw,48px)] font-semibold">
+          Dúvidas frequentes.
+        </h2>
+        <div className="mt-10">
+          <Faq />
+        </div>
+      </section>
+
+      {/* CADASTRO FINAL */}
+      <section className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pb-20">
+        <div className="grid gap-10 border border-white/15 bg-[linear-gradient(135deg,rgba(192,0,255,.18),rgba(255,255,255,.02)_55%)] p-6 sm:p-10 lg:grid-cols-[1fr_440px]">
+          <div>
+            <h2 className="font-display text-[clamp(30px,4vw,46px)] font-semibold leading-[1.02]">
+              O link sai primeiro no grupo.
+            </h2>
+            <p className="mt-4 max-w-[420px] text-[15px] leading-relaxed text-white/70">
+              Deixe seu nome e WhatsApp e entre agora. Leva menos de um minuto.
             </p>
           </div>
+          <SignupForm id="final" compact />
+        </div>
+      </section>
 
-          <button type="button" className="bk-btn bk-go" onClick={() => toForm("topo")}>
-            Entrar no Grupo VIP <ArrowUpRight aria-hidden />
-          </button>
-
-          <div className="bk-stage" aria-hidden>
-            <span className="bk-stage__ring" />
-            <span className="bk-stage__vi bk-display">VI</span>
-            <Case
-              slug={STAGE[0]!}
-              className="bk-stage__case"
-              style={{ left: "4%", top: "56%", rotate: "-12deg", animationDelay: "-2s" }}
-            />
-            <Case
-              slug={STAGE[1]!}
-              className="bk-stage__case"
-              style={{ right: "3%", top: "14%", rotate: "10deg", animationDelay: "-4s" }}
-            />
-            <Case
-              slug={STAGE[2]!}
-              className="bk-stage__case"
-              style={{ right: "6%", bottom: "8%", rotate: "-6deg", animationDelay: "-1s" }}
-            />
-            <Case slug={GTA} className="bk-stage__gta" w={540} />
-            <span className="bk-stage__tag bk-display">
-              {phase === "antes" ? "Pré-venda · PS5" : "PS5"}
-            </span>
-            <img
-              className="bk-stage__boy"
-              src="/black/mascote.webp"
-              alt=""
-              width={540}
-              height={1300}
-            />
-            <span className="bk-stage__floor" />
-          </div>
-
-          <div className="bk-hero__act">
-            <Countdown now={now} />
-            <button type="button" onClick={icsDownload} className="bk-agenda">
-              <CalendarPlus aria-hidden /> Salvar as datas na agenda
-            </button>
-            <div ref={formRef} id="cadastro" className="bk-card">
-              <h2 className="bk-card__title bk-display">Entra no grupo</h2>
-              <p className="bk-card__sub">
-                Nome e WhatsApp, e o grupo abre na hora. Leva menos de 1 minuto.
-              </p>
-              {total !== null && (
-                <p className="bk-card__count">
-                  <b className="bk-display">{total.toLocaleString("pt-BR")}</b> pessoas já estão no
-                  grupo.
-                </p>
-              )}
-              <SignupForm id="topo" />
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {shelf}
-
-      <div className="bk-wrap">
-        <section className="bk-sec" aria-labelledby="bk-fases">
-          <span className="bk-eyebrow">Como vai ser</span>
-          <h2 id="bk-fases" className="bk-h2 bk-display">
-            4 fases até <span className="bk-grad">a Black.</span>
-            <small>Tudo no mesmo grupo. Cada fase avisa primeiro quem está dentro.</small>
-          </h2>
-          <div className="bk-map">
-            <span className="bk-map__track" aria-hidden>
-              <i style={{ width: `${prog}%` }} />
-            </span>
-            {steps.map((s) => {
-              const a = order.indexOf(s.from);
-              const b = order.indexOf(s.to);
-              const st = idx > b ? "is-done" : idx >= a ? "is-now" : "";
-              return (
-                <article key={s.n} className={`bk-stagecard ${st}`}>
-                  <span className="bk-stagecard__pin">{st === "is-done" ? "✓" : s.n}</span>
-                  <p className="bk-stagecard__when">
-                    {s.when}
-                    {st === "is-now" && <em>agora</em>}
-                  </p>
-                  <h3 className="bk-display">{s.t}</h3>
-                  <p>{s.d}</p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="bk-sec" style={{ paddingTop: 0 }} aria-labelledby="bk-trailer">
-          <div className="bk-trailer">
-            <Trailer />
-            <div>
-              <span className="bk-eyebrow">Já viu o trailer?</span>
-              <h2 id="bk-trailer" className="bk-h2 bk-display">
-                Vai jogar <span className="bk-grad">no dia 19?</span>
-                <small>
-                  O GTA 6 entra no fim de semana do lançamento e na Black Friday da Soccer, em mídia
-                  digital, com entrega no e-mail. O preço de cada fase sai primeiro no grupo.
-                </small>
-              </h2>
-              <button
-                type="button"
-                className="bk-btn"
-                style={{ maxWidth: 380 }}
-                onClick={() => toForm("trailer")}
-              >
-                Quero o preço antes <ArrowUpRight aria-hidden />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {black.ownerPhoto && (
-          <section className="bk-sec" style={{ paddingTop: 0 }} aria-labelledby="bk-dono">
-            <div className="bk-owner">
-              <img src={black.ownerPhoto} alt="Geovane, dono da Soccer Games" loading="lazy" />
-              <div>
-                <span className="bk-eyebrow">Quem manda no grupo</span>
-                <h2 id="bk-dono" className="bk-h2 bk-display">
-                  É o Geovane <span className="bk-grad">que avisa.</span>
-                  <small>
-                    O dono da Soccer manda as ofertas no grupo. Só ele e a equipe mandam mensagem.
-                  </small>
-                </h2>
-              </div>
-            </div>
-          </section>
-        )}
-
-        <section aria-label="Por que comprar na Soccer Games">
-          <div className="bk-trust">
-            {[
-              {
-                I: Mail,
-                t: "Chega no seu e-mail",
-                d: "Pix em geral em menos de 30 minutos, no horário de atendimento.",
-              },
-              {
-                I: ShieldCheck,
-                t: "Garantia vitalícia",
-                d: "Em todas as contas, seguindo as regras de utilização.",
-              },
-              {
-                I: Gamepad2,
-                t: "PS4 e PS5",
-                d: "Licença primária, que joga offline, ou secundária, mais barata.",
-              },
-            ].map(({ I, t, d }) => (
-              <div key={t}>
-                <span className="bk-trust__ico">
-                  <I aria-hidden />
-                </span>
-                <span>
-                  <b>{t}</b>
-                  <span>{d}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="bk-sec" aria-labelledby="bk-faq">
-          <span className="bk-eyebrow">Antes de entrar</span>
-          <h2 id="bk-faq" className="bk-h2 bk-display">
-            Dúvidas
-          </h2>
-          <Faq />
-        </section>
-
-        <section style={{ paddingBottom: 72 }}>
-          <div className="bk-final">
-            <img
-              className="bk-final__boy"
-              src="/black/mascote.webp"
-              alt=""
-              aria-hidden
-              loading="lazy"
-            />
-            <div style={{ position: "relative" }}>
-              <span className="bk-eyebrow">
-                {daysLeft !== null && phase !== "fim"
-                  ? `Faltam ${daysLeft === 1 ? "1 dia" : `${daysLeft} dias`}`
-                  : "Grupo VIP"}
+      {/* ATENDIMENTO */}
+      <section
+        className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pb-28"
+        aria-label="Atendimento"
+      >
+        <p className="text-[12px] text-white/55">
+          Atendimento · segunda a sábado, das 9h às 21h · domingo, das 9h às 15h
+        </p>
+        <div className="mt-5 grid border-y border-white/10 sm:grid-cols-3">
+          {[
+            {
+              I: LifeBuoy,
+              t: "Central de Atendimento",
+              d: "Entrega, ativação, licenças e garantia",
+              u: withUtm(`${STORE}/central-de-atendimento/`, {
+                content: "black-central",
+                campaign: `black-${black.year}`,
+              }),
+            },
+            { I: Gamepad2, t: "Ver os jogos", d: "Mais de 380 jogos de PS4 e PS5", u: "/" },
+            {
+              I: MessageCircle,
+              t: "Falar no WhatsApp",
+              d: "Dúvida antes de comprar",
+              u: `https://wa.me/${WA}?text=${encodeURIComponent("Olá! Vim pela página da Black November.")}`,
+            },
+          ].map(({ I, t, d, u }, i) => (
+            <a
+              key={t}
+              href={u}
+              {...(u.startsWith("/") ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+              onClick={() => track("links_clique", { item_name: `Black: ${t}`, item_url: u })}
+              className={`group flex items-start justify-between gap-4 py-6 transition-colors hover:bg-white/[.03] sm:px-6 ${i ? "border-t border-white/10 sm:border-l sm:border-t-0" : ""}`}
+            >
+              <span>
+                <I className="h-5 w-5 text-[#c64bff]" strokeWidth={1.4} aria-hidden />
+                <span className="mt-3 block text-[15px] font-semibold">{t}</span>
+                <span className="mt-1 block text-[12px] text-white/55">{d}</span>
               </span>
-              <h2 className="bk-h2 bk-display">
-                O link sai <span className="bk-grad">primeiro no grupo.</span>
-                <small>
-                  Quem está dentro fica sabendo antes. Quem está fora, vê depois no site.
-                </small>
-              </h2>
-            </div>
-            <div ref={finalRef} className="bk-card">
-              <SignupForm id="final" compact />
-            </div>
-          </div>
-        </section>
+              <ArrowUpRight
+                className="h-4 w-4 text-white/40 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"
+                aria-hidden
+              />
+            </a>
+          ))}
+        </div>
+        <p className="mt-10 text-center text-[11px] text-white/40">
+          Soccer Games · lojasoccergames.com.br
+        </p>
+      </section>
 
-        <section style={{ paddingBottom: 110 }} aria-label="Atendimento">
-          <p className="bk-fine">
-            Atendimento · segunda a sábado, das 9h às 21h · domingo, das 9h às 15h
-          </p>
-          <div className="bk-help">
-            {[
-              {
-                I: LifeBuoy,
-                t: "Central de Atendimento",
-                d: "Entrega, ativação, licenças e garantia",
-                u: withUtm(`${STORE}/central-de-atendimento/`, {
-                  content: "black-central",
-                  campaign: `black-${black.year}`,
-                }),
-              },
-              { I: Gamepad2, t: "Ver os jogos", d: "Mais de 380 jogos de PS4 e PS5", u: "/" },
-              {
-                I: MessageCircle,
-                t: "Falar no WhatsApp",
-                d: "Dúvida antes de comprar",
-                u: `https://wa.me/${WA}?text=${encodeURIComponent("Olá! Vim pela página do Grupo VIP da Black.")}`,
-              },
-            ].map(({ I, t, d, u }) => (
-              <a
-                key={t}
-                href={u}
-                {...(u.startsWith("/") ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-                onClick={() => track("links_clique", { item_name: `Black: ${t}`, item_url: u })}
-              >
-                <span>
-                  <b>{t}</b>
-                  <small>{d}</small>
-                </span>
-                <I aria-hidden />
-              </a>
-            ))}
-          </div>
-          <p className="bk-fine" style={{ textAlign: "center", marginTop: 32 }}>
-            Soccer Games · lojasoccergames.com.br · GTA VI é marca da Rockstar Games
-          </p>
-        </section>
-      </div>
-
-      <div className={`bk-bar ${bar ? "" : "is-off"}`}>
-        <span className="bk-bar__txt">
-          <b className="bk-display">
+      {/* barra fixa no celular */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 flex items-center gap-4 border-t border-white/15 bg-[#0c0c10]/95 px-5 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur transition-transform duration-300 lg:hidden ${bar ? "translate-y-0" : "translate-y-full"}`}
+      >
+        <span className="flex-1 text-[11px] leading-tight text-white/60">
+          <b className="font-display block text-[16px] text-white">
             {daysLeft !== null && phase !== "fim"
               ? daysLeft === 1
                 ? "1 dia"
                 : `${daysLeft} dias`
-              : "Black 2026"}
+              : "Black November"}
           </b>
           {phase === "antes"
-            ? "para o GTA 6"
+            ? "para a Pré-Black"
             : phase === "fim"
               ? "Ofertas no grupo"
-              : phase === "black"
-                ? "para acabar a Black"
-                : "para a Black Friday"}
+              : "para a Black Friday"}
         </span>
-        <button type="button" onClick={() => toForm("barra")}>
+        <button
+          type="button"
+          onClick={toForm}
+          className="min-h-[46px] bg-[#c000ff] px-5 text-[14px] font-semibold text-white"
+        >
           Entrar no grupo
         </button>
       </div>

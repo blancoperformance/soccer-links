@@ -4,16 +4,12 @@ export const blackFaq: { group: string; items: { q: string; a: string }[] }[] = 
     group: "Grupo VIP e datas",
     items: [
       {
-        q: "Quando é a Black da Soccer Games?",
-        a: "O GTA VI chega dia 19 de novembro. No fim de semana do lançamento, de 20 a 22, tem oferta na loja e live na sexta, 20. A Black Friday vai de 27 a 30 de novembro, até a Cyber Monday. Tudo avisado primeiro no mesmo Grupo VIP.",
+        q: "Quando é a Black November da Soccer Games?",
+        a: "A campanha vai até o fim de novembro. A Pré-Black acontece no fim de semana de lançamento do GTA VI, de 20 a 22 de novembro, com live na sexta, 20. A Black Friday é no dia 27 de novembro, no mesmo grupo.",
       },
       {
-        q: "O GTA VI vai estar na Black?",
-        a: "Sim. O GTA VI entra no fim de semana do lançamento e na Black Friday da Soccer. O preço de cada momento sai primeiro no Grupo VIP.",
-      },
-      {
-        q: "O que é o fim de semana do GTA VI?",
-        a: "É o fim de semana de 20 a 22 de novembro, logo depois do lançamento, quando os preços da loja descem para a abertura da Black. Na sexta, 20, tem live. Quem está no Grupo VIP recebe os avisos primeiro.",
+        q: "O que é a Pré-Black do GTA VI?",
+        a: "É o fim de semana de 20 a 22 de novembro, quando os preços da loja descem para a abertura da Black. Na sexta, 20, tem live. Quem está no Grupo VIP recebe os avisos primeiro.",
       },
       {
         q: "O que é o Grupo VIP?",

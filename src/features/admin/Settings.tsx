@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
+  CalendarDays,
   BarChart3,
   CheckCircle2,
   Copy,
@@ -48,6 +49,12 @@ const CHECKS: { id: string; name: string; what: string; icon: LucideIcon }[] = [
     icon: Package,
   },
   { id: "black", name: "Grupo VIP da Black", what: "Cadastros da página /black.", icon: Crown },
+  {
+    id: "plano",
+    name: "Plano da Black",
+    what: "Calendário de ofertas, quadro do time e acessos.",
+    icon: CalendarDays,
+  },
 ];
 
 const STATE: Record<CheckState, { label: string; chip: string; icon: LucideIcon }> = {

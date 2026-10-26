@@ -8,6 +8,7 @@ import {
   type ThemeChoice,
 } from "./theme";
 import type { Workspace } from "./workspace";
+import { useFaviconBadge } from "./favicon";
 
 /** Raiz do painel: aplica o tema (claro, escuro ou automático) em tudo que está dentro. */
 export function PanelRoot({
@@ -223,6 +224,7 @@ export function Shell({
   title,
   sub,
   tools,
+  alert = 0,
   children,
 }: {
   workspace: Workspace;
@@ -240,8 +242,11 @@ export function Shell({
   title: string;
   sub?: ReactNode;
   tools?: ReactNode;
+  /** Quantas coisas esperando: vira o pontinho no ícone da aba e o número no título. */
+  alert?: number;
   children: ReactNode;
 }) {
+  useFaviconBadge(alert);
   const [account, setAccount] = useState(false);
   const [sheet, setSheet] = useState(false);
   const accRef = useRef<HTMLDivElement>(null);

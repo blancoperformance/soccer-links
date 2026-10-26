@@ -9,6 +9,11 @@ import {
   Crown,
   Download,
   Globe,
+  LayoutGrid,
+  List,
+  SquareKanban,
+  UserCog,
+  Workflow,
   Mail,
   Radio,
   RefreshCw,
@@ -20,7 +25,9 @@ import {
 import { Card, Note, Scoreboard, Shell, ShellBoot, type NavGroup } from "../ui";
 import { supabase } from "@/integrations/supabase/client";
 import { setInternalDevice } from "@/lib/tracking";
-import { canOpenBlack, forgetBlackAccess, setWorkspace, type Workspace } from "../workspace";
+import { forgetBlackAccess, setWorkspace, type Workspace } from "../workspace";
+import { loadAcesso, type Acesso } from "./plano/data";
+import { Plano, type PlanoSection } from "./plano/Plano";
 import {
   dateTime,
   dayKey,
@@ -122,7 +129,18 @@ function Confirm({
   );
 }
 
-type BlackSection = "aovivo" | "numeros" | "cadastros";
+type VipSection = "aovivo" | "numeros" | "cadastros";
+type BlackSection = VipSection | PlanoSection;
+const VIP_SECS: string[] = ["aovivo", "numeros", "cadastros"];
+const ALL_SECS: string[] = [
+  ...VIP_SECS,
+  "plano",
+  "calendario",
+  "lista",
+  "quadro",
+  "equipe",
+  "fluxo",
+];
 type Period = { kind: "preset"; days: 1 | 7 | 30 } | { kind: "custom"; from: string; to: string };
 const PERIOD_KEY = "sg:black:periodo";
 function readPeriod(): Period {
@@ -159,6 +177,8 @@ const ago = (iso: string, now: number) => {
 export function BlackLeads() {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
+  const [acesso, setAcesso] = useState<Acesso | null>(null);
+  const vip = acesso?.vip ?? false;
   const [rows, setRows] = useState<BlackLead[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("Atualizando…");
@@ -172,8 +192,8 @@ export function BlackLeads() {
   const [clock, setClock] = useState(Date.now());
   const [sec, setSec] = useState<BlackSection>(() => {
     try {
-      const v = window.localStorage.getItem("sg:black:secao");
-      return v === "numeros" || v === "cadastros" ? v : "aovivo";
+      const v = window.localStorage.getItem("sg:black:secao") ?? "";
+      return (ALL_SECS.includes(v) ? v : "plano") as BlackSection;
     } catch {
       return "aovivo";
     }
@@ -207,16 +227,26 @@ export function BlackLeads() {
         void navigate({ to: "/admin", replace: true });
         return;
       }
-      const ok = await canOpenBlack(s.user.id);
+      const a = await loadAcesso();
       if (!alive) return;
-      if (!ok) {
+      if (!(a.vip || a.papel || a.dono)) {
         setWorkspace("links");
         void navigate({ to: "/admin", replace: true });
         return;
       }
       setInternalDevice(true);
+      setAcesso(a);
+      // Abre numa tela que a pessoa pode ver.
+      setSec((cur) => {
+        const vipOk = VIP_SECS.includes(cur)
+          ? a.vip
+          : cur === "equipe"
+            ? a.dono
+            : Boolean(a.papel) || a.semSql || cur === "fluxo";
+        return vipOk ? cur : a.papel || a.semSql ? "plano" : "aovivo";
+      });
       setSession(s);
-      void import("../Dashboard");
+      if (a.links) void import("../Dashboard");
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") void navigate({ to: "/admin", replace: true });
@@ -244,13 +274,13 @@ export function BlackLeads() {
 
   // First load, then every 60 s while the tab is visible.
   useEffect(() => {
-    if (!session) return;
+    if (!session || !vip) return;
     void load();
     const id = window.setInterval(() => {
       if (document.visibilityState === "visible") void load();
     }, REFRESH_MS);
     return () => window.clearInterval(id);
-  }, [session, load]);
+  }, [session, vip, load]);
 
   const all = useMemo(() => rows ?? [], [rows]);
   const rowsRef = useRef<BlackLead[] | null>(null);
@@ -313,7 +343,7 @@ export function BlackLeads() {
 
   // Live block: newest sign-ups every 15 s; a new one also refreshes the full list.
   useEffect(() => {
-    if (!session) return;
+    if (!session || !vip) return;
     let alive = true;
     const tick = async () => {
       setClock(Date.now());
@@ -335,7 +365,7 @@ export function BlackLeads() {
       alive = false;
       window.clearInterval(id);
     };
-  }, [session, load]);
+  }, [session, vip, load]);
 
   const switchTo = (w: Workspace) => {
     setWorkspace(w);
@@ -395,7 +425,8 @@ export function BlackLeads() {
     }
   };
 
-  if (!session) return <ShellBoot workspace="black" />;
+  if (!session || !acesso) return <ShellBoot workspace="black" />;
+  const plano = !VIP_SECS.includes(sec);
 
   const total = all.length;
   const maxDay = Math.max(1, ...stats.days.map((d) => d.n));
@@ -436,17 +467,67 @@ export function BlackLeads() {
     },
   ];
 
+  const temPlano = Boolean(acesso.papel) || acesso.semSql;
   const groups: NavGroup[] = [
+    ...(temPlano
+      ? [
+          {
+            label: "plano da black",
+            items: [
+              { id: "plano", label: "Hoje no plano", icon: LayoutGrid },
+              { id: "calendario", label: "Calendário", icon: CalendarDays },
+              { id: "lista", label: "Ofertas", icon: List },
+              { id: "quadro", label: "Quadro do time", icon: SquareKanban },
+            ],
+          },
+        ]
+      : []),
+    ...(vip
+      ? [
+          {
+            label: "grupo vip",
+            items: [
+              { id: "aovivo", label: "Ao vivo", icon: Radio, live: true },
+              { id: "numeros", label: "Números", icon: BarChart3 },
+              { id: "cadastros", label: "Cadastros", icon: Users, badge: stats.today || undefined },
+            ],
+          },
+        ]
+      : []),
     {
-      label: "grupo vip",
+      label: "sistema",
       items: [
-        { id: "aovivo", label: "Ao vivo", icon: Radio, live: true },
-        { id: "numeros", label: "Números", icon: BarChart3 },
-        { id: "cadastros", label: "Cadastros", icon: Users, badge: stats.today || undefined },
+        ...(acesso.dono ? [{ id: "equipe", label: "Equipe e acessos", icon: UserCog }] : []),
+        { id: "fluxo", label: "Como funciona", icon: Workflow },
       ],
     },
   ];
+  const tabs = groups.flatMap((g) => g.items.map((i) => i.id)).slice(0, 4);
   const titles: Record<BlackSection, { title: string; sub: string }> = {
+    plano: {
+      title: "Hoje no plano",
+      sub: "A oferta do dia, as mensagens prontas para o grupo e o que vem depois.",
+    },
+    calendario: {
+      title: "Calendário de ofertas",
+      sub: "Um dia por quadrado, com a cor da fase. Clique no dia para abrir ou criar a oferta.",
+    },
+    lista: {
+      title: "Ofertas da campanha",
+      sub: "Todas as ofertas em ordem de data, com preço, licença e etapas.",
+    },
+    quadro: {
+      title: "Quadro do time",
+      sub: "Quem está fazendo o quê. Arraste o card para mudar de coluna.",
+    },
+    equipe: {
+      title: "Equipe e acessos",
+      sub: "Quem entra no painel e o que cada pessoa abre. Só o dono vê esta tela.",
+    },
+    fluxo: {
+      title: "Como funciona",
+      sub: "O caminho de cada oferta, do jogo escolhido até a liberação no grupo.",
+    },
     aovivo: {
       title: "Grupo VIP ao vivo",
       sub: "Os últimos cadastros na landing da Black, atualizando a cada 15 segundos.",
@@ -519,7 +600,7 @@ export function BlackLeads() {
   return (
     <Shell
       workspace="black"
-      canSwitch
+      canSwitch={acesso.links}
       onSwitch={switchTo}
       product="Black November"
       email={session.user.email}
@@ -527,15 +608,28 @@ export function BlackLeads() {
       groups={groups}
       current={sec}
       onNav={(id) => goSec(id as BlackSection)}
-      tabs={["aovivo", "numeros", "cadastros"]}
+      tabs={tabs}
+      alert={vip ? stats.today : 0}
       eyebrow={
-        <>
-          <span className="sg-dot sg-dot--live" aria-hidden /> {status} · atualiza sozinho
-        </>
+        plano ? (
+          <>
+            <span className="sg-dot sg-dot--live" aria-hidden />{" "}
+            {acesso.papel === "editor"
+              ? "você edita"
+              : acesso.papel === "leitor"
+                ? "só leitura"
+                : "plano"}{" "}
+            · atualiza ao vivo
+          </>
+        ) : (
+          <>
+            <span className="sg-dot sg-dot--live" aria-hidden /> {status} · atualiza sozinho
+          </>
+        )
       }
       title={titles[sec].title}
       sub={titles[sec].sub}
-      tools={sec === "aovivo" ? undefined : period$}
+      tools={sec === "aovivo" || plano ? undefined : period$}
     >
       <div className="sg-stack">
         {notice && (
@@ -543,6 +637,8 @@ export function BlackLeads() {
             {notice}
           </Note>
         )}
+
+        {plano && <Plano section={sec as PlanoSection} acesso={acesso} toast={setNotice} />}
 
         {(sec === "aovivo" || sec === "numeros") && (
           <>

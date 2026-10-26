@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { db } from "@/lib/db";
 
 /**
@@ -29,13 +30,18 @@ let cache: { userId: string; result: Promise<boolean> } | null = null;
 
 /**
  * True when the logged-in user may open the Black 2026 panel. The database decides
- * (`black_vip_is_admin`); any error counts as "no".
+ * (`black_vip_is_admin`) or the Black plan team (`black_papel`); any error counts as "no".
  */
 export function canOpenBlack(userId: string): Promise<boolean> {
   if (cache?.userId === userId) return cache.result;
-  const result = Promise.resolve(db.rpc("black_vip_is_admin"))
+  const vip = Promise.resolve(db.rpc("black_vip_is_admin"))
     .then(({ data, error }) => !error && data === true)
     .catch(() => false);
+  // Equipe do plano da Black (black_papel). Sem o SQL do plano a função não existe: conta como não.
+  const team = Promise.resolve((db as unknown as SupabaseClient).rpc("black_papel"))
+    .then(({ data, error }) => !error && (data === "editor" || data === "leitor"))
+    .catch(() => false);
+  const result = Promise.all([vip, team]).then((r) => r.some(Boolean));
   cache = { userId, result };
   return result;
 }

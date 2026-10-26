@@ -847,6 +847,27 @@ export async function loadSystemChecks(now = Date.now()): Promise<Record<string,
         throw e;
       }
     }),
+    run("plano", async () => {
+      const r = await (
+        db as unknown as {
+          rpc: (f: string) => PromiseLike<{ data: unknown; error: { code?: string } | null }>;
+        }
+      ).rpc("black_papel");
+      if (r.error && ["PGRST202", "42883"].includes(r.error.code ?? ""))
+        return {
+          state: "warn",
+          detail:
+            "O plano da Black (calendário, quadro do time e acessos) ainda não está ativo no banco.",
+          fix: "Rodar no Supabase (SQL Editor) o arquivo supabase/migrations/20261026100000_soccer_black_plano.sql.",
+        };
+      if (r.error) throw r.error;
+      return {
+        state: "ok",
+        detail: r.data
+          ? `Plano da Black ativo. Seu acesso: ${r.data === "editor" ? "edita" : "só vê"}.`
+          : "Plano da Black ativo. Este e-mail não está na equipe da Black.",
+      };
+    }),
     run("black", async () => {
       const at = await lastRow("black_vip_leads");
       return {

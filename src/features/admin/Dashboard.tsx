@@ -783,6 +783,7 @@ export function Dashboard() {
       product="Links da bio"
       email={session.user.email}
       onSignOut={signOut}
+      alert={leadsToCall}
       groups={groups}
       current={section}
       onNav={(id) => go(id as SectionId)}

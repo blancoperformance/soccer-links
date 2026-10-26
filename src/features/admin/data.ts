@@ -617,7 +617,7 @@ export function leadsDispatchCsv(rows: LeadRow[]) {
 
 /* ---------- vendas da loja (via /api/vendas, no servidor) ---------- */
 
-export type SalesError = "scope" | "token" | "api" | "auth";
+export type SalesError = "scope" | "invalid" | "token" | "api" | "auth";
 
 /** Pedidos pagos da Nuvemshop que vieram do links. O token da loja nunca passa pelo navegador. */
 export async function loadSalesReport(from: Date, to: Date): Promise<SalesReport> {
@@ -630,7 +630,8 @@ export async function loadSalesReport(from: Date, to: Date): Promise<SalesReport
   });
   if (r.status === 401) throw new Error("auth");
   const body = (await r.json()) as SalesReport & { error?: string };
-  if (body.error) throw new Error(["scope", "token"].includes(body.error) ? body.error : "api");
+  if (body.error)
+    throw new Error(["scope", "invalid", "token"].includes(body.error) ? body.error : "api");
   return body;
 }
 
@@ -837,6 +838,12 @@ export async function loadSystemChecks(now = Date.now()): Promise<Record<string,
             detail:
               "O app da Nuvemshop não tem permissão para ler pedidos. A aba Vendas fica sem dados.",
             fix: 'No app da Nuvemshop, marcar "Pedidos: ler", reinstalar, e trocar NUVEMSHOP_TOKEN na Vercel pelo token novo.',
+          };
+        if (k === "invalid")
+          return {
+            state: "bad",
+            detail: "A Nuvemshop recusou o token: ele não vale ou é de outra loja.",
+            fix: 'Colar na Vercel o NUVEMSHOP_TOKEN e o NUVEMSHOP_STORE_ID da página "Pronto" e fazer Redeploy.',
           };
         if (k === "token")
           return {

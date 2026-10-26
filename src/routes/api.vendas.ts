@@ -60,7 +60,7 @@ export const Route = createFileRoute("/api/vendas")({
           return json(await fetchLinkSales(storeId, token, min, to, bioCoupon));
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
-          if (msg === "scope") return json({ error: "scope" });
+          if (msg === "scope" || msg === "invalid") return json({ error: msg });
           console.error("[api/vendas] Nuvemshop:", msg);
           return json({ error: "api" });
         }

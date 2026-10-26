@@ -126,7 +126,9 @@ export async function fetchLinkSales(
       },
     );
     if (r.status === 404) break; // sem pedidos, ou passou da última página
-    if (r.status === 401 || r.status === 403) throw new Error("scope");
+    // 401 = token inválido ou de outra loja; 403 = token certo, mas sem a permissão de ler pedidos.
+    if (r.status === 401) throw new Error("invalid");
+    if (r.status === 403) throw new Error("scope");
     if (!r.ok) throw new Error(`api ${r.status}`);
     const list = (await r.json()) as ApiOrder[];
     for (const o of list) {

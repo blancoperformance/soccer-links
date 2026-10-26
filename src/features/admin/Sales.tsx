@@ -26,7 +26,7 @@ export function Sales({ from, to }: { from: Date; to: Date }) {
         const m = e instanceof Error ? e.message : "";
         setSt({
           kind: "error",
-          reason: (["scope", "token", "auth"].includes(m) ? m : "api") as SalesError,
+          reason: (["scope", "invalid", "token", "auth"].includes(m) ? m : "api") as SalesError,
         });
       },
     );
@@ -47,11 +47,13 @@ export function Sales({ from, to }: { from: Date; to: Date }) {
       >
         {st.reason === "scope"
           ? "O app Soccer Links na Nuvemshop ainda não tem permissão para ler pedidos. No painel de parceiros, marque a permissão de pedidos (leitura), reinstale o app na loja e troque o NUVEMSHOP_TOKEN na Vercel."
-          : st.reason === "token"
-            ? "O token da Nuvemshop não está configurado na Vercel."
-            : st.reason === "auth"
-              ? "Sua sessão expirou. Entre de novo no painel."
-              : "Não deu para ler os pedidos da loja agora. Tente de novo em alguns minutos."}
+          : st.reason === "invalid"
+            ? 'A Nuvemshop recusou o token: ele não vale ou é de outra loja. Confira se o NUVEMSHOP_TOKEN e o NUVEMSHOP_STORE_ID na Vercel são os da página "Pronto" e faça Redeploy.'
+            : st.reason === "token"
+              ? "O token da Nuvemshop não está configurado na Vercel."
+              : st.reason === "auth"
+                ? "Sua sessão expirou. Entre de novo no painel."
+                : "Não deu para ler os pedidos da loja agora. Tente de novo em alguns minutos."}
       </p>
     );
 

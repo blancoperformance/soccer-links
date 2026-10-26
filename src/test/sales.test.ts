@@ -17,28 +17,48 @@ describe("vendas do links", () => {
       {
         number: 101,
         total: "89.90",
-        landing_url: "https://lojasoccergames.com.br/produtos/fc26/?utm_source=tiktok&utm_medium=bio&utm_campaign=semana3",
+        landing_url:
+          "https://lojasoccergames.com.br/produtos/fc26/?utm_source=tiktok&utm_medium=bio&utm_campaign=semana3",
         coupon: [],
         products: [{ name: "FC 26", quantity: 1, price: "89.90" }],
       },
       "BIO1",
     );
-    expect(viaLink).toMatchObject({ via: "link", source: "tiktok", campaign: "semana3", total: 89.9, sid: null });
+    expect(viaLink).toMatchObject({
+      via: "link",
+      source: "tiktok",
+      campaign: "semana3",
+      total: 89.9,
+      sid: null,
+    });
 
     const viaCupom = toLinkSale(
-      { number: 102, total: 50, landing_url: "https://lojasoccergames.com.br/", coupon: [{ code: "bio1" }] },
+      {
+        number: 102,
+        total: 50,
+        landing_url: "https://lojasoccergames.com.br/",
+        coupon: [{ code: "bio1" }],
+      },
       "BIO1",
     );
     expect(viaCupom).toMatchObject({ via: "cupom", source: null, coupon: "bio1" });
 
     expect(
-      toLinkSale({ number: 103, total: 50, landing_url: "https://lojasoccergames.com.br/?utm_medium=cpc" }, "BIO1"),
+      toLinkSale(
+        { number: 103, total: 50, landing_url: "https://lojasoccergames.com.br/?utm_medium=cpc" },
+        "BIO1",
+      ),
     ).toBeNull();
   });
 
   it("soma a loja, pula cancelado e avisa sem permissão", async () => {
     const orders = [
-      { number: 1, total: "100", landing_url: "/?utm_medium=bio", created_at: "2026-10-20T10:00:00Z" },
+      {
+        number: 1,
+        total: "100",
+        landing_url: "/?utm_medium=bio",
+        created_at: "2026-10-20T10:00:00Z",
+      },
       { number: 2, total: "50", landing_url: "/", created_at: "2026-10-20T11:00:00Z" },
       { number: 3, total: "70", status: "cancelled", landing_url: "/?utm_medium=bio" },
     ];
@@ -48,6 +68,12 @@ describe("vendas do links", () => {
     expect(rep.sales.map((s) => s.number)).toEqual([1]);
 
     const denied = (async () => new Response("{}", { status: 403 })) as unknown as typeof fetch;
-    await expect(fetchLinkSales("1", "t", new Date(0), new Date(), "BIO1", denied)).rejects.toThrow("scope");
+    await expect(fetchLinkSales("1", "t", new Date(0), new Date(), "BIO1", denied)).rejects.toThrow(
+      "scope",
+    );
+    const bad = (async () => new Response("{}", { status: 401 })) as unknown as typeof fetch;
+    await expect(fetchLinkSales("1", "t", new Date(0), new Date(), "BIO1", bad)).rejects.toThrow(
+      "invalid",
+    );
   });
 });

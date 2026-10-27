@@ -223,11 +223,12 @@
   display: grid;
   gap: 32px;
   align-content: center;
-  padding: 220px 0 40px;
+  padding-top: 220px;
+  padding-bottom: 40px;
 }
 @media (min-width: 768px) {
   .sb-hero__body {
-    padding-top: 260px;
+    padding-top: 280px;
   }
 }
 @media (min-width: 1024px) {
@@ -235,7 +236,8 @@
     grid-template-columns: minmax(0, 1fr) 420px;
     gap: 56px;
     align-items: center;
-    padding: 48px 0 56px;
+    padding-top: 48px;
+    padding-bottom: 64px;
   }
 }
 .sb-h1 {
@@ -363,14 +365,14 @@
 .sb-dg {
   position: relative;
   display: inline-block;
-  height: 1em;
+  height: 1.2em;
   overflow: hidden;
 }
 .sb-dg i {
   display: block;
   font-style: normal;
-  height: 1em;
-  line-height: 1;
+  height: 1.2em;
+  line-height: 1.2;
 }
 .sb-dg i {
   animation: sb-roll 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;

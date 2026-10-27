@@ -680,7 +680,7 @@
 .sb-state--done {
   color: #6ee7b7;
 }
-.sb-level__date {
+.sb-level .sb-level__date {
   margin-top: auto;
   font-size: 34px;
   font-weight: 700;

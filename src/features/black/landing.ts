@@ -77,6 +77,7 @@ const SEGMENTS: [string, number, number][] = [
 ];
 
 type YTPlayer = {
+  getCurrentTime?: () => number;
   unloadModule?: (m: string) => void;
   loadVideoById: (o: { videoId: string; startSeconds: number; endSeconds: number }) => void;
   mute: () => void;
@@ -111,6 +112,7 @@ export function startReel(root: HTMLElement) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   let i = 0;
   let show = 0;
+  let poll = 0;
   const go = () => {
     const YT = window.YT;
     if (!YT?.Player) return;
@@ -144,7 +146,7 @@ export function startReel(root: HTMLElement) {
             e.target.unloadModule?.("captions");
             e.target.unloadModule?.("cc");
             window.clearTimeout(show);
-            show = window.setTimeout(() => wrap.classList.remove("bfm-wait"), 700);
+            show = window.setTimeout(() => wrap.classList.remove("bfm-wait"), 1100);
           } else {
             window.clearTimeout(show);
             wrap.classList.add("bfm-wait");
@@ -158,6 +160,13 @@ export function startReel(root: HTMLElement) {
         },
       },
     });
+    // esconde o vídeo um pouco antes do fim de cada trecho: o YouTube mostra o ícone de pausa ao parar
+    window.clearInterval(poll);
+    poll = window.setInterval(() => {
+      const end = SEGMENTS[i]![2];
+      const t = player.getCurrentTime?.() ?? 0;
+      if (t > end - 1.2) wrap.classList.add("bfm-wait");
+    }, 200);
   };
   if (window.YT?.Player) go();
   else {

@@ -379,6 +379,7 @@ function Reel() {
       {video && clip(n, true)}
       {video && pre && clip(n + 1, false)}
       <div className="bk-reel__shade" />
+      <div className="bk-reel__glow" />
     </div>
   );
 }
@@ -585,48 +586,23 @@ export function BlackPage() {
 
   return (
     <div className="bk" data-theme="escuro">
-      <header className="bk-nav">
-        <a
-          href="/"
-          className="bk-nav__logo"
-          aria-label="Soccer Games"
-          onClick={() => track("links_clique", { item_name: "Black: logo" })}
-        >
-          <img src="/logo-soccer.png" alt="" width={34} height={34} className="h-[34px] w-[34px]" />
-          <b>Soccer Games</b>
-        </a>
-        <nav className="bk-nav__links" aria-label="Seções">
-          <a href="#gta">
-            <span>01</span>GTA 6
-          </a>
-          <a href="#duvidas">
-            <span>02</span>Dúvidas
-          </a>
-          <a href="#entrar">
-            <span>03</span>Grupo VIP
-          </a>
-        </nav>
-        <div className="bk-nav__right">
-          <span className="bk-nav__status bk-tag">
-            <i className="bk-dot" aria-hidden /> Grupo VIP aberto
-          </span>
-          <button type="button" className="bk-nav__cta" onClick={() => toForm("menu")}>
-            Entrar no VIP <ArrowUpRight className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
-      </header>
-
-      <aside className="bk-rail" aria-hidden>
-        <span>Black Soccer {black.year}</span>
-        <i />
-        <span>GTA 6 · 19.11</span>
-      </aside>
-
       <main className="bk-main">
         {/* TOPO */}
         <section className="bk-hero" aria-labelledby="bk-h1">
           <Reel />
-          <div className="bk-hud">
+          <header className="bk-top bk-pad">
+            <a
+              href="/"
+              aria-label="Soccer Games"
+              onClick={() => track("links_clique", { item_name: "Black: logo" })}
+            >
+              <img src="/logo-soccer.png" alt="Soccer Games" width={42} height={42} />
+            </a>
+            <span className="bk-top__live">
+              <i aria-hidden /> Black {black.year} · GTA 6
+            </span>
+          </header>
+          <div className="bk-hud bk-pad">
             <span className="bk-chip">
               <i className="bk-rec" aria-hidden /> Trailer oficial
             </span>
@@ -636,13 +612,12 @@ export function BlackPage() {
           </div>
 
           <div className="bk-hero__body bk-pad">
-            <span className="bk-corner" aria-hidden />
             <div>
-              <p className="bk-tag bk-tag--ac">Black Soccer {black.year}</p>
+              <p className="bk-kick">GTA 6 · 19 de novembro</p>
               <h1 id="bk-h1" className="bk-h">
                 GTA 6 na Black
                 <br />
-                <span className="dim">da Soccer.</span>
+                <span className="bk-grad">da Soccer.</span>
               </h1>
               <p className="bk-lede">
                 O GTA 6 chega dia <b>19/11</b>. O preço do <b>fim de semana do lançamento</b> e da{" "}
@@ -651,7 +626,7 @@ export function BlackPage() {
               <button
                 type="button"
                 onClick={icsDownload}
-                className="mt-6 inline-flex items-center gap-2 text-[13px] text-white/65 underline underline-offset-4 hover:text-white"
+                className="mt-6 hidden items-center gap-2 text-[13px] text-white/65 underline underline-offset-4 hover:text-white lg:inline-flex"
               >
                 <CalendarPlus className="h-4 w-4" aria-hidden /> Salvar as datas na agenda
               </button>
@@ -662,25 +637,27 @@ export function BlackPage() {
           </div>
 
           <div className="bk-strip">
-            {(
-              [
-                [["antes", "lancamento"], "Lançamento", "19/11", "GTA 6 para PS5"],
-                [["pre"], "Fim de semana", "20 a 22/11", "Do GTA, com live na sexta"],
-                [["entre", "black"], "Black Friday", "27 a 30/11", "Até a Cyber Monday"],
-              ] as [Phase[], string, string, string][]
-            ).map(([ph, l, d, s]) => (
-              <div key={l} className={ph.includes(phase) ? "is-now" : ""}>
-                <span className="bk-tag">{l}</span>
-                <b>{d}</b>
-                <small>{s}</small>
+            <div className="bk-strip__in bk-pad">
+              {(
+                [
+                  [["antes", "lancamento"], "Lançamento", "19/11", "GTA 6 para PS5"],
+                  [["pre"], "Fim de semana", "20 a 22/11", "Do GTA, com live na sexta"],
+                  [["entre", "black"], "Black Friday", "27 a 30/11", "Até a Cyber Monday"],
+                ] as [Phase[], string, string, string][]
+              ).map(([ph, l, d, s]) => (
+                <div key={l} className={ph.includes(phase) ? "is-now" : ""}>
+                  <span className="bk-tag">{l}</span>
+                  <b>{d}</b>
+                  <small>{s}</small>
+                </div>
+              ))}
+              <div role="timer" aria-label="Contagem regressiva">
+                <span className="bk-tag">{phase === "fim" ? "Black 2026" : "Faltam"}</span>
+                <b>{phase === "fim" ? "Encerrada" : clock}</b>
+                <small>
+                  {phase === "fim" ? "Ofertas seguem no grupo" : `para ${COUNT_TO[phase]}`}
+                </small>
               </div>
-            ))}
-            <div role="timer" aria-label="Contagem regressiva">
-              <span className="bk-tag">{phase === "fim" ? "Black 2026" : "Faltam"}</span>
-              <b>{phase === "fim" ? "Encerrada" : clock}</b>
-              <small>
-                {phase === "fim" ? "Ofertas seguem no grupo" : `para ${COUNT_TO[phase]}`}
-              </small>
             </div>
           </div>
         </section>
@@ -688,7 +665,7 @@ export function BlackPage() {
         {/* GTA 6 E O GRUPO */}
         <section
           id="gta"
-          className="bk-cells"
+          className="bk-cells bk-box"
           aria-label="GTA 6 e o Grupo VIP"
           style={{ scrollMarginTop: 60 }}
         >
@@ -797,7 +774,7 @@ export function BlackPage() {
         </section>
 
         {/* ATENDIMENTO */}
-        <nav className="bk-help" aria-label="Atendimento">
+        <nav className="bk-help bk-box" aria-label="Atendimento">
           {[
             {
               I: LifeBuoy,

@@ -46,7 +46,6 @@
     var(--glass-edge),
     0 24px 60px -24px rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(22px) saturate(150%);
-  -webkit-backdrop-filter: blur(22px) saturate(150%);
   border-radius: 18px;
 }
 /* luz na borda de cima */
@@ -1214,7 +1213,6 @@
   background: rgba(14, 12, 20, 0.62);
   box-shadow: var(--glass-edge);
   backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
 }
 .sb-nav__brand {
   display: inline-flex;
@@ -1381,7 +1379,6 @@
     var(--glass-edge),
     0 30px 80px -40px rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(26px) saturate(140%);
-  -webkit-backdrop-filter: blur(26px) saturate(140%);
 }
 
 /* datas: células dentro do painel */
@@ -1552,7 +1549,6 @@
     inset 0 0 0 1px rgba(255, 255, 255, 0.09),
     0 30px 70px -30px rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(28px) saturate(160%) brightness(0.85);
-  -webkit-backdrop-filter: blur(28px) saturate(160%) brightness(0.85);
 }
 .sb-form::after,
 .sb-final__bg {
@@ -1653,7 +1649,6 @@
     border-right: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(28px) saturate(160%) brightness(0.8);
-    -webkit-backdrop-filter: blur(28px) saturate(160%) brightness(0.8);
   }
   .sb-rail span {
     writing-mode: vertical-rl;
@@ -1927,11 +1922,9 @@
 .sb-sec {
   background: rgba(6, 5, 10, 0.45);
   backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
 }
 .sb-sec .sb-panel {
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   background: rgba(255, 255, 255, 0.025);
 }
 
@@ -2036,12 +2029,10 @@
 .sb-rail {
   background: rgba(18, 16, 26, 0.38);
   backdrop-filter: blur(34px) saturate(170%);
-  -webkit-backdrop-filter: blur(34px) saturate(170%);
 }
 .sb-sec {
   background: rgba(10, 9, 15, 0.42);
   backdrop-filter: blur(34px) saturate(160%);
-  -webkit-backdrop-filter: blur(34px) saturate(160%);
 }
 .sb-field input {
   background: rgba(0, 0, 0, 0.42);

@@ -1,34 +1,8 @@
 /**
- * /black da Soccer: o mesmo motor da landing da Black da MTS (selo animado, contagem que rola,
- * blocos animados, trilho, dúvidas), portado por scripts/port-black.py, com o conteúdo da Soccer
- * e a montagem dos trailers oficiais do GTA VI no fundo.
+ * Peças da /black da Soccer: datas da campanha, agenda (.ics) e a montagem dos trailers oficiais
+ * do GTA VI no fundo do topo.
  */
-import markup from "./landing.html?raw";
-import engine from "./landing-engine.txt?raw";
 import { black } from "./config";
-import { blackFaq } from "./faq";
-
-const esc = (t: string) =>
-  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-function faqHtml() {
-  const qi = (q: string, a: string) =>
-    `<div class="bfm-qi"><button class="bfm-q" type="button" aria-expanded="false"><span>${esc(q)}</span><span class="bfm-q-ico" aria-hidden="true">&nbsp;</span></button><div class="bfm-qa"><p>${esc(a)}</p></div></div>`;
-  const group = (g: (typeof blackFaq)[number]) =>
-    `<div class="bfm-fg"><span class="bfm-fg-l">${esc(g.group)}</span><div class="bfm-fg-list">${g.items.map((i) => qi(i.q, i.a)).join("")}</div></div>`;
-  const [first, ...rest] = blackFaq;
-  const total = blackFaq.reduce((n, g) => n + g.items.length, 0);
-  return (
-    `<div class="bfm-faq-b">${first ? group(first) : ""}` +
-    (rest.length
-      ? `<div class="bfm-fg-more" id="bfm-fg-more"><div class="bfm-fg-in">${rest.map(group).join("")}</div></div>` +
-        `<button class="bfm-more-b" type="button" aria-controls="bfm-fg-more" aria-expanded="false" data-n="${total}"><span>Ver todas as dúvidas (${total})</span><span class="bfm-q-ico" aria-hidden="true">&nbsp;</span></button>`
-      : "") +
-    `</div>`
-  );
-}
-
-export const landingHtml = markup.replace("<!--FAQ-->", faqHtml());
 
 /** Próximo marco da campanha: para onde a contagem aponta. */
 export function nextMark(now = Date.now()) {
@@ -186,9 +160,4 @@ export function startReel(root: HTMLElement) {
       document.head.appendChild(s);
     }
   }
-}
-
-/** Liga o motor da página (os scripts portados da MTS). Roda uma vez por montagem. */
-export function runEngine() {
-  new Function(engine)();
 }

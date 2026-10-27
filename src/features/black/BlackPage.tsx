@@ -623,6 +623,17 @@ export function BlackPage() {
               De <em>27 a 30/11</em>, os jogos de PS4 e PS5 entram na Black. O <em>GTA 6</em> chega
               dia 19/11 e vem junto. Quem está no Grupo VIP vê cada oferta antes do site.
             </p>
+            <ul className="sb-gets sb-gets--copy">
+              {[
+                "A lista da semana antes do site, com cupom do grupo",
+                "O preço do GTA 6 em 18/11, antes de todo mundo",
+                "As ofertas da Black um dia antes do site",
+              ].map((g) => (
+                <li key={g}>
+                  <Check className="h-4 w-4" aria-hidden /> {g}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div
@@ -640,7 +651,7 @@ export function BlackPage() {
               <p className="sb-form__sub">
                 Grátis, pelo WhatsApp. Só os administradores mandam mensagem.
               </p>
-              <ul className="sb-gets">
+              <ul className="sb-gets sb-gets--form">
                 {[
                   "A lista da semana antes do site, com cupom do grupo",
                   "O preço do GTA 6 em 18/11, antes de todo mundo",

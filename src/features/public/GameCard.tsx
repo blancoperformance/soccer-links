@@ -52,12 +52,15 @@ export function Cover({
   done,
   w = 480,
   className = "",
+  bare = false,
 }: {
   game: Game;
   live: LiveGame | null;
   done: boolean;
   w?: number;
   className?: string;
+  /** Só a capa, sem os selos de plataforma e pré-venda (capas pequenas). */
+  bare?: boolean;
 }) {
   const [broken, setBroken] = useState(false);
   const src = live?.images[0];
@@ -95,17 +98,19 @@ export function Cover({
           )}
         </span>
       )}
-      <span className="absolute left-2 top-2 flex gap-1">
-        {game.platforms.map((p) => (
-          <span
-            key={p}
-            className="rounded-full bg-black/75 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white backdrop-blur-sm"
-          >
-            {p}
-          </span>
-        ))}
-      </span>
-      {game.collections.includes("pre-venda") && (
+      {!bare && (
+        <span className="absolute left-2 top-2 flex gap-1">
+          {game.platforms.map((p) => (
+            <span
+              key={p}
+              className="rounded-full bg-black/75 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white backdrop-blur-sm"
+            >
+              {p}
+            </span>
+          ))}
+        </span>
+      )}
+      {!bare && game.collections.includes("pre-venda") && (
         <span className="absolute bottom-2 left-2 rounded-full bg-mts-ink px-2 py-0.5 text-[10px] font-semibold text-mts-on-ink">
           Pré-venda
         </span>

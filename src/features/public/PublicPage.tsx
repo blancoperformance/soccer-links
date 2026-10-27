@@ -55,7 +55,38 @@ const BLACK_STEPS = [
   { at: "27 a 30/11", what: "Black Friday" },
 ] as const;
 
-function BlackHero() {
+const GTA6 = "gta-6-grand-theft-auto-vi-ps5-midia-digital";
+
+function GtaRow({ game, onOpen }: { game: Game; onOpen: (g: Game) => void }) {
+  const { live, done } = useLiveGame(game.slug, true);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        track("links_clique", { item_name: "Destaque topo: GTA 6 pré-venda" });
+        onOpen(game);
+      }}
+      className="group mt-4 flex w-full items-center gap-3.5 rounded-xl border border-white/15 bg-white/[.04] p-2.5 pr-4 text-left transition-colors hover:border-[#d77bff]/60"
+    >
+      <span className="block w-14 shrink-0">
+        <Cover game={game} live={live} done={done} w={160} bare />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14px] font-semibold text-white">GTA 6 em pré-venda</span>
+        <span className="mt-0.5 block text-[12px] text-white/65">PS5, chega dia 19/11</span>
+      </span>
+      <span className="shrink-0 text-[13px] font-semibold text-[#d77bff]">
+        Ver preço{" "}
+        <span aria-hidden className="inline-block transition-transform group-hover:translate-x-0.5">
+          →
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function BlackHero({ onOpen }: { onOpen: (g: Game) => void }) {
+  const gta = getGame(GTA6);
   const big = useCountdown(black.bigDay);
   const live = big === 0;
   const parts =
@@ -89,12 +120,15 @@ function BlackHero() {
           </li>
         ))}
       </ol>
+      {gta && <GtaRow game={gta} onOpen={onOpen} />}
       {parts && (
         <div
           className="mt-4 flex items-end justify-between gap-3"
           aria-label="Tempo até a Black Friday"
         >
-          <span className="text-[11px] uppercase tracking-[.12em] text-white/60">Faltam para a Black</span>
+          <span className="text-[11px] uppercase tracking-[.12em] text-white/60">
+            Faltam para a Black
+          </span>
           <span className="flex gap-4 tabular-nums">
             {parts.map(([label, n]) => (
               <span key={label} className="text-right">
@@ -913,7 +947,7 @@ export function PublicPage({
                 }}
               />
             ) : blackOn ? (
-              <BlackHero />
+              <BlackHero onOpen={(g) => openGame(g)} />
             ) : (
               <>
                 <p className="font-display relative mt-6 text-[32px] font-semibold leading-[1.04]">

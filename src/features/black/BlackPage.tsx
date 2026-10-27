@@ -590,14 +590,14 @@ export function BlackPage() {
               da <span className="sb-shine">Soccer.</span>
             </h1>
             <p className="sb-lede">
-              O GTA 6 chega dia <b>19/11</b>. O preço do <b>fim de semana do lançamento</b> e da{" "}
-              <b>Black Friday (27 a 30/11)</b> sai primeiro no Grupo VIP, no WhatsApp.
+              O GTA 6 chega dia <b>19/11</b>. O preço dele no fim de semana do lançamento e na Black
+              Friday, de 27 a 30/11, sai primeiro no nosso Grupo VIP do WhatsApp.
             </p>
 
             {!over && (
               <div className="sb-load sb-glass" role="timer" aria-label="Contagem regressiva">
                 <div className="sb-load__top">
-                  <span>Carregando {mark.bar.replace(/^para /, "")}</span>
+                  <span>Carregando {mark.bar.replace(/^para /, "")}…</span>
                   <b>{now ? `${Math.round(prog * 100)}%` : "··"}</b>
                 </div>
                 <div className="sb-bar" aria-hidden>
@@ -625,8 +625,11 @@ export function BlackPage() {
                   <i aria-hidden /> Aberto
                 </span>
               </div>
-              <p className="sb-form__title">Entre antes de todo mundo.</p>
-              <p className="sb-form__sub">Preço do GTA 6, horário da live e lembretes da Black.</p>
+              <p className="sb-form__title">Entre no Grupo VIP</p>
+              <p className="sb-form__sub">
+                É por lá que a gente avisa o preço do GTA 6, o horário da live e cada oferta da
+                Black.
+              </p>
               <SignupForm id="topo" total={total} />
             </div>
           </div>
@@ -637,9 +640,9 @@ export function BlackPage() {
       <section className="sb-sec" aria-labelledby="sb-fases">
         <div className="sb-wrap">
           <div className="sb-rv">
-            <p className="sb-kick">Seleção de fase</p>
+            <p className="sb-kick">Datas</p>
             <h2 id="sb-fases" className="sb-h2">
-              Quatro fases. <span>Um grupo só.</span>
+              Do lançamento do GTA 6 até a Cyber Monday
             </h2>
           </div>
           <div className="sb-levels">
@@ -696,7 +699,7 @@ export function BlackPage() {
           <div className="sb-rv">
             <p className="sb-kick">Na loja</p>
             <h2 id="sb-estante" className="sb-h2">
-              Escolha o jogo. <span>O preço sai no grupo.</span>
+              Já vai escolhendo o seu
             </h2>
           </div>
           <div className="sb-shelf">
@@ -722,7 +725,7 @@ export function BlackPage() {
           <div className="sb-rv">
             <p className="sb-kick">Antes de entrar</p>
             <h2 id="sb-faq" className="sb-h2">
-              Dúvidas <span>frequentes.</span>
+              Dúvidas
             </h2>
           </div>
           <Faq />
@@ -741,14 +744,15 @@ export function BlackPage() {
                   "A Black 2026 acabou."
                 ) : (
                   <>
-                    Faltam {d === 1 ? "1 dia" : `${d} dias`}.{" "}
-                    <span>O preço sai primeiro aqui.</span>
+                    Faltam {d === 1 ? "1 dia" : `${d} dias`}{" "}
+                    {mark.bar
+                      .replace(/^para /, "pro ")
+                      .replace("pro o ", "pro ")
+                      .replace("pro a ", "pra ")}
                   </>
                 )}
               </h2>
-              <p className="sb-lede">
-                Nome e WhatsApp, e o grupo abre na hora. Leva menos de um minuto.
-              </p>
+              <p className="sb-lede">Coloca seu nome e WhatsApp que o grupo abre na hora.</p>
             </div>
             <div ref={finalRef}>
               <SignupForm id="final" total={total} askEmail />

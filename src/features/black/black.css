@@ -97,7 +97,7 @@
 .sb-h2 {
   margin-top: 14px;
   font-size: clamp(32px, 4.6vw, 56px);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.04em;
   line-height: 1.02;
 }
@@ -243,7 +243,7 @@
 .sb-h1 {
   margin-top: 18px;
   font-size: clamp(46px, 11.5vw, 64px);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.05em;
   line-height: 0.95;
 }
@@ -289,7 +289,7 @@
 }
 .sb-lede b {
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* barra de carregamento + contagem */
@@ -303,7 +303,7 @@
   justify-content: space-between;
   align-items: baseline;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--mute);
 }
 .sb-load__top b {
@@ -357,7 +357,7 @@
 .sb-num {
   display: inline-flex;
   font-size: 30px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -430,7 +430,7 @@
 .sb-form__title {
   margin-top: 14px;
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.1;
 }
@@ -528,7 +528,7 @@
     0 14px 34px -14px rgba(192, 0, 255, 0.9);
   color: #fff;
   font-size: 15.5px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: transform 140ms ease;
 }
@@ -656,7 +656,7 @@
 }
 .sb-level__n {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--dim);
 }
 .sb-state {
@@ -667,7 +667,7 @@
   padding: 0 10px;
   border-radius: 999px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   background: rgba(0, 0, 0, 0.35);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   color: var(--mute);
@@ -683,14 +683,14 @@
 .sb-level .sb-level__date {
   margin-top: auto;
   font-size: 34px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.04em;
   line-height: 1;
 }
 .sb-level h3 {
   margin-top: 10px;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 .sb-level p {
@@ -802,7 +802,7 @@
   display: grid;
   place-items: center;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 600;
 }
 /* reflexo de vidro */
 .sb-case__img::after {
@@ -864,7 +864,7 @@
   display: block;
   margin-top: 14px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
 }
 .sb-perk span {
   display: block;
@@ -887,7 +887,7 @@
 }
 .sb-faq__g {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1013,7 +1013,7 @@
 .sb-help b {
   display: block;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
 }
 .sb-help em {
   display: block;

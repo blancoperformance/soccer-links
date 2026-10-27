@@ -613,7 +613,7 @@ export function BlackPage() {
                 É por lá que a gente avisa o preço do GTA 6, o horário da live e cada oferta da
                 Black.
               </p>
-              <SignupForm id="topo" total={total} />
+              <SignupForm id="topo" total={total} askEmail />
             </div>
           </div>
           {!over && (

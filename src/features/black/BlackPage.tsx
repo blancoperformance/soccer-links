@@ -1,3 +1,4 @@
+import "./black.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -6,13 +7,18 @@ import {
   LifeBuoy,
   Mail,
   MessageCircle,
+  Play,
   Radio,
+  Tag,
   ShieldCheck,
   Zap,
 } from "lucide-react";
 import { callRpc, readRpc } from "@/lib/backend";
 import { loadClarity, loadGtm, loadPixel, track } from "@/lib/tracking";
 import { withUtm } from "@/lib/utm";
+import { getGame } from "@/features/public/games";
+import { useLiveGame } from "@/features/public/GameCard";
+import { sized } from "@/features/public/store";
 import { black, phaseAt, type Phase } from "./config";
 import { blackFaq } from "./faq";
 
@@ -38,20 +44,27 @@ function useNow(ms = 1000) {
 
 const PHASE_LABEL: Record<Phase, { pre: string; when: string }> = {
   antes: {
-    pre: "A Pré-Black do GTA VI começa em",
-    when: "20 de novembro, 00h · Black Friday em 27 de novembro",
+    pre: "O GTA 6 chega em",
+    when: "19 de novembro · fim de semana do GTA de 20 a 22/11 · Black de 27 a 30/11",
+  },
+  lancamento: {
+    pre: "O GTA 6 chegou. O fim de semana do GTA começa em",
+    when: "20 de novembro, 00h · live na sexta",
   },
   pre: {
-    pre: "Pré-Black acontecendo agora. A Black Friday começa em",
-    when: "Live na sexta, 20 de novembro · Black Friday em 27 de novembro",
+    pre: "Fim de semana do GTA rolando. A Black Friday começa em",
+    when: "27 de novembro, 00h · até a Cyber Monday, 30/11",
   },
-  entre: { pre: "A Black Friday começa em", when: "27 de novembro, 00h" },
-  black: { pre: "Black Friday acontecendo agora. Termina em", when: "Hoje, até 23h59" },
-  fim: { pre: "A Black November terminou", when: "As ofertas da semana continuam no grupo" },
+  entre: {
+    pre: "A Black Friday da Soccer começa em",
+    when: "27 de novembro, 00h · até a Cyber Monday, 30/11",
+  },
+  black: { pre: "Black Friday rolando. Termina em", when: "Segunda, 30 de novembro, 23h59" },
+  fim: { pre: "A Black 2026 terminou", when: "As ofertas da semana continuam no grupo" },
 };
 
 function Countdown({ now }: { now: number | null }) {
-  const { phase, target } = phaseAt(now ?? Date.parse("2026-10-16T12:00:00-03:00"));
+  const { phase, target } = phaseAt(now ?? Date.parse("2026-10-26T12:00:00-03:00"));
   const left = target && now ? Math.max(0, target - now) : 0;
   const d = Math.floor(left / 864e5);
   const parts: [string, string][] = [
@@ -373,39 +386,194 @@ function Faq() {
 }
 
 function icsDownload() {
+  const ev = (uid: string, a: string, b: string, t: string, d: string) => [
+    "BEGIN:VEVENT",
+    `UID:${uid}-${black.year}@lojasoccergames.com.br`,
+    `DTSTART:${a}`,
+    `DTEND:${b}`,
+    `SUMMARY:${t}`,
+    `DESCRIPTION:${d}`,
+    "URL:https://links.lojasoccergames.com.br/black",
+    "END:VEVENT",
+  ];
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Soccer Games//Black November//PT",
-    "BEGIN:VEVENT",
-    `UID:pre-black-${black.year}@lojasoccergames.com.br`,
-    "DTSTART:20261120T030000Z",
-    "DTEND:20261120T040000Z",
-    "SUMMARY:Pré-Black Soccer Games (GTA VI)",
-    "DESCRIPTION:Pré-Black da Soccer Games no fim de semana do GTA VI. Live na sexta. Black Friday em 27/11.",
-    "URL:https://links.lojasoccergames.com.br/black",
-    "END:VEVENT",
-    "BEGIN:VEVENT",
-    `UID:black-friday-${black.year}@lojasoccergames.com.br`,
-    "DTSTART:20261127T030000Z",
-    "DTEND:20261127T040000Z",
-    "SUMMARY:Black Friday Soccer Games",
-    "URL:https://links.lojasoccergames.com.br/black",
-    "END:VEVENT",
+    "PRODID:-//Soccer Games//Black 2026//PT",
+    ...ev(
+      "gta-vi",
+      "20261119T030000Z",
+      "20261119T040000Z",
+      "GTA 6 chega (Soccer Games)",
+      "Lançamento do GTA VI. O preço sai primeiro no Grupo VIP.",
+    ),
+    ...ev(
+      "fim-de-semana-gta",
+      "20261120T030000Z",
+      "20261123T025900Z",
+      "Fim de semana do GTA 6 na Soccer",
+      "Ofertas na loja e live na sexta, 20/11.",
+    ),
+    ...ev(
+      "black-friday",
+      "20261127T030000Z",
+      "20261201T025900Z",
+      "Black Friday Soccer Games",
+      "De 27 a 30/11, até a Cyber Monday.",
+    ),
     "END:VCALENDAR",
   ].join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
-  a.download = "black-november-soccer-games.ics";
+  a.download = "black-soccer-games-2026.ics";
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   track("links_clique", { item_name: "Black: salvar na agenda" });
+}
+
+/** Pôr do sol de Vice City nas cores da Soccer: o degradê que assina a página. */
+const SUNSET =
+  "bg-gradient-to-r from-[#ffb36b] via-[#ff4fa8] to-[#c64bff] bg-clip-text text-transparent";
+const GTA = "gta-6-grand-theft-auto-vi-ps5-midia-digital";
+const gtaUrl = withUtm(`${STORE}/produtos/${GTA}/`, {
+  content: "black-gta6",
+  campaign: `black-${black.year}`,
+});
+
+/**
+ * Trailer oficial do canal da Rockstar, só incorporado (nunca baixado nem recortado).
+ * Fica atrás do topo: imagem do trailer em todo lugar e, no computador, o vídeo mudo em loop.
+ */
+function HeroBackdrop() {
+  const id = black.trailerId;
+  const [bg, setBg] = useState(false);
+  const [bgOn, setBgOn] = useState(false);
+  const [poster, setPoster] = useState(true);
+  const img = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const el = img.current;
+    if (el && el.complete && !el.naturalWidth) setPoster(false);
+    const big = window.matchMedia("(min-width: 1024px)").matches;
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const save = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
+      ?.saveData;
+    if (!big || calm || save || !id) return;
+    const t = window.setTimeout(() => setBg(true), 900);
+    return () => window.clearTimeout(t);
+  }, [id]);
+  return (
+    <div className="bk-stage" aria-hidden>
+      <div className="bk-stage__base" />
+      {id && poster && (
+        <img
+          ref={img}
+          className="bk-stage__poster"
+          src={`https://i.ytimg.com/vi/${id}/maxresdefault.jpg`}
+          alt=""
+          fetchPriority="high"
+          onError={() => setPoster(false)}
+        />
+      )}
+      {bg && (
+        <div className={`bk-stage__video ${bgOn ? "is-on" : ""}`}>
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&playsinline=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3`}
+            title="Trailer do GTA VI ao fundo"
+            tabIndex={-1}
+            allow="autoplay; encrypted-media"
+            onLoad={() => window.setTimeout(() => setBgOn(true), 1500)}
+          />
+        </div>
+      )}
+      <div className="bk-stage__shade" />
+    </div>
+  );
+}
+
+/** O trailer com som, em tela cheia, quando a pessoa toca no play. */
+function TrailerModal({ onClose }: { onClose: () => void }) {
+  const id = black.trailerId;
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && close.current();
+    window.addEventListener("keydown", k);
+    const o = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", k);
+      document.body.style.overflow = o;
+    };
+  }, []);
+  return (
+    <div
+      className="bk-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Trailer oficial do GTA VI"
+      onClick={onClose}
+    >
+      <div className="bk-modal__box" onClick={(e) => e.stopPropagation()}>
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+          title="Trailer oficial do GTA VI"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+        />
+      </div>
+      <button type="button" className="bk-modal__close" onClick={onClose}>
+        Fechar
+      </button>
+    </div>
+  );
+}
+
+function PlayButton({ onPlay }: { onPlay: () => void }) {
+  if (!black.trailerId) return null;
+  return (
+    <button type="button" className="bk-play group" onClick={onPlay}>
+      <span className="bk-play__ring">
+        <Play className="ml-0.5 h-5 w-5" fill="currentColor" aria-hidden />
+      </span>
+      <span className="text-left">
+        <b className="block text-[14px] font-semibold text-white">Assistir ao trailer</b>
+        <span className="block text-[12px] text-white/60">Oficial · Rockstar Games</span>
+      </span>
+    </button>
+  );
+}
+
+/** Capa real do GTA 6, puxada da loja. Sem foto: um bloco com o nome. */
+function GtaCover() {
+  const game = getGame(GTA);
+  const { live } = useLiveGame(GTA, true);
+  const src = live?.images[0];
+  const [broken, setBroken] = useState(false);
+  return (
+    <span className="bk-case">
+      {src && !broken ? (
+        <img
+          src={sized(src, 640)}
+          alt={game?.name ?? "GTA VI"}
+          loading="lazy"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <span className={`bk-case__none font-display ${SUNSET}`}>GTA VI</span>
+      )}
+    </span>
+  );
 }
 
 export function BlackPage() {
   const now = useNow();
   const [total, setTotal] = useState<number | null>(null);
   const [bar, setBar] = useState(false);
+  const [movie, setMovie] = useState(false);
+  const openMovie = () => {
+    setMovie(true);
+    track("links_clique", { item_name: "Black: trailer GTA VI" });
+  };
   const formRef = useRef<HTMLDivElement>(null);
   const phase = useMemo(() => (now ? phaseAt(now).phase : "antes"), [now]);
 
@@ -435,21 +603,31 @@ export function BlackPage() {
   const what = [
     {
       n: "01",
+      ph: ["antes"],
       icon: Zap,
-      t: "Ofertas da semana até lá",
-      d: "Até a Black, toda semana tem oferta temática com preço baixo direto no site, sem cupom. O aviso sai primeiro no grupo.",
+      t: "Ofertas da semana",
+      d: "Até 18/11, toda semana tem oferta com preço baixo direto no site, sem cupom. O aviso sai primeiro no grupo.",
     },
     {
       n: "02",
-      icon: Radio,
-      t: "Pré-Black do GTA VI",
-      d: `De 20 a 22 de novembro, no fim de semana do lançamento, os preços da loja descem. Live na ${black.liveDay}.`,
+      ph: ["lancamento"],
+      icon: Gamepad2,
+      t: "O GTA 6 chega, dia 19",
+      d: "No dia do lançamento, o preço do GTA 6 na Soccer é avisado primeiro no Grupo VIP.",
     },
     {
       n: "03",
-      icon: Gamepad2,
-      t: "Black Friday, dia 27",
-      d: "O grande dia da Black November, no mesmo grupo. Quem está dentro recebe cada oferta antes.",
+      ph: ["pre"],
+      icon: Radio,
+      t: "Fim de semana do GTA",
+      d: `De 20 a 22/11, os preços da loja descem para a abertura da Black. Live na ${black.liveDay}.`,
+    },
+    {
+      n: "04",
+      ph: ["entre", "black"],
+      icon: Tag,
+      t: "Black Friday, 27 a 30",
+      d: "A Black da Soccer, com o GTA 6 junto, até a Cyber Monday. Quem está no grupo vê cada oferta antes.",
     },
   ];
 
@@ -462,81 +640,164 @@ export function BlackPage() {
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 [background-image:linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(80%_60%_at_50%_20%,#000,transparent)]" />
         <div className="absolute -top-40 left-1/2 h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(192,0,255,.38),transparent)] blur-2xl" />
-        <div className="absolute bottom-[-30%] right-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(192,0,255,.16),transparent)] blur-2xl" />
+        <div className="absolute bottom-[-30%] right-[-10%] h-[560px] w-[560px] rounded-full bg-[radial-gradient(closest-side,rgba(255,79,168,.14),transparent)] blur-2xl" />
+        <div className="absolute bottom-[-25%] left-[-12%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(closest-side,rgba(255,150,80,.08),transparent)] blur-2xl" />
       </div>
 
-      <header className="relative z-10 mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-5">
-        <a
-          href="/"
-          aria-label="Soccer Games"
-          className="flex items-center"
-          onClick={() => track("links_clique", { item_name: "Black: logo" })}
-        >
-          <img src="/logo-soccer.png" alt="Soccer Games" width={40} height={40} className="h-10 w-10" />
-        </a>
-        <span className="flex items-center gap-2 text-[12px] text-white/70">
-          <span className="sg-live-dot h-1.5 w-1.5 rounded-full bg-[#c64bff]" aria-hidden />
-          Black November {black.year}
-        </span>
-      </header>
-
-      {/* HERO: no celular, título, cadastro e depois a contagem; no computador, cadastro à direita */}
-      <section className="relative z-10 mx-auto grid w-full max-w-[1200px] gap-10 px-6 pb-16 pt-4 lg:grid-cols-[1fr_480px] lg:gap-x-16 lg:gap-y-10 lg:pb-24 lg:pt-14">
-        <div className="lg:col-start-1 lg:row-start-1">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#c64bff]">
-            Acesso antecipado
-          </p>
-          <h1 className="font-display mt-4 text-[clamp(46px,9.5vw,100px)] font-semibold leading-[.95] tracking-[-0.05em]">
-            A Black
-            <br />
-            <span className="bg-gradient-to-r from-white via-[#e9b6ff] to-[#c64bff] bg-clip-text text-transparent">
-              November
-            </span>
-            <br />
-            {phase === "antes" ? "vem aí." : phase === "fim" ? "foi assim." : "chegou."}
-          </h1>
-          <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-white/75 sm:text-[17px]">
-            Pré-Black no fim de semana do GTA VI e Black Friday no dia 27. As ofertas chegam
-            primeiro no Grupo VIP.
-          </p>
-        </div>
-
-        <div
-          ref={formRef}
-          id="cadastro"
-          className="relative scroll-mt-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center"
-        >
-          <div className="relative border border-white/15 bg-white/[.04] p-6 backdrop-blur-xl sm:p-8">
-            <span aria-hidden className="absolute left-0 top-8 h-7 w-[2px] bg-[#c000ff]" />
-            <p className="text-[12px] text-white/70">Grupo VIP no WhatsApp</p>
-            <h2 className="font-display mt-2 text-[26px] font-semibold leading-tight sm:text-[28px]">
-              Entre antes de todo mundo.
-            </h2>
-            <p className="mt-3 text-[14px] leading-relaxed text-white/70">
-              Avisos de oferta, horário da live e lembretes da Black. Só os administradores mandam
-              mensagem.
-            </p>
-            {total !== null && (
-              <p className="mt-4 text-[13px] text-white/80">
-                <b className="font-display text-[18px] text-white">
-                  {total.toLocaleString("pt-BR")}
-                </b>{" "}
-                pessoas já estão no grupo.
-              </p>
-            )}
-            <SignupForm id="topo" />
-          </div>
-        </div>
-
-        <div className="max-w-[520px] lg:col-start-1 lg:row-start-2">
-          <Countdown now={now} />
-          <button
-            type="button"
-            onClick={icsDownload}
-            className="mt-5 inline-flex items-center gap-2 text-[13px] text-white/70 underline underline-offset-4 hover:text-white"
+      <div className="relative">
+        <HeroBackdrop />
+        <header className="relative z-10 mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-5">
+          <a
+            href="/"
+            aria-label="Soccer Games"
+            className="flex items-center"
+            onClick={() => track("links_clique", { item_name: "Black: logo" })}
           >
-            <CalendarPlus className="h-4 w-4" aria-hidden /> Salvar as datas na agenda
-          </button>
+            <img
+              src="/logo-soccer.png"
+              alt="Soccer Games"
+              width={40}
+              height={40}
+              className="h-10 w-10"
+            />
+          </a>
+          <span className="flex items-center gap-2 text-[12px] text-white/70">
+            <span className="sg-live-dot h-1.5 w-1.5 rounded-full bg-[#c64bff]" aria-hidden />
+            Black {black.year} · GTA 6
+          </span>
+        </header>
+
+        {/* HERO: no celular, título, cadastro e depois a contagem; no computador, cadastro à direita */}
+        <section className="relative z-10 mx-auto grid w-full max-w-[1200px] gap-10 px-6 pb-16 pt-[min(52vw,300px)] sm:pt-24 lg:min-h-[calc(100svh-80px)] lg:grid-cols-[1fr_460px] lg:content-center lg:gap-x-16 lg:gap-y-10 lg:pb-28 lg:pt-10">
+          <div className="lg:col-start-1 lg:row-start-1">
+            <p className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#ff9bd0]">
+              <span className="h-px w-6 bg-gradient-to-r from-[#ffb36b] to-[#ff4fa8]" aria-hidden />
+              GTA 6 · 19 de novembro
+            </p>
+            <h1 className="font-display mt-4 text-[clamp(50px,10vw,108px)] font-bold leading-[.92] tracking-[-0.055em] [text-shadow:0_2px_40px_rgba(0,0,0,.35)]">
+              GTA 6
+              <br />
+              <span className={`${SUNSET} [text-shadow:none]`}>na Black</span>
+              <br />
+              da Soccer.
+            </h1>
+            <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-white/80 sm:text-[17px]">
+              O GTA 6 chega dia 19/11. O preço do fim de semana do lançamento e da Black Friday, de
+              27 a 30/11, sai primeiro no Grupo VIP.
+            </p>
+          </div>
+
+          <div
+            ref={formRef}
+            id="cadastro"
+            className="relative scroll-mt-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center"
+          >
+            <div className="relative border border-white/15 bg-[#0b0910]/70 p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,.8)] backdrop-blur-xl sm:p-8">
+              <span
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-[#ffb36b] via-[#ff4fa8] to-[#c000ff]"
+              />
+              <span aria-hidden className="absolute left-0 top-8 h-7 w-[2px] bg-[#c000ff]" />
+              <p className="text-[12px] text-white/70">Grupo VIP no WhatsApp</p>
+              <h2 className="font-display mt-2 text-[26px] font-semibold leading-tight sm:text-[28px]">
+                Entre antes de todo mundo.
+              </h2>
+              <p className="mt-3 text-[14px] leading-relaxed text-white/70">
+                Avisos de oferta, horário da live e lembretes da Black. Só os administradores mandam
+                mensagem.
+              </p>
+              {total !== null && (
+                <p className="mt-4 text-[13px] text-white/80">
+                  <b className="font-display text-[18px] text-white">
+                    {total.toLocaleString("pt-BR")}
+                  </b>{" "}
+                  pessoas já estão no grupo.
+                </p>
+              )}
+              <SignupForm id="topo" />
+            </div>
+          </div>
+
+          <div className="max-w-[520px] lg:col-start-1 lg:row-start-2">
+            <Countdown now={now} />
+            <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-4">
+              <PlayButton onPlay={openMovie} />
+              <button
+                type="button"
+                onClick={icsDownload}
+                className="inline-flex items-center gap-2 text-[13px] text-white/70 underline underline-offset-4 hover:text-white"
+              >
+                <CalendarPlus className="h-4 w-4" aria-hidden /> Salvar as datas na agenda
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* MISSÃO PRINCIPAL: GTA 6 */}
+      <section
+        className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pb-16 pt-4 lg:pb-24"
+        aria-labelledby="bk-gta"
+      >
+        <div className="grid overflow-hidden border border-white/12 bg-white/[.025] md:grid-cols-[minmax(0,380px)_1fr]">
+          <a
+            href={gtaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() =>
+              track("links_clique", { item_name: "Black: GTA 6 na loja", item_url: gtaUrl })
+            }
+            className="relative block border-b border-white/10 md:border-b-0 md:border-r"
+          >
+            <GtaCover />
+            <span className="absolute left-4 top-4 bg-[#060608]/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+              Pré-venda · PS5
+            </span>
+          </a>
+          <div className="relative flex flex-col justify-center p-6 sm:p-10">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -right-20 -top-24 h-[360px] w-[360px] rounded-full bg-[radial-gradient(closest-side,rgba(255,79,168,.18),transparent)] blur-2xl"
+            />
+            <p className="relative text-[12px] font-semibold uppercase tracking-[0.18em] text-[#ff9bd0]">
+              Missão principal
+            </p>
+            <h2
+              id="bk-gta"
+              className="font-display relative mt-3 text-[clamp(28px,3.3vw,42px)] font-bold leading-[1.04] tracking-[-0.045em]"
+            >
+              O GTA 6 chega dia 19.{" "}
+              <span className="text-white/45">O preço sai primeiro no grupo.</span>
+            </h2>
+            <div className="relative mt-7 grid grid-cols-3 gap-4 border-t border-white/12 pt-5">
+              {(
+                [
+                  ["Lançamento", "19/11", phase === "antes" || phase === "lancamento"],
+                  ["Fim de semana", "20 a 22/11", phase === "pre"],
+                  ["Black Friday", "27 a 30/11", phase === "entre" || phase === "black"],
+                ] as const
+              ).map(([l, d, on]) => (
+                <p key={l}>
+                  <span className="block text-[11px] text-white/55 sm:text-[12px]">{l}</span>
+                  <b
+                    className={`font-display mt-1 block text-[17px] font-semibold sm:text-[22px] ${on ? SUNSET : "text-white"}`}
+                  >
+                    {d}
+                  </b>
+                </p>
+              ))}
+            </div>
+            <div className="relative mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+              <button
+                type="button"
+                onClick={toForm}
+                className="flex min-h-[52px] items-center gap-6 bg-white px-6 text-[15px] font-semibold text-[#060608] transition-colors hover:bg-[#c000ff] hover:text-white"
+              >
+                Quero o preço primeiro <ArrowUpRight className="h-5 w-5" aria-hidden />
+              </button>
+              <PlayButton onPlay={openMovie} />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -546,9 +807,10 @@ export function BlackPage() {
           {[0, 1].map((k) => (
             <span key={k} className="flex gap-10" aria-hidden={k === 1}>
               {[
-                "Pré-Black do GTA VI",
+                "GTA 6 dia 19/11",
+                "Fim de semana do GTA",
                 "Live na sexta, 20/11",
-                "Black Friday 27/11",
+                "Black Friday de 27 a 30/11",
                 "Entrega por e-mail",
                 "Garantia vitalícia",
                 "PS4 e PS5",
@@ -557,7 +819,7 @@ export function BlackPage() {
                   key={t}
                   className="font-display flex items-center gap-10 text-[20px] font-medium text-white/85"
                 >
-                  {t} <span className="text-[#c64bff]">✦</span>
+                  {t} <span className={SUNSET}>✦</span>
                 </span>
               ))}
             </span>
@@ -570,25 +832,45 @@ export function BlackPage() {
         className="relative z-10 mx-auto w-full max-w-[1200px] px-6 py-20 lg:py-28"
         aria-labelledby="bn-what"
       >
-        <p className="text-[12px] text-white/55">O que vai ter na Black November</p>
+        <p className="text-[12px] text-white/55">O que vai ter na Black da Soccer</p>
         <h2
           id="bn-what"
           className="font-display mt-3 max-w-[720px] text-[clamp(32px,5vw,58px)] font-semibold leading-[1.02]"
         >
-          Um mês inteiro de oferta. <span className="text-white/40">Primeiro no grupo.</span>
+          Quatro missões. <span className="text-white/40">Um grupo só.</span>
         </h2>
-        <div className="mt-12 grid border-y border-white/10 md:grid-cols-3">
+        <div className="mt-12 grid border-y border-white/10 md:grid-cols-2 lg:grid-cols-4">
           {what.map((w, i) => (
             <article
               key={w.n}
-              className={`group relative overflow-hidden px-1 py-8 md:px-8 ${i ? "border-t border-white/10 md:border-l md:border-t-0" : ""}`}
+              className={`group relative overflow-hidden px-1 py-8 md:px-7 ${i ? "border-t border-white/10" : ""} ${i % 2 ? "md:border-l" : ""} ${i === 1 ? "md:border-t-0" : ""} ${i ? "lg:border-l lg:border-t-0" : ""}`}
             >
               <span
                 aria-hidden
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 [background:radial-gradient(420px_circle_at_50%_120%,rgba(192,0,255,.22),transparent_65%)] group-hover:opacity-100"
               />
+              {w.ph.includes(phase) && (
+                <span
+                  className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-[#ffb36b] via-[#ff4fa8] to-[#c000ff]"
+                  aria-hidden
+                />
+              )}
               <div className="relative flex items-start justify-between">
-                <w.icon className="h-6 w-6 text-[#c64bff]" strokeWidth={1.4} aria-hidden />
+                <span className="flex flex-col gap-4">
+                  <w.icon className="h-6 w-6 text-[#c64bff]" strokeWidth={1.4} aria-hidden />
+                  <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                    Missão {w.n}
+                    {w.ph.includes(phase) && (
+                      <span className="flex items-center gap-1.5 text-[#ff9bd0]">
+                        <span
+                          className="sg-live-dot h-1.5 w-1.5 rounded-full bg-[#ff4fa8]"
+                          aria-hidden
+                        />
+                        {phase === "entre" ? "próxima" : "agora"}
+                      </span>
+                    )}
+                  </span>
+                </span>
                 <span className="font-display text-[56px] font-semibold leading-none text-white/[.07]">
                   {w.n}
                 </span>
@@ -709,12 +991,12 @@ export function BlackPage() {
                 campaign: `black-${black.year}`,
               }),
             },
-            { I: Gamepad2, t: "Ver os jogos", d: "Mais de 380 jogos de PS4 e PS5", u: "/" },
+            { I: Gamepad2, t: "Ver os jogos", d: "Jogos de PS4 e PS5", u: "/" },
             {
               I: MessageCircle,
               t: "Falar no WhatsApp",
               d: "Dúvida antes de comprar",
-              u: `https://wa.me/${WA}?text=${encodeURIComponent("Olá! Vim pela página da Black November.")}`,
+              u: `https://wa.me/${WA}?text=${encodeURIComponent("Olá! Vim pela página da Black da Soccer.")}`,
             },
           ].map(({ I, t, d, u }, i) => (
             <a
@@ -751,13 +1033,17 @@ export function BlackPage() {
               ? daysLeft === 1
                 ? "1 dia"
                 : `${daysLeft} dias`
-              : "Black November"}
+              : "Black 2026"}
           </b>
           {phase === "antes"
-            ? "para a Pré-Black"
-            : phase === "fim"
-              ? "Ofertas no grupo"
-              : "para a Black Friday"}
+            ? "para o GTA 6"
+            : phase === "lancamento"
+              ? "para o fim de semana do GTA"
+              : phase === "black"
+                ? "para o fim da Black"
+                : phase === "fim"
+                  ? "Ofertas no grupo"
+                  : "para a Black Friday"}
         </span>
         <button
           type="button"
@@ -767,6 +1053,7 @@ export function BlackPage() {
           Entrar no grupo
         </button>
       </div>
+      {movie && <TrailerModal onClose={() => setMovie(false)} />}
     </div>
   );
 }

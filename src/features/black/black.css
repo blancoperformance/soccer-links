@@ -1,0 +1,213 @@
+/*
+ * BLACK 2026 · Soccer × Vice City.
+ * Mesma base da página (Montserrat, vidro, grade fina, roxo Soccer) com duas assinaturas:
+ * o trailer oficial do GTA VI rodando atrás do topo e o degradê do pôr do sol (laranja, rosa, roxo).
+ */
+
+/* palco do topo: imagem do trailer e, no computador, o vídeo mudo em loop */
+.bk-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.bk-stage__base,
+.bk-stage__poster,
+.bk-stage__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.bk-stage__base {
+  background:
+    radial-gradient(70% 60% at 78% 18%, rgba(255, 79, 168, 0.28), transparent 60%),
+    radial-gradient(60% 50% at 92% 60%, rgba(255, 160, 80, 0.16), transparent 60%),
+    radial-gradient(80% 70% at 50% 0%, rgba(192, 0, 255, 0.3), transparent 65%), #060608;
+}
+.bk-stage__poster {
+  object-fit: cover;
+  object-position: 60% 35%;
+  opacity: 0.85;
+}
+.bk-stage__video {
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+.bk-stage__video.is-on {
+  opacity: 1;
+}
+/* o iframe 16:9 cobre o palco inteiro e esconde a moldura do player */
+.bk-stage__video iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 177.78vh);
+  height: max(100%, 56.25vw);
+  transform: translate(-50%, -50%) scale(1.12);
+  border: 0;
+}
+/* leitura: escurece à esquerda (título) e funde com o fundo embaixo */
+.bk-stage__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 6, 8, 0.15) 0%,
+    rgba(6, 6, 8, 0.25) 30%,
+    rgba(6, 6, 8, 0.92) 62%,
+    #060608 78%
+  );
+}
+@media (min-width: 1024px) {
+  .bk-stage__shade {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(6, 6, 8, 0.94) 0%,
+        rgba(6, 6, 8, 0.7) 34%,
+        rgba(6, 6, 8, 0.25) 62%,
+        rgba(6, 6, 8, 0.45) 100%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(6, 6, 8, 0.55) 0%,
+        transparent 18%,
+        transparent 70%,
+        #060608 100%
+      ),
+      repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px);
+  }
+}
+
+/* botão do trailer */
+.bk-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.bk-play__ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #ff8a5c, #ff4fa8 45%, #c000ff);
+  box-shadow: 0 12px 36px -10px rgba(255, 79, 168, 0.75);
+  transition: transform 200ms ease;
+}
+.bk-play__ring::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 155, 208, 0.55);
+  animation: bk-ping 2.2s ease-out infinite;
+}
+.bk-play:hover .bk-play__ring {
+  transform: scale(1.07);
+}
+@keyframes bk-ping {
+  0% {
+    transform: scale(0.92);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* trailer com som */
+.bk-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(3, 3, 5, 0.9);
+  backdrop-filter: blur(10px);
+  animation: bk-fade 220ms ease both;
+}
+.bk-modal__box {
+  width: min(1180px, 100%);
+  aspect-ratio: 16 / 9;
+  max-height: calc(100svh - 120px);
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 40px 120px -30px rgba(255, 79, 168, 0.45);
+}
+.bk-modal__box iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.bk-modal__close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(6, 6, 8, 0.8);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+@keyframes bk-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* capa do GTA */
+.bk-case {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 1;
+  height: 100%;
+  background:
+    radial-gradient(80% 60% at 70% 20%, rgba(255, 79, 168, 0.35), transparent 65%),
+    linear-gradient(160deg, #2a0f3f, #0c0712);
+}
+.bk-case img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 700ms ease;
+}
+a:hover .bk-case img {
+  transform: scale(1.04);
+}
+.bk-case__none {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-stage__video {
+    display: none;
+  }
+  .bk-play__ring::after,
+  .bk-modal {
+    animation: none;
+  }
+}

@@ -110,6 +110,7 @@ export function startReel(root: HTMLElement) {
   if (cn?.saveData || /(^|-)2g$/.test(cn?.effectiveType ?? "")) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   let i = 0;
+  let show = 0;
   const go = () => {
     const YT = window.YT;
     if (!YT?.Player) return;
@@ -137,11 +138,16 @@ export function startReel(root: HTMLElement) {
           e.target.playVideo();
         },
         onStateChange: (e) => {
+          // 1 tocando, 2 pausado, 3 carregando, 5 parado: só mostra o vídeo quando está tocando,
+          // assim o ícone de pausa e a tela de carregamento do YouTube nunca aparecem
           if (e.data === 1) {
-            // sem legenda automática por cima do fundo
             e.target.unloadModule?.("captions");
             e.target.unloadModule?.("cc");
-            wrap.classList.remove("bfm-wait");
+            window.clearTimeout(show);
+            show = window.setTimeout(() => wrap.classList.remove("bfm-wait"), 700);
+          } else {
+            window.clearTimeout(show);
+            wrap.classList.add("bfm-wait");
           }
           if (e.data === 0) {
             wrap.classList.add("bfm-wait");

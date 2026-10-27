@@ -1934,3 +1934,189 @@
   -webkit-backdrop-filter: none;
   background: rgba(255, 255, 255, 0.025);
 }
+
+/* ===================== v5: fonte, leitura, vidro com ruído, botão sem brilho ===================== */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212;
+}
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-latin-ext-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB,
+    U+20AD-20C0;
+}
+.sb,
+.sb button,
+.sb input {
+  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+}
+.sb {
+  --mute: rgba(246, 244, 251, 0.8);
+  --dim: rgba(246, 244, 251, 0.6);
+}
+.sb-h1 {
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+.sb-h2 {
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+.sb-lede {
+  font-size: 18px;
+  color: rgba(246, 244, 251, 0.9);
+}
+.sb-kick,
+.sb-nav__live,
+.sb-head__n {
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+}
+.sb-level p,
+.sb-perk span,
+.sb-faq__a p,
+.sb-form__sub,
+.sb-consent,
+.sb-help em {
+  color: rgba(246, 244, 251, 0.8);
+}
+.sb-level p {
+  font-size: 14.5px;
+}
+
+/* ruído em cima de tudo: o vídeo ganha textura de filme e o vidro fica fosco de verdade */
+.sb::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: sb-grain 0.9s steps(6) infinite;
+}
+@keyframes sb-grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3%, 2%);
+  }
+  40% {
+    transform: translate(2%, -3%);
+  }
+  60% {
+    transform: translate(-2%, -1%);
+  }
+  80% {
+    transform: translate(3%, 3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+.sb-reel__still {
+  filter: blur(26px) saturate(1.1);
+}
+/* vidro: claro o suficiente para o desfoque aparecer */
+.sb-nav,
+.sb-form,
+.sb-load,
+.sb-help a,
+.sb-bar-m,
+.sb-rail {
+  background: rgba(18, 16, 26, 0.38);
+  backdrop-filter: blur(34px) saturate(170%);
+  -webkit-backdrop-filter: blur(34px) saturate(170%);
+}
+.sb-sec {
+  background: rgba(10, 9, 15, 0.42);
+  backdrop-filter: blur(34px) saturate(160%);
+  -webkit-backdrop-filter: blur(34px) saturate(160%);
+}
+.sb-field input {
+  background: rgba(0, 0, 0, 0.42);
+  font-size: 16px;
+}
+.sb-field span {
+  font-size: 13px;
+  color: #fff;
+}
+
+/* botão: sem sombra colorida; branco, e no mouse vira roxo com a seta andando */
+.sb-cta {
+  background: #fff;
+  color: #0b0910;
+  box-shadow: none;
+  border-radius: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  isolation: isolate;
+}
+.sb-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--v);
+  transform: translateY(101%);
+  transition: transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.sb-cta:hover {
+  color: #fff;
+  filter: none;
+  box-shadow: none;
+  transform: none;
+}
+.sb-cta:hover::before {
+  transform: none;
+}
+.sb-cta:hover svg {
+  transform: translate(3px, -3px);
+}
+.sb-cta:active {
+  transform: scale(0.99);
+}
+.sb-bar-m .sb-cta {
+  background: #fff;
+}
+
+/* barra do topo: botão do trailer como texto simples */
+.sb-nav__btn {
+  gap: 9px;
+  font-weight: 500;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.sb-nav__btn svg {
+  color: #fff;
+  transition: transform 220ms ease;
+}
+.sb-nav__btn:hover svg {
+  transform: scale(1.15);
+}
+/* "Aberto" sem bolinha */
+.sb-form__head span:last-child {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sb-form__head span:last-child i {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sb::after {
+    animation: none;
+  }
+}

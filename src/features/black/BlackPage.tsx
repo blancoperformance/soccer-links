@@ -587,10 +587,8 @@ export function BlackPage() {
             </a>
             <span className="sb-nav__live">Black Friday {black.year} · 27 a 30 de novembro</span>
             <button type="button" className="sb-nav__btn" onClick={openMovie}>
-              <span className="sb-nav__play">
-                <Play className="h-3 w-3" fill="currentColor" aria-hidden />
-              </span>
-              Trailer com som
+              <Play className="h-3.5 w-3.5" aria-hidden />
+              Ver o trailer
             </button>
           </div>
         </header>
@@ -618,9 +616,7 @@ export function BlackPage() {
             <div className="sb-form sb-glass sb-glass--lit">
               <div className="sb-form__head">
                 <span>Grupo VIP · WhatsApp</span>
-                <span>
-                  <i aria-hidden /> Aberto
-                </span>
+                <span>Aberto</span>
               </div>
               <p className="sb-form__title">Entre no Grupo VIP</p>
               <p className="sb-form__sub">

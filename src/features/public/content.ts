@@ -240,9 +240,9 @@ export const community = {
     sub: "Crie conteúdo com a gente",
   },
   vip: {
-    enabled: false,
-    title: "Grupo VIP",
-    sub: "Ofertas e lançamentos antes de todo mundo",
+    enabled: true,
+    title: "Grupo VIP da Black",
+    sub: "As ofertas da Black e o preço do GTA 6 antes do site",
     url: "/black",
   },
   playlist: { enabled: false, title: "", sub: "", url: "" },

@@ -44,6 +44,87 @@ import { loadCatalog } from "./store";
 import { DealsBanner, Offers } from "./Offers";
 import { BagBar } from "./BagBar";
 import { isWeeklyPromotionActive, weeklyPromotion } from "./promotion";
+import { black } from "../black/config";
+
+/** Destaque da Black no topo: do fim da campanha da semana até o fim da Black (30/11). */
+export const isBlackHighlightOn = (at = new Date()) => at.getTime() <= Date.parse(black.bigEnd);
+
+const BLACK_STEPS = [
+  { at: "Toda segunda", what: "Lista da semana no grupo" },
+  { at: "19/11", what: "Chega o GTA 6" },
+  { at: "27 a 30/11", what: "Black Friday" },
+] as const;
+
+function BlackHero() {
+  const big = useCountdown(black.bigDay);
+  const live = big === 0;
+  const parts =
+    big == null || live
+      ? null
+      : ([
+          ["dias", Math.floor(big / 86400000)],
+          ["horas", Math.floor((big / 3600000) % 24)],
+          ["min", Math.floor((big / 60000) % 60)],
+        ] as const);
+  return (
+    <div className="relative mt-6" aria-label="Black Friday da Soccer">
+      <p className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[.15em] text-white/80">
+        <span className="rounded-full bg-[#d77bff] px-3 py-1.5 text-[#220034]">27 a 30/11</span>
+        Black Friday {black.year}
+      </p>
+      <h2 className="font-display mt-5 text-[clamp(48px,13vw,70px)] font-black uppercase leading-[.88] tracking-[-.04em] text-white">
+        Black
+        <br />
+        <span className="text-[#d77bff]">Friday.</span>
+      </h2>
+      <p className="mt-4 max-w-[330px] text-[14px] leading-relaxed text-white/80">
+        Os jogos de PS4 e PS5 entram na Black e o GTA 6 chega dia 19/11. No Grupo VIP você vê cada
+        oferta antes do site.
+      </p>
+      <ol className="relative mt-5 grid grid-cols-3 border-y border-white/15" aria-label="Datas">
+        {BLACK_STEPS.map((s, i) => (
+          <li key={s.at} className={`py-3 ${i ? "border-l border-white/15 pl-3" : "pr-3"}`}>
+            <span className="block text-[13px] font-bold text-white">{s.at}</span>
+            <span className="mt-0.5 block text-[11px] leading-snug text-white/65">{s.what}</span>
+          </li>
+        ))}
+      </ol>
+      {parts && (
+        <div
+          className="mt-4 flex items-end justify-between gap-3"
+          aria-label="Tempo até a Black Friday"
+        >
+          <span className="text-[11px] uppercase tracking-[.12em] text-white/60">Faltam para a Black</span>
+          <span className="flex gap-4 tabular-nums">
+            {parts.map(([label, n]) => (
+              <span key={label} className="text-right">
+                <b className="font-display block text-[26px] font-bold leading-none text-white">
+                  {String(n).padStart(2, "0")}
+                </b>
+                <span className="text-[10px] text-white/60">{label}</span>
+              </span>
+            ))}
+          </span>
+        </div>
+      )}
+      <a
+        href="/black"
+        onClick={() =>
+          track("links_clique", { item_name: "Destaque topo: Grupo VIP Black", item_url: "/black" })
+        }
+        className="group mt-5 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-[#c000ff] px-5 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#a400db] active:scale-[.99]"
+      >
+        {live ? "Ver a Black no Grupo VIP" : "Entrar no Grupo VIP da Black"}
+        <span aria-hidden className="transition-transform group-hover:translate-x-1">
+          →
+        </span>
+      </a>
+      <p className="mt-2.5 text-[11px] text-white/60">
+        Grátis, pelo WhatsApp. Só os administradores mandam mensagem.
+      </p>
+    </div>
+  );
+}
 
 function WhatsIcon() {
   return (
@@ -555,6 +636,7 @@ export function PublicPage({
   const [now, setNow] = useState<Date | null>(null);
   const shelves = useMemo(() => getShelves(now ?? new Date()), [now]);
   const campaignOn = Boolean(campaign?.enabled && isWeeklyPromotionActive(now ?? new Date()));
+  const blackOn = !campaignOn && isBlackHighlightOn(now ?? new Date());
   const [shelf, setShelf] = useState(() => getShelves()[0]?.id ?? "");
   const [chip, setChip] = useState<string | null>(null);
   const [quizOpen, setQuizOpen] = useState(false);
@@ -762,6 +844,19 @@ export function PublicPage({
             >
               {campaign.cta}
             </a>
+          ) : blackOn ? (
+            <a
+              href="/black"
+              onClick={() =>
+                track("links_clique", {
+                  item_name: "Barra do topo: Grupo VIP Black",
+                  item_url: "/black",
+                })
+              }
+              className="shrink-0 rounded-[12px] bg-mts-ink px-3.5 py-2 text-[13px] font-semibold text-mts-on-ink hover:opacity-90"
+            >
+              Grupo VIP Black
+            </a>
           ) : (
             <button
               type="button"
@@ -817,6 +912,8 @@ export function PublicPage({
                   track("links_clique", { item_name: "Best Sellers: escolher jogo" });
                 }}
               />
+            ) : blackOn ? (
+              <BlackHero />
             ) : (
               <>
                 <p className="font-display relative mt-6 text-[32px] font-semibold leading-[1.04]">

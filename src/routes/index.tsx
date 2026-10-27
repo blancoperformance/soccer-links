@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { isWeeklyPromotionActive } from "@/features/public/promotion";
-import { PublicPage } from "@/features/public/PublicPage";
+import { isBlackHighlightOn, PublicPage } from "@/features/public/PublicPage";
 import {
   campaign,
   community,
@@ -15,11 +15,17 @@ import {
 } from "@/features/public/content";
 
 const pageTitle = () =>
-  isWeeklyPromotionActive() ? "Semana dos Best Sellers | Soccer Games" : "Soccer Games | Links";
+  isWeeklyPromotionActive()
+    ? "Semana dos Best Sellers | Soccer Games"
+    : isBlackHighlightOn()
+      ? "Soccer Games | Black Friday e Grupo VIP"
+      : "Soccer Games | Links";
 const pageDescription = () =>
   isWeeklyPromotionActive()
     ? "De 19 a 25 de outubro: FC 26, Hogwarts Legacy, Call of Duty e mais Best Sellers de PS4 e PS5 em oferta na Soccer Games. Escolha seu jogo e sua licença."
-    : "Jogos digitais de PS4 e PS5, quiz para escolher o próximo jogo, atendimento e o Grupo VIP da Soccer Games.";
+    : isBlackHighlightOn()
+      ? "Black Friday da Soccer Games de 27 a 30/11 e GTA 6 em 19/11. Jogos digitais de PS4 e PS5, atendimento e o Grupo VIP com as ofertas antes do site."
+      : "Jogos digitais de PS4 e PS5, quiz para escolher o próximo jogo, atendimento e o Grupo VIP da Soccer Games.";
 
 export const Route = createFileRoute("/")({
   head: () => ({

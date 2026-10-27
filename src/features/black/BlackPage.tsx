@@ -379,7 +379,6 @@ function Reel() {
       {video && clip(n, true)}
       {video && pre && clip(n + 1, false)}
       <div className="bk-reel__shade" />
-      <div className="bk-reel__glow" />
     </div>
   );
 }

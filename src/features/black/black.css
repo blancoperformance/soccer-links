@@ -29,7 +29,7 @@
   width: 620px;
   height: 620px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(192, 0, 255, 0.14), transparent);
+  background: radial-gradient(closest-side, rgba(192, 0, 255, 0.07), transparent);
   pointer-events: none;
   z-index: 0;
 }
@@ -104,7 +104,6 @@
   height: 6px;
   border-radius: 50%;
   background: #c64bff;
-  box-shadow: 0 0 0 4px rgba(198, 75, 255, 0.18);
   animation: bk-blink 1.6s ease-in-out infinite;
 }
 .bk-kick {
@@ -172,20 +171,6 @@
   .bk-reel {
     bottom: auto;
     height: 420px;
-  }
-}
-/* brilho roxo da Soccer: no topo e atrás do cadastro */
-.bk-reel__glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(48% 42% at 50% -6%, rgba(192, 0, 255, 0.42), transparent 70%),
-    radial-gradient(34% 40% at 82% 58%, rgba(192, 0, 255, 0.22), transparent 70%);
-}
-@media (max-width: 1023px) {
-  .bk-reel__glow {
-    background: radial-gradient(90% 60% at 50% 0%, rgba(192, 0, 255, 0.4), transparent 70%);
   }
 }
 .bk-reel__still,
@@ -270,9 +255,11 @@
   gap: 8px;
   height: 32px;
   padding: 0 11px;
-  border: 1px solid var(--line2);
-  background: rgba(6, 6, 8, 0.6);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -365,9 +352,11 @@ button.bk-chip:hover {
 
 /* faixa de datas no pé do topo */
 .bk-strip {
-  border-top: 1px solid var(--line);
-  background: rgba(6, 6, 8, 0.72);
-  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
 .bk-strip__in {
   display: grid;
@@ -439,11 +428,13 @@ button.bk-chip:hover {
 /* ---------- cadastro ---------- */
 .bk-form {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(20, 15, 28, 0.9);
-  box-shadow: 0 40px 120px -40px rgba(192, 0, 255, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 30px 80px -30px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
 .bk-form::before {
   content: "";
@@ -455,6 +446,7 @@ button.bk-chip:hover {
   background: var(--ac);
 }
 .bk-form__head {
+  background: rgba(0, 0, 0, 0.18);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -565,7 +557,6 @@ button.bk-chip:hover {
   color: #fff;
   font-size: 15px;
   font-weight: 700;
-  box-shadow: 0 12px 40px -12px rgba(192, 0, 255, 0.85);
   cursor: pointer;
   transition:
     background 160ms,

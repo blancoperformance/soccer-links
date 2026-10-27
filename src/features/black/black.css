@@ -2111,3 +2111,271 @@
     animation: none;
   }
 }
+
+/* ===================== v6: preto de verdade, roxo de destaque, efeitos nos detalhes ===================== */
+.sb {
+  --bg: #000;
+  background: #000;
+}
+.sb-reel {
+  background: #000;
+}
+.sb-reel__shade {
+  background: rgba(0, 0, 0, 0.74);
+}
+@media (min-width: 1024px) {
+  .sb-reel__shade {
+    background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.74) 45%,
+      rgba(0, 0, 0, 0.66) 100%
+    );
+  }
+}
+.sb-sec {
+  background: rgba(0, 0, 0, 0.5);
+}
+.sb-nav,
+.sb-form,
+.sb-load,
+.sb-help a,
+.sb-bar-m,
+.sb-rail {
+  background: rgba(10, 10, 12, 0.42);
+}
+/* roxo de destaque, como nas artes da Soccer */
+.sb em {
+  font-style: normal;
+  color: #c76bff;
+}
+.sb-h1 em.sb-shine {
+  color: transparent;
+}
+.sb-lede em {
+  color: #d58cff;
+  font-weight: 500;
+}
+.sb-kick {
+  color: #c76bff;
+}
+
+/* o que você ganha, dentro do cadastro */
+.sb-gets {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.sb-gets li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.92);
+}
+.sb-gets svg {
+  flex: none;
+  margin-top: 2px;
+  color: #c76bff;
+}
+
+/* trilho: logo e barra de leitura da página */
+@media (min-width: 1024px) {
+  .sb-rail {
+    gap: 16px;
+    justify-content: space-between;
+    padding: 18px 0 22px;
+  }
+  .sb-rail img {
+    width: 26px;
+    height: 26px;
+    opacity: 0.9;
+  }
+  .sb-rail__track {
+    position: relative;
+    flex: 1;
+    width: 2px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .sb-rail__track i {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #c76bff, #8b00d9);
+    transform-origin: top;
+    transition: transform 120ms linear;
+  }
+  .sb-rail b {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* destaque do GTA 6 */
+.sb-spot {
+  display: grid;
+  gap: 24px;
+  padding: 24px var(--pad) 32px;
+}
+@media (min-width: 900px) {
+  .sb-spot {
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 44px;
+    align-items: center;
+    padding: 36px var(--pad);
+  }
+}
+.sb-spot__case {
+  perspective: 1200px;
+  max-width: 300px;
+}
+.sb-spot__copy p {
+  max-width: 560px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(246, 244, 251, 0.86);
+}
+.sb-spot__copy p + p {
+  margin-top: 12px;
+}
+.sb-spot__btn {
+  display: inline-flex;
+  width: auto;
+  margin-top: 24px;
+  text-decoration: none;
+}
+
+/* efeitos nos detalhes */
+/* ícones: um brilho passa por eles quando o bloco entra no mouse */
+.sb-perk svg,
+.sb-help svg,
+.sb-gets svg {
+  transition:
+    transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 300ms;
+}
+.sb-perk:hover svg,
+.sb-help a:hover svg {
+  transform: translateY(-2px) scale(1.12);
+  color: #e0b0ff;
+}
+.sb-perk,
+.sb-level,
+.sb-help a {
+  position: relative;
+  transition: background 300ms ease;
+}
+.sb-perk:hover,
+.sb-level:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+/* luz que segue o mouse nos blocos */
+.sb-perk::before,
+.sb-help a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(199, 107, 255, 0.14),
+    transparent 70%
+  );
+  transition: opacity 300ms;
+}
+.sb-perk:hover::before,
+.sb-help a:hover::before {
+  opacity: 1;
+}
+/* títulos pequenos e etiquetas: um reflexo passa de tempos em tempos */
+.sb-kick,
+.sb-state--now {
+  background-image: linear-gradient(100deg, currentColor 40%, #fff 50%, currentColor 60%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: sb-glint 6s ease-in-out infinite;
+}
+@keyframes sb-glint {
+  0%,
+  70% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0% 0;
+  }
+}
+/* dúvidas: linha roxa entra pela esquerda, pergunta desliza, resposta aparece */
+.sb-faq__list li {
+  position: relative;
+}
+.sb-faq__list li::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  background: #c76bff;
+  transform: scaleY(0);
+  transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.sb-faq__list li:hover::before,
+.sb-faq__list li:has(button[aria-expanded="true"])::before {
+  transform: scaleY(1);
+}
+.sb-faq__list button span:first-child {
+  transition:
+    transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 200ms;
+}
+.sb-faq__list button:hover span:first-child {
+  transform: translateX(6px);
+}
+.sb-faq__list button[aria-expanded="true"] span:first-child {
+  color: #e0b0ff;
+}
+.sb-faq__a p {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 300ms ease 60ms,
+    transform 300ms ease 60ms;
+}
+.sb-faq__a.on p {
+  opacity: 1;
+  transform: none;
+}
+/* links de texto: sublinhado que desenha */
+.sb-sec .sb-wrap > button,
+.sb-consent a {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 300ms ease;
+}
+.sb-consent a {
+  background-size: 100% 1px;
+}
+.sb-consent a:hover {
+  background-size: 0% 1px;
+}
+.sb-level__bg {
+  opacity: 0.12;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sb-kick,
+  .sb-state--now {
+    animation: none;
+  }
+}

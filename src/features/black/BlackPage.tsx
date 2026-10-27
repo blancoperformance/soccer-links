@@ -59,55 +59,47 @@ function Num({ v }: { v: string }) {
   );
 }
 
-const LEVELS: { ph: Phase[]; n: string; date: string; t: string; d: string; img?: string }[] = [
+/** O que chega no grupo, do plano da Black (Docs "Plano para lotar o Grupo VIP"). */
+const DROPS: { from: string; to: string; date: string; t: string; d: string; img?: string }[] = [
   {
-    ph: ["antes"],
-    n: "Fase 01",
-    date: "Até 18/11",
-    t: "Ofertas da semana",
-    d: "Toda semana tem oferta com preço baixo direto no site, sem cupom. O aviso sai primeiro no grupo.",
+    from: "2026-10-26T00:00:00-03:00",
+    to: "2026-11-18T00:00:00-03:00",
+    date: "Toda segunda",
+    t: "A lista da semana",
+    d: "As ofertas da semana seguinte chegam no grupo antes do site, com um cupom que só o grupo tem.",
     img: yt("tJbzMqJGH4k"),
   },
   {
-    ph: ["lancamento"],
-    n: "Fase 02",
-    date: "19/11",
-    t: "O GTA 6 chega",
-    d: "Dia do lançamento. O preço do GTA 6 na Soccer é avisado primeiro no Grupo VIP.",
+    from: "2026-11-18T00:00:00-03:00",
+    to: "2026-11-19T00:00:00-03:00",
+    date: "18/11",
+    t: "O preço do GTA 6",
+    d: "O preço do fim de semana do lançamento sai no grupo um dia antes, antes de todo mundo.",
     img: yt("VQRLujxTm3c"),
   },
   {
-    ph: ["pre"],
-    n: "Fase 03",
-    date: "20 a 22/11",
+    from: "2026-11-19T00:00:00-03:00",
+    to: "2026-11-23T00:00:00-03:00",
+    date: "19 a 22/11",
     t: "Fim de semana do GTA",
-    d: `Os preços da loja descem para a abertura da Black. Live na ${black.liveDay}.`,
+    d: `Lançamento com passo a passo de ativação, preços baixos na loja e live na ${black.liveDay}.`,
     img: yt("QdBZY2fkU-0"),
   },
   {
-    ph: ["entre", "black"],
-    n: "Fase 04",
-    date: "27 a 30/11",
+    from: "2026-11-26T00:00:00-03:00",
+    to: "2026-12-01T00:00:00-03:00",
+    date: "26 a 30/11",
     t: "Black Friday",
-    d: "A Black da Soccer, com o GTA 6 junto, até a Cyber Monday. O grupo vê cada oferta antes.",
+    d: "A lista da Black no grupo em 26/11, um dia antes do site. De 27 a 30, as ofertas de cada dia chegam primeiro aqui.",
   },
 ];
-const ORDER: Phase[] = ["antes", "lancamento", "pre", "entre", "black", "fim"];
-function levelState(ph: Phase[], phase: Phase) {
-  if (phase === "entre" && ph.includes("entre")) return "next";
-  if (ph.includes(phase)) return "now";
-  const last = Math.max(...ph.map((p) => ORDER.indexOf(p)));
-  return ORDER.indexOf(phase) > last ? "done" : "locked";
+function dropState(from: string, to: string, now: number) {
+  const a = Date.parse(from);
+  const b = Date.parse(to);
+  if (now >= b) return "done";
+  if (now >= a) return "now";
+  return "locked";
 }
-
-const SHELF = [
-  "gta-6-grand-theft-auto-vi-ps5-midia-digital",
-  "ea-sports-fc-26-para-ps5-midia-digital",
-  "marvels-spider-man-2-para-ps5-midia-digital",
-  "god-of-war-ragnarok-ps5-midia-digital",
-  "call-of-duty-black-ops-7-midia-digital-ps5",
-  "red-dead-redemption-2-ps4-midia-digital",
-];
 
 const phoneDigits = (v: string) => {
   let d = v.replace(/\D/g, "");
@@ -483,6 +475,20 @@ export function BlackPage() {
   const [total, setTotal] = useState<number | null>(null);
   const [bar, setBar] = useState(false);
   const [movie, setMovie] = useState(false);
+  const [scrollP, setScrollP] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const on = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const h = document.documentElement.scrollHeight - window.innerHeight;
+        setScrollP(h > 0 ? Math.min(1, window.scrollY / h) : 0);
+      });
+    };
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
   const pageRef = useRef<HTMLDivElement>(null);
   const reelRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
@@ -513,6 +519,15 @@ export function BlackPage() {
       { threshold: 0.12 },
     );
     pageRef.current?.querySelectorAll(".sb-rv").forEach((el) => rv.observe(el));
+    const move = (e: PointerEvent) => {
+      const t = (e.target as HTMLElement | null)?.closest<HTMLElement>(".sb-perk, .sb-help a");
+      if (!t) return;
+      const r = t.getBoundingClientRect();
+      t.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      t.style.setProperty("--my", `${e.clientY - r.top}px`);
+    };
+    const page = pageRef.current;
+    page?.addEventListener("pointermove", move);
     const seen = new Map<Element, boolean>();
     const io = new IntersectionObserver((en) => {
       en.forEach((e) => seen.set(e.target, e.isIntersecting));
@@ -522,6 +537,7 @@ export function BlackPage() {
     return () => {
       rv.disconnect();
       io.disconnect();
+      page?.removeEventListener("pointermove", move);
     };
   }, []);
 
@@ -561,9 +577,11 @@ export function BlackPage() {
   return (
     <div className="sb font-sans" data-theme="escuro" ref={pageRef}>
       <aside className="sb-rail" aria-hidden>
-        <span>Black Friday {black.year}</span>
-        <i />
-        <span>Soccer Games</span>
+        <img src="/logo-soccer.png" alt="" width={26} height={26} />
+        <span className="sb-rail__track">
+          <i style={{ transform: `scaleY(${scrollP})` }} />
+        </span>
+        <b>{String(Math.round(scrollP * 100)).padStart(2, "0")}</b>
       </aside>
       <div className="sb-reel" ref={reelRef} aria-hidden>
         <img className="sb-reel__still" src={yt("VQRLujxTm3c")} alt="" fetchPriority="high" />
@@ -599,11 +617,11 @@ export function BlackPage() {
             <h1 id="sb-h1" className="sb-h1">
               A Black Friday
               <br />
-              da <span className="sb-shine">Soccer.</span>
+              da <em className="sb-shine">Soccer.</em>
             </h1>
             <p className="sb-lede">
-              De 27 a 30/11, os jogos de PS4 e PS5 entram na Black, e o <b>GTA 6</b>, que chega dia
-              19/11, vem junto. Cada oferta sai primeiro no nosso Grupo VIP do WhatsApp.
+              De <em>27 a 30/11</em>, os jogos de PS4 e PS5 entram na Black. O <em>GTA 6</em> chega
+              dia 19/11 e vem junto. Quem está no Grupo VIP vê cada oferta antes do site.
             </p>
           </div>
 
@@ -620,9 +638,19 @@ export function BlackPage() {
               </div>
               <p className="sb-form__title">Entre no Grupo VIP</p>
               <p className="sb-form__sub">
-                É por lá que a gente avisa cada oferta da Black, o preço do GTA 6 e o horário da
-                live.
+                Grátis, pelo WhatsApp. Só os administradores mandam mensagem.
               </p>
+              <ul className="sb-gets">
+                {[
+                  "A lista da semana antes do site, com cupom do grupo",
+                  "O preço do GTA 6 em 18/11, antes de todo mundo",
+                  "As ofertas da Black um dia antes do site",
+                ].map((g) => (
+                  <li key={g}>
+                    <Check className="h-4 w-4" aria-hidden /> {g}
+                  </li>
+                ))}
+              </ul>
               <SignupForm id="topo" total={total} askEmail />
             </div>
           </div>
@@ -659,36 +687,34 @@ export function BlackPage() {
         <div className="sb-wrap">
           <div className="sb-head sb-rv">
             <span className="sb-head__n">01</span>
-            <p className="sb-kick">Datas</p>
+            <p className="sb-kick">No grupo</p>
             <h2 id="sb-fases" className="sb-h2">
-              Calendário da Black
+              O que chega <em>antes do site</em>
             </h2>
           </div>
           <div className="sb-panel sb-rv">
             <div className="sb-levels">
-              {LEVELS.map((l) => {
-                const st = levelState(l.ph, phase);
+              {DROPS.map((l) => {
+                const st = dropState(l.from, l.to, now ?? t0);
                 return (
-                  <article key={l.n} className={`sb-level ${st}`}>
+                  <article key={l.t} className={`sb-level ${st}`}>
                     {l.img && (
                       <span className="sb-level__bg" style={{ backgroundImage: `url(${l.img})` }} />
                     )}
                     <div className="sb-level__top">
-                      <span className="sb-level__n">{l.n}</span>
+                      <span className="sb-level__n">{l.date}</span>
                       {st === "now" && <span className="sb-state sb-state--now">Agora</span>}
-                      {st === "next" && <span className="sb-state sb-state--now">Próxima</span>}
                       {st === "done" && (
                         <span className="sb-state sb-state--done">
-                          <Check className="h-3 w-3" aria-hidden /> Concluída
+                          <Check className="h-3 w-3" aria-hidden /> Já foi
                         </span>
                       )}
                       {st === "locked" && (
                         <span className="sb-state">
-                          <Lock className="h-3 w-3" aria-hidden /> Bloqueada
+                          <Lock className="h-3 w-3" aria-hidden /> Em breve
                         </span>
                       )}
                     </div>
-                    <p className="sb-level__date">{l.date}</p>
                     <h3>{l.t}</h3>
                     <p>{l.d}</p>
                   </article>
@@ -713,14 +739,36 @@ export function BlackPage() {
             <span className="sb-head__n">02</span>
             <p className="sb-kick">Na loja</p>
             <h2 id="sb-estante" className="sb-h2">
-              Jogos na loja
+              GTA 6 em <em>pré-venda</em>
             </h2>
           </div>
           <div className="sb-panel sb-rv">
-            <div className="sb-shelf">
-              {SHELF.map((s) => (
-                <Case key={s} slug={s} />
-              ))}
+            <div className="sb-spot">
+              <div className="sb-spot__case">
+                <Case slug="gta-6-grand-theft-auto-vi-ps5-midia-digital" />
+              </div>
+              <div className="sb-spot__copy">
+                <p>
+                  Quem compra na pré-venda recebe o acesso nos prazos normais e joga a partir do
+                  lançamento, dia 19/11.
+                </p>
+                <p>
+                  O preço do fim de semana do lançamento sai primeiro no grupo, em 18/11. Na Black,
+                  o GTA 6 entra junto com os outros jogos.
+                </p>
+                <a
+                  className="sb-cta sb-spot__btn"
+                  href={withUtm(`${STORE}/produtos/gta-6-grand-theft-auto-vi-ps5-midia-digital/`, {
+                    content: "black-gta6",
+                    campaign: `black-${black.year}`,
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => track("links_clique", { item_name: "Black: pré-venda GTA 6" })}
+                >
+                  Ver a pré-venda na loja <ArrowUpRight className="h-5 w-5" aria-hidden />
+                </a>
+              </div>
             </div>
             <div className="sb-perks">
               {PERKS.map(({ I, t, d: txt }) => (

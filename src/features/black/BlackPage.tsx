@@ -593,31 +593,14 @@ export function BlackPage() {
               O GTA 6 chega dia <b>19/11</b>. O preço dele no fim de semana do lançamento e na Black
               Friday, de 27 a 30/11, sai primeiro no nosso Grupo VIP do WhatsApp.
             </p>
-
-            {!over && (
-              <div className="sb-load sb-glass" role="timer" aria-label="Contagem regressiva">
-                <div className="sb-load__top">
-                  <span>Carregando {mark.bar.replace(/^para /, "")}…</span>
-                  <b>{now ? `${Math.round(prog * 100)}%` : "··"}</b>
-                </div>
-                <div className="sb-bar" aria-hidden>
-                  {Array.from({ length: 24 }, (_, i) => (
-                    <i key={i} className={i < lit ? `on${i === lit - 1 ? " tip" : ""}` : ""} />
-                  ))}
-                </div>
-                <div className="sb-clock">
-                  {parts.map(([v, l]) => (
-                    <span key={l}>
-                      {now ? <Num v={v} /> : <span className="sb-num">··</span>}
-                      <small>{l}</small>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
-          <div ref={formRef} id="cadastro" style={{ scrollMarginTop: 24 }}>
+          <div
+            ref={formRef}
+            id="cadastro"
+            className="sb-hero__form"
+            style={{ scrollMarginTop: 24 }}
+          >
             <div className="sb-form sb-glass sb-glass--lit">
               <div className="sb-form__head">
                 <span>Grupo VIP · WhatsApp</span>
@@ -633,6 +616,31 @@ export function BlackPage() {
               <SignupForm id="topo" total={total} />
             </div>
           </div>
+          {!over && (
+            <div
+              className="sb-load sb-glass sb-hero__load"
+              role="timer"
+              aria-label="Contagem regressiva"
+            >
+              <div className="sb-load__top">
+                <span>Carregando {mark.bar.replace(/^para /, "")}…</span>
+                <b>{now ? `${Math.round(prog * 100)}%` : "··"}</b>
+              </div>
+              <div className="sb-bar" aria-hidden>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <i key={i} className={i < lit ? `on${i === lit - 1 ? " tip" : ""}` : ""} />
+                ))}
+              </div>
+              <div className="sb-clock">
+                {parts.map(([v, l]) => (
+                  <span key={l}>
+                    {now ? <Num v={v} /> : <span className="sb-num">··</span>}
+                    <small>{l}</small>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

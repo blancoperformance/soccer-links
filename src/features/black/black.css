@@ -223,7 +223,7 @@
   display: grid;
   gap: 32px;
   align-content: center;
-  padding-top: 220px;
+  padding-top: 170px;
   padding-bottom: 40px;
 }
 @media (min-width: 768px) {
@@ -234,10 +234,23 @@
 @media (min-width: 1024px) {
   .sb-hero__body {
     grid-template-columns: minmax(0, 1fr) 420px;
-    gap: 56px;
+    grid-template-areas: "copy form" "load form";
+    column-gap: 56px;
+    row-gap: 0;
     align-items: center;
     padding-top: 48px;
     padding-bottom: 64px;
+  }
+  .sb-hero__body > :first-child {
+    grid-area: copy;
+    align-self: end;
+  }
+  .sb-hero__form {
+    grid-area: form;
+  }
+  .sb-hero__load {
+    grid-area: load;
+    align-self: start;
   }
 }
 .sb-h1 {
@@ -294,7 +307,7 @@
 
 /* barra de carregamento + contagem */
 .sb-load {
-  margin-top: 30px;
+  margin-top: 0;
   max-width: 520px;
   padding: 18px 20px 20px;
 }

@@ -79,6 +79,8 @@ const SEGMENTS: [string, number, number][] = [
 type YTPlayer = {
   getCurrentTime?: () => number;
   unloadModule?: (m: string) => void;
+  getVideoData?: () => { video_id?: string };
+  getPlayerState?: () => number;
   loadVideoById: (o: { videoId: string; startSeconds: number; endSeconds: number }) => void;
   mute: () => void;
   playVideo: () => void;
@@ -117,6 +119,15 @@ export function startReel(root: HTMLElement) {
     const YT = window.YT;
     if (!YT?.Player) return;
     const [videoId, start, end] = SEGMENTS[0]!;
+    let moving = false;
+    const next = () => {
+      if (moving) return;
+      moving = true;
+      wrap.classList.add("bfm-wait");
+      i = (i + 1) % SEGMENTS.length;
+      const [v, s, f] = SEGMENTS[i]!;
+      player.loadVideoById({ videoId: v, startSeconds: s, endSeconds: f });
+    };
     const player = new YT.Player(el, {
       videoId,
       host: "https://www.youtube-nocookie.com",
@@ -143,6 +154,7 @@ export function startReel(root: HTMLElement) {
           // 1 tocando, 2 pausado, 3 carregando, 5 parado: só mostra o vídeo quando está tocando,
           // assim o ícone de pausa e a tela de carregamento do YouTube nunca aparecem
           if (e.data === 1) {
+            moving = false;
             e.target.unloadModule?.("captions");
             e.target.unloadModule?.("cc");
             window.clearTimeout(show);
@@ -151,13 +163,10 @@ export function startReel(root: HTMLElement) {
             window.clearTimeout(show);
             wrap.classList.add("bfm-wait");
           }
-          if (e.data === 0) {
-            wrap.classList.add("bfm-wait");
-            i = (i + 1) % SEGMENTS.length;
-            const [v, s, f] = SEGMENTS[i]!;
-            player.loadVideoById({ videoId: v, startSeconds: s, endSeconds: f });
-          }
+          if (e.data === 0) next();
         },
+        // trecho indisponível: pula para o próximo em vez de travar
+        onError: () => next(),
       },
     });
     // esconde o vídeo um pouco antes do fim de cada trecho: o YouTube mostra o ícone de pausa ao parar
@@ -166,6 +175,8 @@ export function startReel(root: HTMLElement) {
       const end = SEGMENTS[i]![2];
       const t = player.getCurrentTime?.() ?? 0;
       if (t > end - 1.2) wrap.classList.add("bfm-wait");
+      // se o YouTube ignorar o fim do trecho, troca daqui mesmo
+      if (t > end + 0.4) next();
     }, 200);
   };
   if (window.YT?.Player) go();

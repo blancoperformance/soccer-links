@@ -3,9 +3,9 @@ import { BlackPage } from "@/features/black/BlackPage";
 import { blackFaq } from "@/features/black/faq";
 import { black } from "@/features/black/config";
 
-const TITLE = `GTA 6 na Black da Soccer Games ${black.year} | Grupo VIP`;
+const TITLE = `Black Friday da Soccer Games ${black.year} | Grupo VIP`;
 const DESC =
-  "O GTA 6 chega dia 19/11. O preço do fim de semana do lançamento e da Black Friday (27 a 30/11) sai primeiro no Grupo VIP da Soccer Games. É de graça.";
+  "Black Friday da Soccer Games de 27 a 30/11, com jogos de PS4 e PS5 e o GTA 6 junto. Cada oferta sai primeiro no Grupo VIP. É de graça.";
 
 const faqLd = {
   "@context": "https://schema.org",
@@ -48,9 +48,7 @@ export const Route = createFileRoute("/black")({
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
     ],
-    links: [
-      { rel: "canonical", href: "https://links.lojasoccergames.com.br/black" },
-    ],
+    links: [{ rel: "canonical", href: "https://links.lojasoccergames.com.br/black" }],
     scripts: [
       { type: "application/ld+json", children: JSON.stringify(faqLd) },
       { type: "application/ld+json", children: JSON.stringify(eventLd) },

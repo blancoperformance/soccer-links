@@ -21,7 +21,7 @@ import { useLiveGame } from "@/features/public/GameCard";
 import { sized } from "@/features/public/store";
 import { black, phaseAt, type Phase } from "./config";
 import { blackFaq } from "./faq";
-import { icsText, nextMark, startReel } from "./landing";
+import { icsText, startReel } from "./landing";
 
 const WA = "5518996366686";
 const STORE = "https://lojasoccergames.com.br";
@@ -536,7 +536,16 @@ export function BlackPage() {
     track("links_clique", { item_name: "Black: trailer GTA VI" });
   };
 
-  const mark = nextMark(now ?? Date.parse("2026-10-26T12:00:00-03:00"));
+  // a contagem aponta para a Black (27/11) e, durante ela, para o fim (30/11)
+  const t0 = now ?? Date.parse("2026-10-26T12:00:00-03:00");
+  const mark =
+    t0 < Date.parse(black.bigDay)
+      ? {
+          t: Date.parse(black.bigDay),
+          bar: "para a Black Friday",
+          label: "Carregando a Black Friday…",
+        }
+      : { t: Date.parse(black.bigEnd), bar: "para o fim da Black", label: "Black Friday rolando" };
   const left = now ? Math.max(0, mark.t - now) : 0;
   const d = Math.floor(left / 864e5);
   const parts: [string, string][] = [
@@ -551,6 +560,11 @@ export function BlackPage() {
 
   return (
     <div className="sb font-sans" data-theme="escuro" ref={pageRef}>
+      <aside className="sb-rail" aria-hidden>
+        <span>Black Friday {black.year}</span>
+        <i />
+        <span>Soccer Games</span>
+      </aside>
       <div className="sb-reel" ref={reelRef} aria-hidden>
         <img className="sb-reel__still" src={yt("VQRLujxTm3c")} alt="" fetchPriority="high" />
         <div className="bfm-bg-full bfm-wait">
@@ -571,9 +585,7 @@ export function BlackPage() {
               <img src="/logo-soccer.png" alt="" width={32} height={32} />
               <b>Soccer Games</b>
             </a>
-            <span className="sb-nav__live">
-              <i className="sb-live" aria-hidden /> Black {black.year} · grupo aberto
-            </span>
+            <span className="sb-nav__live">Black Friday {black.year} · 27 a 30 de novembro</span>
             <button type="button" className="sb-nav__btn" onClick={openMovie}>
               <span className="sb-nav__play">
                 <Play className="h-3 w-3" fill="currentColor" aria-hidden />
@@ -585,15 +597,15 @@ export function BlackPage() {
 
         <div className="sb-hero__body sb-wrap">
           <div>
-            <p className="sb-kick">GTA 6 · 19 de novembro</p>
+            <p className="sb-kick">Black Friday · 27 a 30/11</p>
             <h1 id="sb-h1" className="sb-h1">
-              GTA 6 na Black
+              A Black Friday
               <br />
               da <span className="sb-shine">Soccer.</span>
             </h1>
             <p className="sb-lede">
-              O GTA 6 chega dia <b>19/11</b>. O preço dele no fim de semana do lançamento e na Black
-              Friday, de 27 a 30/11, sai primeiro no nosso Grupo VIP do WhatsApp.
+              De 27 a 30/11, os jogos de PS4 e PS5 entram na Black, e o <b>GTA 6</b>, que chega dia
+              19/11, vem junto. Cada oferta sai primeiro no nosso Grupo VIP do WhatsApp.
             </p>
           </div>
 
@@ -612,8 +624,8 @@ export function BlackPage() {
               </div>
               <p className="sb-form__title">Entre no Grupo VIP</p>
               <p className="sb-form__sub">
-                É por lá que a gente avisa o preço do GTA 6, o horário da live e cada oferta da
-                Black.
+                É por lá que a gente avisa cada oferta da Black, o preço do GTA 6 e o horário da
+                live.
               </p>
               <SignupForm id="topo" total={total} askEmail />
             </div>
@@ -625,7 +637,7 @@ export function BlackPage() {
               aria-label="Contagem regressiva"
             >
               <div className="sb-load__top">
-                <span>Carregando {mark.bar.replace(/^para /, "")}…</span>
+                <span>{mark.label}</span>
                 <b>{now ? `${Math.round(prog * 100)}%` : "··"}</b>
               </div>
               <div className="sb-bar" aria-hidden>
@@ -667,11 +679,7 @@ export function BlackPage() {
                     )}
                     <div className="sb-level__top">
                       <span className="sb-level__n">{l.n}</span>
-                      {st === "now" && (
-                        <span className="sb-state sb-state--now">
-                          <i className="sb-live" aria-hidden /> Agora
-                        </span>
-                      )}
+                      {st === "now" && <span className="sb-state sb-state--now">Agora</span>}
                       {st === "next" && <span className="sb-state sb-state--now">Próxima</span>}
                       {st === "done" && (
                         <span className="sb-state sb-state--done">

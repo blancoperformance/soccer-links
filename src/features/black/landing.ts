@@ -77,6 +77,7 @@ const SEGMENTS: [string, number, number][] = [
 ];
 
 type YTPlayer = {
+  unloadModule?: (m: string) => void;
   loadVideoById: (o: { videoId: string; startSeconds: number; endSeconds: number }) => void;
   mute: () => void;
   playVideo: () => void;
@@ -127,6 +128,7 @@ export function startReel(root: HTMLElement) {
         modestbranding: 1,
         disablekb: 1,
         iv_load_policy: 3,
+        cc_load_policy: 0,
         fs: 0,
       },
       events: {
@@ -135,7 +137,12 @@ export function startReel(root: HTMLElement) {
           e.target.playVideo();
         },
         onStateChange: (e) => {
-          if (e.data === 1) wrap.classList.remove("bfm-wait");
+          if (e.data === 1) {
+            // sem legenda automática por cima do fundo
+            e.target.unloadModule?.("captions");
+            e.target.unloadModule?.("cc");
+            wrap.classList.remove("bfm-wait");
+          }
           if (e.data === 0) {
             wrap.classList.add("bfm-wait");
             i = (i + 1) % SEGMENTS.length;

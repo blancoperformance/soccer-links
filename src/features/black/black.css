@@ -141,7 +141,8 @@
   left: 50%;
   width: max(100%, 177.78svh);
   height: max(100%, 56.25vw);
-  transform: translate(-50%, -50%) scale(1.06);
+  /* os trailers vêm com faixa preta de cinema (2.39:1): o zoom esconde as faixas */
+  transform: translate(-50%, -50%) scale(1.36);
   border: 0;
   pointer-events: none;
   transition: opacity 0.5s ease;

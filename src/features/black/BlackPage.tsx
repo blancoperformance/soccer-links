@@ -277,9 +277,7 @@ function SignupForm({
         </label>
         {askEmail && (
           <label className="sb-field">
-            <span>
-              E-mail <em>(opcional)</em>
-            </span>
+            <span>E-mail</span>
             <input
               name="email"
               type="email"
@@ -421,7 +419,7 @@ function Faq() {
       {blackFaq.map((g) => (
         <div key={g.group} className="contents">
           <p className="sb-faq__g">{g.group}</p>
-          <ul className="sb-faq__list sb-glass">
+          <ul className="sb-faq__list">
             {g.items.map((it) => {
               const on = open === it.q;
               return (
@@ -553,32 +551,36 @@ export function BlackPage() {
 
   return (
     <div className="sb font-sans" data-theme="escuro" ref={pageRef}>
+      <div className="sb-reel" ref={reelRef} aria-hidden>
+        <img className="sb-reel__still" src={yt("VQRLujxTm3c")} alt="" fetchPriority="high" />
+        <div className="bfm-bg-full bfm-wait">
+          <div id="bfm-yt" />
+        </div>
+        <div className="sb-reel__shade" />
+      </div>
       {/* TOPO */}
       <section className="sb-hero" aria-labelledby="sb-h1">
-        <div className="sb-reel" ref={reelRef} aria-hidden>
-          <img className="sb-reel__still" src={yt("VQRLujxTm3c")} alt="" fetchPriority="high" />
-          <div className="bfm-bg-full bfm-wait">
-            <div id="bfm-yt" />
-          </div>
-          <div className="sb-reel__shade" />
-          <div className="sb-reel__light" />
-        </div>
-
         <header className="sb-top sb-wrap">
-          <a
-            href="/"
-            className="sb-top__brand"
-            aria-label="Soccer Games"
-            onClick={() => track("links_clique", { item_name: "Black: logo" })}
-          >
-            <img src="/logo-soccer.png" alt="" width={40} height={40} />
-            <span className="sb-pill sb-glass">
-              <i className="sb-live" aria-hidden /> Black {black.year}
+          <div className="sb-nav">
+            <a
+              href="/"
+              className="sb-nav__brand"
+              aria-label="Soccer Games"
+              onClick={() => track("links_clique", { item_name: "Black: logo" })}
+            >
+              <img src="/logo-soccer.png" alt="" width={32} height={32} />
+              <b>Soccer Games</b>
+            </a>
+            <span className="sb-nav__live">
+              <i className="sb-live" aria-hidden /> Black {black.year} · grupo aberto
             </span>
-          </a>
-          <button type="button" className="sb-pill sb-glass sb-btn-ghost" onClick={openMovie}>
-            <Play className="h-3.5 w-3.5" fill="currentColor" aria-hidden /> Trailer com som
-          </button>
+            <button type="button" className="sb-nav__btn" onClick={openMovie}>
+              <span className="sb-nav__play">
+                <Play className="h-3 w-3" fill="currentColor" aria-hidden />
+              </span>
+              Trailer com som
+            </button>
+          </div>
         </header>
 
         <div className="sb-hero__body sb-wrap">
@@ -647,49 +649,48 @@ export function BlackPage() {
       {/* SELEÇÃO DE FASE */}
       <section className="sb-sec" aria-labelledby="sb-fases">
         <div className="sb-wrap">
-          <div className="sb-rv">
+          <div className="sb-head sb-rv">
+            <span className="sb-head__n">01</span>
             <p className="sb-kick">Datas</p>
             <h2 id="sb-fases" className="sb-h2">
-              Do lançamento do GTA 6 até a Cyber Monday
+              Calendário da Black
             </h2>
           </div>
-          <div className="sb-levels">
-            {LEVELS.map((l, i) => {
-              const st = levelState(l.ph, phase);
-              return (
-                <article
-                  key={l.n}
-                  className={`sb-level sb-glass sb-rv ${st}`}
-                  style={{ transitionDelay: `${i * 80}ms` }}
-                >
-                  {l.img && (
-                    <span className="sb-level__bg" style={{ backgroundImage: `url(${l.img})` }} />
-                  )}
-                  <div className="sb-level__top">
-                    <span className="sb-level__n">{l.n}</span>
-                    {st === "now" && (
-                      <span className="sb-state sb-state--now">
-                        <i className="sb-live" aria-hidden /> Agora
-                      </span>
+          <div className="sb-panel sb-rv">
+            <div className="sb-levels">
+              {LEVELS.map((l) => {
+                const st = levelState(l.ph, phase);
+                return (
+                  <article key={l.n} className={`sb-level ${st}`}>
+                    {l.img && (
+                      <span className="sb-level__bg" style={{ backgroundImage: `url(${l.img})` }} />
                     )}
-                    {st === "next" && <span className="sb-state sb-state--now">Próxima</span>}
-                    {st === "done" && (
-                      <span className="sb-state sb-state--done">
-                        <Check className="h-3 w-3" aria-hidden /> Concluída
-                      </span>
-                    )}
-                    {st === "locked" && (
-                      <span className="sb-state">
-                        <Lock className="h-3 w-3" aria-hidden /> Bloqueada
-                      </span>
-                    )}
-                  </div>
-                  <p className="sb-level__date">{l.date}</p>
-                  <h3>{l.t}</h3>
-                  <p>{l.d}</p>
-                </article>
-              );
-            })}
+                    <div className="sb-level__top">
+                      <span className="sb-level__n">{l.n}</span>
+                      {st === "now" && (
+                        <span className="sb-state sb-state--now">
+                          <i className="sb-live" aria-hidden /> Agora
+                        </span>
+                      )}
+                      {st === "next" && <span className="sb-state sb-state--now">Próxima</span>}
+                      {st === "done" && (
+                        <span className="sb-state sb-state--done">
+                          <Check className="h-3 w-3" aria-hidden /> Concluída
+                        </span>
+                      )}
+                      {st === "locked" && (
+                        <span className="sb-state">
+                          <Lock className="h-3 w-3" aria-hidden /> Bloqueada
+                        </span>
+                      )}
+                    </div>
+                    <p className="sb-level__date">{l.date}</p>
+                    <h3>{l.t}</h3>
+                    <p>{l.d}</p>
+                  </article>
+                );
+              })}
+            </div>
           </div>
           <button
             type="button"
@@ -704,25 +705,28 @@ export function BlackPage() {
       {/* ESTANTE */}
       <section className="sb-sec" style={{ paddingTop: 0 }} aria-labelledby="sb-estante">
         <div className="sb-wrap">
-          <div className="sb-rv">
+          <div className="sb-head sb-rv">
+            <span className="sb-head__n">02</span>
             <p className="sb-kick">Na loja</p>
             <h2 id="sb-estante" className="sb-h2">
-              Já vai escolhendo o seu
+              Jogos na loja
             </h2>
           </div>
-          <div className="sb-shelf">
-            {SHELF.map((s) => (
-              <Case key={s} slug={s} />
-            ))}
-          </div>
-          <div className="sb-perks">
-            {PERKS.map(({ I, t, d: txt }) => (
-              <div key={t} className="sb-perk sb-glass sb-rv">
-                <I className="h-5 w-5" strokeWidth={1.7} aria-hidden />
-                <b>{t}</b>
-                <span>{txt}</span>
-              </div>
-            ))}
+          <div className="sb-panel sb-rv">
+            <div className="sb-shelf">
+              {SHELF.map((s) => (
+                <Case key={s} slug={s} />
+              ))}
+            </div>
+            <div className="sb-perks">
+              {PERKS.map(({ I, t, d: txt }) => (
+                <div key={t} className="sb-perk">
+                  <I className="h-5 w-5" strokeWidth={1.7} aria-hidden />
+                  <b>{t}</b>
+                  <span>{txt}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -730,22 +734,26 @@ export function BlackPage() {
       {/* DÚVIDAS */}
       <section className="sb-sec" style={{ paddingTop: 0 }} aria-labelledby="sb-faq">
         <div className="sb-wrap">
-          <div className="sb-rv">
+          <div className="sb-head sb-rv">
+            <span className="sb-head__n">03</span>
             <p className="sb-kick">Antes de entrar</p>
             <h2 id="sb-faq" className="sb-h2">
               Dúvidas
             </h2>
           </div>
-          <Faq />
+          <div className="sb-panel sb-rv">
+            <Faq />
+          </div>
         </div>
       </section>
 
       {/* FECHAMENTO */}
       <section className="sb-sec" style={{ paddingTop: 0 }} aria-labelledby="sb-final">
         <div className="sb-wrap">
-          <div className="sb-final sb-glass sb-glass--lit sb-rv">
+          <div className="sb-final sb-panel sb-rv">
             <span className="sb-final__bg" aria-hidden />
             <div>
+              <span className="sb-head__n">04</span>
               <p className="sb-kick">Grupo VIP</p>
               <h2 id="sb-final" className="sb-h2">
                 {over ? (

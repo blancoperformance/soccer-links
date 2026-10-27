@@ -6,7 +6,7 @@
 export const black = {
   year: 2026,
   /** Link do Grupo VIP no WhatsApp (chat.whatsapp.com/...). Vazio = a página grava o cadastro e avisa que o link sai em breve. */
-  groupUrl: "https://chat.whatsapp.com/Fk0DYxKtWbaCGr2ZVCSYPI",
+  groupUrl: "https://chat.whatsapp.com/C1YwVOkr6n2DBzUwb1EkzL",
   /** Mostra o total real de inscritos só a partir deste número. */
   socialMin: 150,
   /** Lançamento do GTA VI. */

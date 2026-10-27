@@ -53,12 +53,12 @@ rep(
     "#bfm-vip .bfm-bg-full.bfm-wait #bfm-yt{opacity:0}\n"
     "#bfm-vip .bfm-bg-full::after{",
 )
-s = s.replace("background:rgba(11,11,11,.8);pointer-events:none}", "background:rgba(11,11,11,.74);pointer-events:none}", 1)
+s = s.replace("background:rgba(11,11,11,.8);pointer-events:none}", "background:linear-gradient(90deg,rgba(11,11,11,.86) 0%,rgba(11,11,11,.62) 45%,rgba(11,11,11,.5) 100%);pointer-events:none}", 1)
 
 # ---------- topo ----------
 rep(
     '<div class="bfm-brandline"><span class="bfm-edition">Black 2026</span></div>',
-    '<div class="bfm-brandline"><a class="bfm-logo" href="/" data-t="Black: logo" aria-label="Soccer Games"><img src="/logo-soccer.png" alt="" width="40" height="40"></a><span class="bfm-edition">Black 2026 · GTA 6</span></div>',
+    '<div class="bfm-brandline"><a class="bfm-logo" href="/" data-t="Black: logo" aria-label="Soccer Games"><img src="/logo-soccer.png" alt="" width="40" height="40"></a><span class="bfm-edition">Black 2026</span></div>',
 )
 rep(
     '<span class="bfm-l1">A <span class="bfm-w"><span>maior</span></span></span><span class="bfm-l2">Black November <span class="bfm-h-end">da MTS.</span></span>',
@@ -219,7 +219,7 @@ js = js[:i] + (
     "  var NX=window.SOCCER_BLACK.next(),OPEN=new Date(NX.t);\n"
     "  (function(){var w=document.getElementById('bfm-when'),l=document.getElementById('bfm-bt-l');if(w)w.textContent=NX.when;if(l)l.textContent=NX.bar;})();\n"
 ) + js[k:]
-jrep("var WORDS=['maior','melhor'];", "var WORDS=['GTA 6','Jogos de PS5','Jogos de PS4'];")
+jrep("var WORDS=['maior','melhor'];", "var WORDS=['GTA 6','PS5','PS4'];")
 i = js.index("  var CLIPS=")
 k = js.index("  var pad=function", i)
 js = js[:i] + "  window.SOCCER_BLACK.reel(root);\n" + js[k:]
@@ -247,6 +247,9 @@ js = js.replace("'bf26-'+Date.now()", "'bn2026-'+Date.now()")
 
 # CSS extra da Soccer
 extra = """
+/* Soccer: a página não tem o cabeçalho da loja por cima, então o topo ganha respiro */
+#bfm-vip{--bfm-header-overlap:56px}
+@media (max-width:900px){#bfm-vip{--bfm-header-overlap:8px}}
 /* Soccer: logo no topo, selo com o SG, rodapé */
 #bfm-vip .bfm-brandline{display:flex;align-items:center;gap:14px}
 #bfm-vip .bfm-logo{display:block;width:40px;height:40px;flex:none}

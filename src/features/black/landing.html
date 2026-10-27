@@ -15,7 +15,7 @@
 #bfm-vip .bfm-bg-full video.cut{opacity:0}
 #bfm-vip .bfm-bg-full #bfm-yt{position:absolute;top:50%;left:50%;width:max(100%,177.78vh);height:max(100%,56.25vw);transform:translate(-50%,-50%) scale(1.04);border:0;transition:opacity .35s linear}
 #bfm-vip .bfm-bg-full.bfm-wait #bfm-yt{opacity:0}
-#bfm-vip .bfm-bg-full::after{content:"";position:absolute;inset:0;background:rgba(11,11,11,.74);pointer-events:none}
+#bfm-vip .bfm-bg-full::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,11,11,.86) 0%,rgba(11,11,11,.62) 45%,rgba(11,11,11,.5) 100%);pointer-events:none}
 
 /* ---------- hero ---------- */
 #bfm-vip .bfm-hero{position:relative;z-index:1;display:grid;align-items:center;height:auto;min-height:clamp(600px,var(--hh),860px);padding:clamp(20px,2.8svh,36px) 0 clamp(32px,4svh,52px)}
@@ -670,6 +670,9 @@ body:has(#bfm-vip){background-color:#0b0b0b}
 #bfm-vip .bfm-cat .bfm-rail.bfm-js .bfm-cc{touch-action:pan-y!important;scroll-snap-align:none!important;-webkit-touch-callout:none}
 #bfm-vip .bfm-cat .bfm-rail.bfm-js img{-webkit-touch-callout:none}
 
+/* Soccer: a página não tem o cabeçalho da loja por cima, então o topo ganha respiro */
+#bfm-vip{--bfm-header-overlap:56px}
+@media (max-width:900px){#bfm-vip{--bfm-header-overlap:8px}}
 /* Soccer: logo no topo, selo com o SG, rodapé */
 #bfm-vip .bfm-brandline{display:flex;align-items:center;gap:14px}
 #bfm-vip .bfm-logo{display:block;width:40px;height:40px;flex:none}
@@ -692,7 +695,7 @@ body:has(#bfm-vip){background-color:#0b0b0b}
   <div class="bfm-stage">
   <div class="bfm-left">
     <div class="bfm-headwrap">
-      <div class="bfm-brandline"><a class="bfm-logo" href="/" data-t="Black: logo" aria-label="Soccer Games"><img src="/logo-soccer.png" alt="" width="40" height="40"></a><span class="bfm-edition">Black 2026 · GTA 6</span></div>
+      <div class="bfm-brandline"><a class="bfm-logo" href="/" data-t="Black: logo" aria-label="Soccer Games"><img src="/logo-soccer.png" alt="" width="40" height="40"></a><span class="bfm-edition">Black 2026</span></div>
       <h1 class="bfm-h" id="bfm-h"><span class="bfm-l1"><span class="bfm-w"><span>GTA 6</span></span></span><span class="bfm-l2">na Black <span class="bfm-h-end">da Soccer.</span></span></h1>
       <p class="bfm-sub">O GTA 6 chega dia 19/11. O preço do fim de semana do lançamento e da Black Friday sai primeiro no grupo.</p>
       <div class="bfm-time-detail" aria-hidden="true"><div class="bfm-ticks"><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i><i>&nbsp;</i></div></div>

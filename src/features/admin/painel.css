@@ -5151,8 +5151,234 @@ button.sg-board__cell:hover {
   cursor: pointer;
 }
 @media (max-width: 520px) {
-  .sg-card__head { flex-wrap: wrap; }
-  .sg-card__titles { flex: 1 1 160px; min-width: 0; }
-  .sg-card__action:has(.sg-search) { flex: 1 1 100%; }
-  .sg-card__action .sg-search { width: 100% !important; }
+  .sg-card__head {
+    flex-wrap: wrap;
+  }
+  .sg-card__titles {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+  .sg-card__action:has(.sg-search) {
+    flex: 1 1 100%;
+  }
+  .sg-card__action .sg-search {
+    width: 100% !important;
+  }
+}
+
+/* ================================================================ menu recolhível (Ctrl+B) */
+.sg-side__fold {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sg-console-muted);
+  transition:
+    background-color var(--sg-fast) var(--sg-ease),
+    color var(--sg-fast) var(--sg-ease);
+}
+.sg-side__fold:hover {
+  background: var(--sg-console-2);
+  color: #fff;
+}
+.sg-side__fold svg {
+  width: 17px;
+  height: 17px;
+}
+.sg-side__product {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.sg-side {
+  overflow: hidden;
+  transition:
+    width 220ms var(--sg-ease),
+    box-shadow 220ms var(--sg-ease);
+}
+.sg-main {
+  transition: padding-left 220ms var(--sg-ease);
+}
+.sg-nav__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sg-side.is-mini {
+  --sg-mini-w: 68px;
+  width: var(--sg-mini-w);
+}
+.sg-main.is-mini {
+  padding-left: calc(68px + var(--sg-gap));
+}
+/* recolhido: só os ícones; o resto some sem mexer na altura */
+.sg-side.is-mini:not(:hover) .sg-side__product,
+.sg-side.is-mini:not(:hover) .sg-side__fold,
+.sg-side.is-mini:not(:hover) .sg-nav__text,
+.sg-side.is-mini:not(:hover) .sg-nav__badge,
+.sg-side.is-mini:not(:hover) .sg-nav__live,
+.sg-side.is-mini:not(:hover) .sg-me__text,
+.sg-side.is-mini:not(:hover) .sg-me > svg {
+  opacity: 0;
+  pointer-events: none;
+}
+.sg-side.is-mini:not(:hover) .sg-nav__group {
+  opacity: 0;
+}
+.sg-side.is-mini:not(:hover) .sg-ws {
+  visibility: hidden;
+}
+.sg-side.is-mini .sg-side__brand {
+  padding-left: 3px;
+}
+.sg-side.is-mini .sg-side__brand img {
+  width: 32px;
+  height: 32px;
+}
+.sg-side.is-mini:not(:hover) .sg-nav__link {
+  padding: 0 13px;
+}
+/* passando o mouse: abre por cima do conteúdo, sem empurrar a tela */
+.sg-side.is-mini:hover {
+  width: var(--sg-side-w);
+  box-shadow:
+    var(--sg-shadow-2),
+    0 24px 60px -20px rgba(0, 0, 0, 0.45);
+}
+.sg-side.is-mini:hover .sg-side__fold {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sg-side,
+  .sg-main {
+    transition: none;
+  }
+}
+
+/* ================================================================ caixas de marcar no visual do painel */
+.sgp input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  display: inline-grid;
+  place-content: center;
+  border-radius: 6px;
+  border: 1.5px solid var(--sg-line-strong, var(--sg-muted));
+  background: var(--sg-surface);
+  cursor: pointer;
+  transition:
+    background-color var(--sg-fast) var(--sg-ease),
+    border-color var(--sg-fast) var(--sg-ease),
+    box-shadow var(--sg-fast) var(--sg-ease);
+}
+.sgp input[type="checkbox"]::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border: solid #fff;
+  border-width: 0 0 2px 2px;
+  transform: translateY(-1px) rotate(-45deg) scale(0);
+  transition: transform 140ms var(--sg-ease);
+}
+.sgp input[type="checkbox"]:checked {
+  background: var(--sg-brand);
+  border-color: var(--sg-brand);
+}
+.sgp input[type="checkbox"]:checked::after {
+  transform: translateY(-1px) rotate(-45deg) scale(1);
+}
+.sgp input[type="checkbox"]:hover {
+  border-color: var(--sg-brand);
+}
+.sgp input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--sg-brand-soft);
+}
+.sgp input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.sgp[data-theme="dark"] input[type="checkbox"]:checked::after {
+  border-color: #12091c;
+}
+
+/* ================================================================ configurações */
+.sg-pass {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.sg-pass__field {
+  display: grid;
+  gap: 6px;
+}
+.sg-pass__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sg-pass__msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+}
+.sg-pass__msg svg {
+  width: 16px;
+  height: 16px;
+}
+.sg-pass__msg.is-ok {
+  color: var(--sg-ok);
+}
+.sg-pass__msg.is-bad {
+  color: var(--sg-bad);
+}
+.sg-prefs {
+  display: grid;
+}
+.sg-prefs__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--sg-line);
+}
+.sg-prefs__row:last-child {
+  border-bottom: 0;
+}
+.sg-prefs__row > span {
+  display: grid;
+  gap: 2px;
+}
+.sg-prefs__row b {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sg-ink, var(--sg-text-2));
+}
+.sg-prefs__row small {
+  font-size: 12.5px;
+  color: var(--sg-muted);
+}
+.sg-prose p {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--sg-text-2);
+}
+.sg-prose p:last-child {
+  margin-bottom: 0;
+}
+.sg-side__product strong,
+.sg-side__product span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

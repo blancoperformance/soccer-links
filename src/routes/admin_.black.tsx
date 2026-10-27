@@ -11,7 +11,7 @@ const BlackLeads = lazy(() =>
 export const Route = createFileRoute("/admin_/black")({
   head: () => ({
     meta: [
-      { title: "Black November | Painel Soccer Games" },
+      { title: "Soccer Black" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin_/black")({
 
 function BlackPage() {
   return (
-    <PanelRoot>
+    <PanelRoot prefer="dark">
       <Suspense fallback={<ShellBoot workspace="black" />}>
         <BlackLeads />
       </Suspense>

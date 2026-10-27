@@ -18,11 +18,13 @@ import {
   Radio,
   RefreshCw,
   Search,
+  Settings,
   Trash2,
   Users,
   X,
 } from "lucide-react";
 import { Card, Note, Scoreboard, Shell, ShellBoot, type NavGroup } from "../ui";
+import { AccountCard, PrivacyCard } from "../Account";
 import { supabase } from "@/integrations/supabase/client";
 import { setInternalDevice } from "@/lib/tracking";
 import { forgetBlackAccess, setWorkspace, type Workspace } from "../workspace";
@@ -130,7 +132,7 @@ function Confirm({
 }
 
 type VipSection = "aovivo" | "numeros" | "cadastros";
-type BlackSection = VipSection | PlanoSection;
+type BlackSection = VipSection | PlanoSection | "config";
 const VIP_SECS: string[] = ["aovivo", "numeros", "cadastros"];
 const ALL_SECS: string[] = [
   ...VIP_SECS,
@@ -140,6 +142,7 @@ const ALL_SECS: string[] = [
   "quadro",
   "equipe",
   "fluxo",
+  "config",
 ];
 type Period = { kind: "preset"; days: 1 | 7 | 30 } | { kind: "custom"; from: string; to: string };
 const PERIOD_KEY = "sg:black:periodo";
@@ -242,7 +245,7 @@ export function BlackLeads() {
           ? a.vip
           : cur === "equipe"
             ? a.dono
-            : Boolean(a.papel) || a.semSql || cur === "fluxo";
+            : Boolean(a.papel) || a.semSql || cur === "fluxo" || cur === "config";
         return vipOk ? cur : a.papel || a.semSql ? "plano" : "aovivo";
       });
       setSession(s);
@@ -426,7 +429,7 @@ export function BlackLeads() {
   };
 
   if (!session || !acesso) return <ShellBoot workspace="black" />;
-  const plano = !VIP_SECS.includes(sec);
+  const plano = !VIP_SECS.includes(sec) && sec !== "config";
 
   const total = all.length;
   const maxDay = Math.max(1, ...stats.days.map((d) => d.n));
@@ -474,10 +477,10 @@ export function BlackLeads() {
           {
             label: "plano da black",
             items: [
-              { id: "plano", label: "Hoje no plano", icon: LayoutGrid },
+              { id: "plano", label: "Início", icon: LayoutGrid },
               { id: "calendario", label: "Calendário", icon: CalendarDays },
               { id: "lista", label: "Ofertas", icon: List },
-              { id: "quadro", label: "Quadro do time", icon: SquareKanban },
+              { id: "quadro", label: "Time", icon: SquareKanban },
             ],
           },
         ]
@@ -499,6 +502,7 @@ export function BlackLeads() {
       items: [
         ...(acesso.dono ? [{ id: "equipe", label: "Equipe e acessos", icon: UserCog }] : []),
         { id: "fluxo", label: "Como funciona", icon: Workflow },
+        { id: "config", label: "Configurações", icon: Settings },
       ],
     },
   ];
@@ -523,6 +527,10 @@ export function BlackLeads() {
     equipe: {
       title: "Equipe e acessos",
       sub: "Quem entra no painel e o que cada pessoa abre. Só o dono vê esta tela.",
+    },
+    config: {
+      title: "Configurações",
+      sub: "Senha, tema e o que o painel guarda.",
     },
     fluxo: {
       title: "Como funciona",
@@ -602,7 +610,7 @@ export function BlackLeads() {
       workspace="black"
       canSwitch={acesso.links}
       onSwitch={switchTo}
-      product="Black November"
+      product="Black Friday 2026"
       email={session.user.email}
       onSignOut={signOut}
       groups={groups}
@@ -629,7 +637,7 @@ export function BlackLeads() {
       }
       title={titles[sec].title}
       sub={titles[sec].sub}
-      tools={sec === "aovivo" || plano ? undefined : period$}
+      tools={sec === "aovivo" || sec === "config" || plano ? undefined : period$}
     >
       <div className="sg-stack">
         {notice && (
@@ -639,6 +647,13 @@ export function BlackLeads() {
         )}
 
         {plano && <Plano section={sec as PlanoSection} acesso={acesso} toast={setNotice} />}
+
+        {sec === "config" && (
+          <div className="sg-grid sg-grid--2">
+            <AccountCard email={session?.user.email} onSignOut={signOut} />
+            <PrivacyCard />
+          </div>
+        )}
 
         {(sec === "aovivo" || sec === "numeros") && (
           <>

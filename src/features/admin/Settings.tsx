@@ -7,11 +7,10 @@ import {
   Copy,
   Crown,
   ExternalLink,
-  LogOut,
   MessageCircle,
   MonitorSmartphone,
   Package,
-  Palette,
+  SlidersHorizontal,
   RefreshCw,
   Receipt,
   ShieldCheck,
@@ -21,7 +20,10 @@ import {
 } from "lucide-react";
 import { trackingConfig } from "@/lib/tracking";
 import { fmt, loadSystemChecks, type CheckState, type SystemCheck } from "./data";
-import { Card, ThemeSwitch } from "./ui";
+import { Card } from "./ui";
+import { AccountCard, PrivacyCard } from "./Account";
+import { Select } from "./Select";
+import { readPrefs, savePrefs, type PanelPrefs } from "./prefs";
 
 const CHECKS: { id: string; name: string; what: string; icon: LucideIcon }[] = [
   {
@@ -96,13 +98,21 @@ export function SettingsPanel({
   onToggleInternal,
   onSignOut,
   onReset,
+  screens = [],
 }: {
   email: string | undefined;
   internal: boolean;
   onToggleInternal: () => void;
   onSignOut: () => void;
   onReset: () => Promise<void>;
+  /** Telas que podem ser a inicial. */
+  screens?: { id: string; label: string }[];
 }) {
+  const [prefs, setPrefs] = useState<PanelPrefs>(readPrefs);
+  const changePrefs = (p: PanelPrefs) => {
+    setPrefs(p);
+    savePrefs(p);
+  };
   const [checks, setChecks] = useState<Record<string, SystemCheck> | null>(null);
   const [checkedAt, setCheckedAt] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -277,30 +287,49 @@ export function SettingsPanel({
           </div>
         </Card>
 
-        {/* ------- conta e tema ------- */}
-        <Card title="Conta e aparência" icon={Palette}>
-          <dl className="sg-kv">
-            <div>
-              <dt>Entrou como</dt>
-              <dd>
-                <span className="sg-mono">{email ?? "-"}</span>
-                <small>Só e-mails liberados como admin no Supabase veem o painel.</small>
-              </dd>
+        {/* ------- conta e segurança ------- */}
+        <AccountCard email={email} onSignOut={onSignOut} />
+
+        {/* ------- preferências ------- */}
+        <Card title="Preferências" hint="Ficam salvas neste navegador." icon={SlidersHorizontal}>
+          <div className="sg-prefs">
+            <div className="sg-prefs__row">
+              <span>
+                <b>Tela inicial</b>
+                <small>Onde o painel abre.</small>
+              </span>
+              <Select
+                label="Tela inicial"
+                value={prefs.home}
+                options={[
+                  { value: "ultima", label: "A última que eu abri" },
+                  ...screens.map((x) => ({ value: x.id, label: x.label })),
+                ]}
+                onChange={(home) => changePrefs({ ...prefs, home })}
+              />
             </div>
-          </dl>
-          <span className="sg-label" style={{ display: "block", margin: "16px 0 8px" }}>
-            Tema do painel (fica salvo neste navegador)
-          </span>
-          <ThemeSwitch />
-          <button
-            type="button"
-            className="sg-btn sg-btn--ghost"
-            style={{ marginTop: 16 }}
-            onClick={onSignOut}
-          >
-            <LogOut aria-hidden /> Sair do painel
-          </button>
+            <div className="sg-prefs__row">
+              <span>
+                <b>Período padrão</b>
+                <small>O período que aparece ao abrir.</small>
+              </span>
+              <Select
+                label="Período padrão"
+                value={String(prefs.days)}
+                options={[
+                  { value: "0", label: "O último que eu usei" },
+                  { value: "1", label: "Hoje" },
+                  { value: "7", label: "7 dias" },
+                  { value: "30", label: "30 dias" },
+                  { value: "90", label: "90 dias" },
+                ]}
+                onChange={(d) => changePrefs({ ...prefs, days: Number(d) as PanelPrefs["days"] })}
+              />
+            </div>
+          </div>
         </Card>
+
+        <PrivacyCard />
 
         {/* ------- atalhos ------- */}
         <Card title="Atalhos" hint="Abre em outra aba." icon={ExternalLink}>
@@ -354,20 +383,20 @@ export function SettingsPanel({
         </div>
         <div className="sg-danger__act">
           <label htmlFor="sg-zerar" className="sg-label">
-            Digite ZERAR para liberar
+            Digite APAGAR para liberar
           </label>
           <input
             id="sg-zerar"
             className="sg-input"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value.toUpperCase())}
-            placeholder="ZERAR"
+            placeholder="APAGAR"
             autoComplete="off"
           />
           <button
             type="button"
             className="sg-btn sg-btn--danger-solid"
-            disabled={confirm !== "ZERAR" || resetting}
+            disabled={confirm !== "APAGAR" || resetting}
             onClick={async () => {
               setResetting(true);
               await onReset();

@@ -1,20 +1,26 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 
-/** Tema do painel: claro (padrão), escuro ou automático (segue o aparelho). Fica salvo neste navegador. */
+/**
+ * Tema do painel: claro, escuro ou automático (segue o aparelho). Fica salvo neste navegador.
+ * Sem escolha salva, cada painel abre no seu padrão: o Links no claro, o Black no escuro.
+ */
 export type ThemeChoice = "light" | "dark" | "auto";
 const KEY = "sg-painel-tema";
 const subs = new Set<() => void>();
 
-function read(): ThemeChoice {
+function read(): ThemeChoice | null {
   try {
     const v = window.localStorage.getItem(KEY);
-    return v === "dark" || v === "auto" ? v : "light";
+    return v === "dark" || v === "auto" || v === "light" ? v : null;
   } catch {
-    return "light";
+    return null;
   }
 }
 
-let choice: ThemeChoice = typeof window === "undefined" ? "light" : read();
+let choice: ThemeChoice | null = typeof window === "undefined" ? null : read();
+
+/** Padrão do painel aberto (quando a pessoa ainda não escolheu um tema). */
+export const ThemeDefault = createContext<ThemeChoice>("light");
 
 export function setTheme(t: ThemeChoice) {
   choice = t;
@@ -37,11 +43,13 @@ const subscribe = (f: () => void) => {
 };
 
 export function useThemeChoice(): ThemeChoice {
-  return useSyncExternalStore(
+  const fallback = useContext(ThemeDefault);
+  const c = useSyncExternalStore(
     subscribe,
     () => choice,
-    () => "light",
+    () => null,
   );
+  return c ?? fallback;
 }
 
 /** "light" ou "dark" de verdade, já resolvendo o automático. */

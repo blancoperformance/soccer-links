@@ -10,7 +10,7 @@ const Dashboard = lazy(() =>
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Painel | Links Soccer Games" },
+      { title: "Soccer" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

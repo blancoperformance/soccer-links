@@ -1,10 +1,22 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronsUpDown, LogOut, Menu, Monitor, Moon, Sun, X, type LucideIcon } from "lucide-react";
+import {
+  ChevronsUpDown,
+  LogOut,
+  Menu,
+  Monitor,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sun,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import {
   setTheme,
   useThemeChoice,
   useResolvedTheme,
   usePageBackground,
+  ThemeDefault,
   type ThemeChoice,
 } from "./theme";
 import type { Workspace } from "./workspace";
@@ -14,10 +26,21 @@ import { useFaviconBadge } from "./favicon";
 export function PanelRoot({
   children,
   forceLight = false,
+  prefer = "light",
 }: {
   children: ReactNode;
   forceLight?: boolean;
+  /** Tema de quem ainda não escolheu: o Black abre no escuro. */
+  prefer?: ThemeChoice;
 }) {
+  return (
+    <ThemeDefault.Provider value={prefer}>
+      <PanelTheme forceLight={forceLight}>{children}</PanelTheme>
+    </ThemeDefault.Provider>
+  );
+}
+
+function PanelTheme({ children, forceLight }: { children: ReactNode; forceLight: boolean }) {
   const theme = useResolvedTheme();
   const t = forceLight ? "light" : theme;
   usePageBackground(t);
@@ -184,9 +207,10 @@ function NavLinks({
               className="sg-nav__link"
               aria-current={it.id === current ? "page" : undefined}
               onClick={() => onNav(it.id)}
+              title={it.label}
             >
               <it.icon aria-hidden />
-              {it.label}
+              <span className="sg-nav__text">{it.label}</span>
               {it.badge ? (
                 <span className="sg-nav__badge">{it.badge}</span>
               ) : it.live ? (
@@ -198,6 +222,44 @@ function NavLinks({
       ))}
     </>
   );
+}
+
+/** Menu recolhido ou aberto, salvo por pessoa (e-mail) neste navegador. */
+function useMiniMenu(email: string | undefined) {
+  const key = `sg:painel:menu:${email ?? "anon"}`;
+  const [mini, setMini] = useState(false);
+  useEffect(() => {
+    try {
+      setMini(window.localStorage.getItem(key) === "mini");
+    } catch {
+      /* sem storage */
+    }
+  }, [key]);
+  const toggle = () =>
+    setMini((v) => {
+      const n = !v;
+      try {
+        window.localStorage.setItem(key, n ? "mini" : "full");
+      } catch {
+        /* sem storage */
+      }
+      return n;
+    });
+  // Ctrl+B (Cmd+B no Mac) recolhe e abre
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "b") {
+        const t = e.target as HTMLElement | null;
+        if (t?.isContentEditable) return;
+        e.preventDefault();
+        toggle();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return [mini, toggle] as const;
 }
 
 const WS: { id: Workspace; label: string }[] = [
@@ -247,6 +309,7 @@ export function Shell({
   children: ReactNode;
 }) {
   useFaviconBadge(alert);
+  const [mini, toggleMini] = useMiniMenu(email);
   const [account, setAccount] = useState(false);
   const [sheet, setSheet] = useState(false);
   const accRef = useRef<HTMLDivElement>(null);
@@ -291,13 +354,22 @@ export function Shell({
 
   return (
     <>
-      <aside className="sg-side" aria-label="Menu do painel">
+      <aside className={`sg-side ${mini ? "is-mini" : ""}`} aria-label="Menu do painel">
         <div className="sg-side__brand">
           <Logo />
           <div className="sg-side__product">
             <span>Painel Soccer</span>
             <strong>{product}</strong>
           </div>
+          <button
+            type="button"
+            className="sg-side__fold"
+            onClick={toggleMini}
+            aria-label={mini ? "Fixar o menu aberto" : "Recolher o menu"}
+            title={`${mini ? "Fixar o menu aberto" : "Recolher o menu"} (Ctrl+B)`}
+          >
+            {mini ? <PanelLeftOpen aria-hidden /> : <PanelLeftClose aria-hidden />}
+          </button>
         </div>
         {canSwitch && (
           <div className="sg-ws" role="group" aria-label="Trocar de painel">
@@ -354,7 +426,7 @@ export function Shell({
         </div>
       </aside>
 
-      <div className="sg-main">
+      <div className={`sg-main ${mini ? "is-mini" : ""}`}>
         <div className="sg-mtop">
           <Logo size={32} />
           <div className="sg-mtop__title">
@@ -588,7 +660,7 @@ export function ShellBoot({ workspace = "links" }: { workspace?: Workspace }) {
           <Logo />
           <div className="sg-side__product">
             <span>Painel Soccer</span>
-            <strong>{workspace === "black" ? "Black November" : "Links da bio"}</strong>
+            <strong>{workspace === "black" ? "Black Friday 2026" : "Links da bio"}</strong>
           </div>
         </div>
         <div className="sg-ws">
@@ -613,7 +685,7 @@ export function ShellBoot({ workspace = "links" }: { workspace?: Workspace }) {
         <div className="sg-mtop">
           <Logo size={32} />
           <div className="sg-mtop__title">
-            <span>{workspace === "black" ? "Black November" : "Links da bio"}</span>
+            <span>{workspace === "black" ? "Black Friday 2026" : "Links da bio"}</span>
             <strong>Carregando</strong>
           </div>
         </div>

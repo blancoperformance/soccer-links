@@ -51,6 +51,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isInternalDevice, setInternalDevice } from "@/lib/tracking";
 import { BarList, Columns, Empty, Funnel, Journey, Kpi, TrendChart } from "./charts";
 import { SettingsPanel } from "./Settings";
+import { readPrefs } from "./prefs";
 import {
   Card,
   Label,
@@ -129,6 +130,8 @@ const parseDay = (s: string) => {
 };
 
 function readPeriod(): Period {
+  const fixed = readPrefs().days;
+  if (fixed) return { kind: "preset", days: fixed };
   try {
     const p = JSON.parse(window.localStorage.getItem(PERIOD_KEY) ?? "null") as Period | null;
     if (p?.kind === "preset" && PERIODS.some((x) => x.id === p.days)) return p;
@@ -167,9 +170,9 @@ function range(p: Period) {
 const SECTIONS = [
   {
     id: "visao",
-    label: "Visão geral",
+    label: "Início",
     icon: LayoutGrid,
-    title: "Visão geral",
+    title: "Início",
     sub: "O essencial do período em uma tela.",
   },
   {
@@ -216,9 +219,9 @@ const SECTIONS = [
   },
   {
     id: "ajustes",
-    label: "Ajustes",
+    label: "Configurações",
     icon: Settings,
-    title: "Ajustes",
+    title: "Configurações",
     sub: "Se cada peça está funcionando, o que está ligado e o que fazer quando algo para.",
   },
 ] as const;
@@ -562,7 +565,10 @@ export function Dashboard() {
   // Remember the open section between visits.
   useEffect(() => {
     try {
-      const s = window.localStorage.getItem("sg:painel:secao") as SectionId | null;
+      const home = readPrefs().home;
+      const s = (
+        home !== "ultima" ? home : window.localStorage.getItem("sg:painel:secao")
+      ) as SectionId | null;
       if (s && SECTIONS.some((x) => x.id === s)) setSection(s);
     } catch {
       /* ignore */
@@ -681,7 +687,7 @@ export function Dashboard() {
     {
       label: "acompanhar",
       items: [
-        { id: "visao", label: "Visão geral", icon: LayoutGrid },
+        { id: "visao", label: "Início", icon: LayoutGrid },
         { id: "aovivo", label: "Ao vivo", icon: Radio, live: true },
         { id: "vendas", label: "Vendas", icon: ShoppingBag },
       ],
@@ -700,7 +706,7 @@ export function Dashboard() {
         { id: "contatos", label: "Contatos", icon: MessageCircle, badge: leadsToCall || undefined },
       ],
     },
-    { label: "sistema", items: [{ id: "ajustes", label: "Ajustes", icon: Settings }] },
+    { label: "sistema", items: [{ id: "ajustes", label: "Configurações", icon: Settings }] },
   ];
   const periodTools = section !== "aovivo" && section !== "ajustes";
   const tools = (
@@ -1349,6 +1355,7 @@ export function Dashboard() {
         {section === "ajustes" && (
           <SettingsPanel
             email={session.user.email}
+            screens={SECTIONS.map((x) => ({ id: x.id, label: x.label }))}
             internal={internal}
             onToggleInternal={() => {
               setInternalDevice(!internal);

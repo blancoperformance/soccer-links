@@ -145,6 +145,22 @@ function joinLink(group: string) {
   return group;
 }
 
+/** Pixel: "Concluir cadastro" quando a pessoa vai de fato para o grupo (uma vez por visita). */
+let joinSent = false;
+function trackJoin(how: string) {
+  if (joinSent) return;
+  joinSent = true;
+  try {
+    window.fbq?.("track", "CompleteRegistration", {
+      content_name: `Grupo VIP Black ${black.year}`,
+      status: how,
+    });
+    (window.dataLayer = window.dataLayer || []).push({ event: "black_vip_join", how });
+  } catch {
+    /* ignore */
+  }
+}
+
 function JoinBox({ group }: { group: string }) {
   const [copied, setCopied] = useState(false);
   const app = joinLink(group);
@@ -152,19 +168,20 @@ function JoinBox({ group }: { group: string }) {
     <div className="sb-join" role="status" aria-live="polite">
       <p className="sb-join__ok">Cadastro feito.</p>
       <p className="sb-join__t">Falta um toque: entre no grupo pelo WhatsApp.</p>
-      <a className="sb-cta sb-join__btn" href={app}>
+      <a className="sb-cta sb-join__btn" href={app} onClick={() => trackJoin("botao")}>
         Entrar no grupo agora
         <ArrowUpRight className="h-5 w-5" aria-hidden />
       </a>
       <p className="sb-join__alt">
         Não abriu?{" "}
-        <a href={group} target="_blank" rel="noopener noreferrer">
+        <a href={group} target="_blank" rel="noopener noreferrer" onClick={() => trackJoin("link")}>
           Abrir pelo link
         </a>{" "}
         ou{" "}
         <button
           type="button"
           onClick={() => {
+            trackJoin("copiou");
             void navigator.clipboard?.writeText(group).then(() => setCopied(true));
           }}
         >
@@ -287,7 +304,11 @@ function SignupForm({
           setJoined(group);
           // No navegador normal o link do convite abre o grupo direto. Dentro do Instagram não:
           // lá a pessoa toca no botão, que abre o convite pelo app do WhatsApp.
-          if (!inApp()) window.setTimeout(() => window.location.assign(group), 800);
+          if (!inApp())
+            window.setTimeout(() => {
+              trackJoin("direto");
+              window.setTimeout(() => window.location.assign(group), 400);
+            }, 500);
         } else {
           setBusy(false);
           setMsg({

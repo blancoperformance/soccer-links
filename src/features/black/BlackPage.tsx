@@ -127,6 +127,55 @@ const validGroup = (u: string) => {
   }
 };
 
+/**
+ * Navegador de dentro do app (Instagram, Facebook, TikTok): ali o link https do convite abre o
+ * WhatsApp na tela inicial, sem entrar no grupo. Nesses casos o convite vai pelo esquema do app.
+ */
+const inApp = () =>
+  typeof navigator !== "undefined" &&
+  /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Messenger|TikTok|musical_ly|Bytedance|Line\//i.test(
+    navigator.userAgent,
+  );
+function joinLink(group: string) {
+  const code = new URL(group).pathname.replace(/\//g, "");
+  const ua = typeof navigator === "undefined" ? "" : navigator.userAgent;
+  if (/Android/i.test(ua))
+    return `intent://chat/?code=${code}#Intent;scheme=whatsapp;S.browser_fallback_url=${encodeURIComponent(group)};end`;
+  if (/iPhone|iPad|iPod/i.test(ua)) return `whatsapp://chat?code=${code}`;
+  return group;
+}
+
+function JoinBox({ group }: { group: string }) {
+  const [copied, setCopied] = useState(false);
+  const app = joinLink(group);
+  return (
+    <div className="sb-join" role="status" aria-live="polite">
+      <p className="sb-join__ok">Cadastro feito.</p>
+      <p className="sb-join__t">Falta um toque: entre no grupo pelo WhatsApp.</p>
+      <a className="sb-cta sb-join__btn" href={app}>
+        Entrar no grupo agora
+        <ArrowUpRight className="h-5 w-5" aria-hidden />
+      </a>
+      <p className="sb-join__alt">
+        Não abriu?{" "}
+        <a href={group} target="_blank" rel="noopener noreferrer">
+          Abrir pelo link
+        </a>{" "}
+        ou{" "}
+        <button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard?.writeText(group).then(() => setCopied(true));
+          }}
+        >
+          {copied ? "link copiado" : "copiar o link do grupo"}
+        </button>
+        .
+      </p>
+    </div>
+  );
+}
+
 function SignupForm({
   id,
   total,
@@ -138,9 +187,11 @@ function SignupForm({
 }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "err" | "ok"; text: string } | null>(null);
+  const [joined, setJoined] = useState("");
   const [errs, setErrs] = useState<Record<string, boolean>>({});
   const [phone, setPhone] = useState("");
   const started = useRef(0);
+  if (joined) return <JoinBox group={joined} />;
   return (
     <form
       noValidate
@@ -232,9 +283,11 @@ function SignupForm({
         }
         const group = validGroup(black.groupUrl);
         if (group) {
-          setMsg({ tone: "ok", text: "Pronto! Abrindo o grupo no WhatsApp…" });
-          // tempo para o Lead do pixel sair antes de trocar de página
-          window.setTimeout(() => window.location.assign(group), 800);
+          setBusy(false);
+          setJoined(group);
+          // No navegador normal o link do convite abre o grupo direto. Dentro do Instagram não:
+          // lá a pessoa toca no botão, que abre o convite pelo app do WhatsApp.
+          if (!inApp()) window.setTimeout(() => window.location.assign(group), 800);
         } else {
           setBusy(false);
           setMsg({

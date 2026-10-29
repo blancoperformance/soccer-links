@@ -113,17 +113,17 @@ export function startReel(root: HTMLElement) {
   if (cn?.saveData || /(^|-)2g$/.test(cn?.effectiveType ?? "")) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   let i = 0;
-  let show = 0;
   let poll = 0;
   const go = () => {
     const YT = window.YT;
     if (!YT?.Player) return;
     const [videoId, start, end] = SEGMENTS[0]!;
     let moving = false;
+    const hide = () => wrap.classList.add("bfm-wait");
     const next = () => {
       if (moving) return;
       moving = true;
-      wrap.classList.add("bfm-wait");
+      hide();
       i = (i + 1) % SEGMENTS.length;
       const [v, s, f] = SEGMENTS[i]!;
       player.loadVideoById({ videoId: v, startSeconds: s, endSeconds: f });
@@ -151,33 +151,53 @@ export function startReel(root: HTMLElement) {
           e.target.playVideo();
         },
         onStateChange: (e) => {
-          // 1 tocando, 2 pausado, 3 carregando, 5 parado: só mostra o vídeo quando está tocando,
-          // assim o ícone de pausa e a tela de carregamento do YouTube nunca aparecem
           if (e.data === 1) {
             moving = false;
             e.target.unloadModule?.("captions");
             e.target.unloadModule?.("cc");
-            window.clearTimeout(show);
-            show = window.setTimeout(() => wrap.classList.remove("bfm-wait"), 1100);
-          } else {
-            window.clearTimeout(show);
-            wrap.classList.add("bfm-wait");
-          }
+          } else hide();
           if (e.data === 0) next();
         },
         // trecho indisponível: pula para o próximo em vez de travar
         onError: () => next(),
       },
     });
-    // esconde o vídeo um pouco antes do fim de cada trecho: o YouTube mostra o ícone de pausa ao parar
+    /*
+     * O vídeo só aparece quando está de fato andando: estado "tocando", o tempo avançando desde a
+     * última checagem, a aba visível e longe do fim do trecho, por pelo menos 0,9 s seguidos.
+     * Qualquer outra coisa (pausa, carregando, aba escondida, fim do trecho) esconde na hora, então
+     * o ícone de pausa e a tela de carregamento do YouTube nunca ficam à mostra.
+     */
+    let lastT = -1;
+    let since = 0;
     window.clearInterval(poll);
     poll = window.setInterval(() => {
-      const end = SEGMENTS[i]![2];
+      const [vid, s0, end] = SEGMENTS[i]!;
       const t = player.getCurrentTime?.() ?? 0;
-      if (t > end - 1.2) wrap.classList.add("bfm-wait");
-      // se o YouTube ignorar o fim do trecho, troca daqui mesmo
-      if (t > end + 0.4) next();
-    }, 200);
+      const st = player.getPlayerState?.() ?? -1;
+      const moved = t > lastT + 0.05;
+      lastT = t;
+      // logo depois de trocar de trecho o player ainda devolve o tempo do vídeo anterior
+      const id = player.getVideoData?.()?.video_id;
+      const here = (!id || id === vid) && t >= s0 - 1;
+      const ok = st === 1 && moved && here && !moving && !document.hidden && t < end - 1.2;
+      if (ok) {
+        if (!since) since = Date.now();
+        if (Date.now() - since > 900) wrap.classList.remove("bfm-wait");
+      } else {
+        since = 0;
+        hide();
+      }
+      if (moving || document.hidden) return;
+      // fim do trecho (o YouTube às vezes pausa em vez de terminar): passa para o próximo
+      if (st === 0 || (here && t >= end - 0.3)) next();
+      // pausado no meio (aba voltou, economia de energia): volta a tocar, ainda escondido
+      else if (st === 2) player.playVideo();
+    }, 250);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) hide();
+      else if (!moving) player.playVideo();
+    });
   };
   if (window.YT?.Player) go();
   else {

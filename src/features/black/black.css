@@ -2629,3 +2629,9 @@
 .sb .sb-bar-m .sb-cta::after {
   opacity: 0.55;
 }
+/* v11: some na hora (sem fade) para o ícone de pausa do YouTube nunca aparecer nem por um instante */
+.sb-reel .bfm-wait #bfm-yt {
+  transition: none;
+  opacity: 0;
+  visibility: hidden;
+}

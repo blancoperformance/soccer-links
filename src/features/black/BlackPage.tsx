@@ -233,7 +233,8 @@ function SignupForm({
         const group = validGroup(black.groupUrl);
         if (group) {
           setMsg({ tone: "ok", text: "Pronto! Abrindo o grupo no WhatsApp…" });
-          window.setTimeout(() => window.location.assign(group), 350);
+          // tempo para o Lead do pixel sair antes de trocar de página
+          window.setTimeout(() => window.location.assign(group), 800);
         } else {
           setBusy(false);
           setMsg({

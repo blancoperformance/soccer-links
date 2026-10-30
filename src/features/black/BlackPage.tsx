@@ -66,7 +66,7 @@ const DROPS: { from: string; to: string; date: string; t: string; d: string; img
     to: "2026-11-18T00:00:00-03:00",
     date: "Toda segunda",
     t: "A lista da semana",
-    d: "As ofertas da semana seguinte chegam no grupo antes do site, com um cupom que só o grupo tem.",
+    d: "Toda segunda, a lista da semana chega no grupo com o link das ofertas, um dia antes de sair no site e no Instagram.",
     img: yt("tJbzMqJGH4k"),
   },
   {
@@ -700,7 +700,7 @@ export function BlackPage() {
             </p>
             <ul className="sb-gets sb-gets--copy">
               {[
-                "A lista da semana antes do site, com cupom do grupo",
+                "A lista da semana um dia antes do site",
                 "O preço do GTA 6 em 18/11, antes de todo mundo",
                 "As ofertas da Black um dia antes do site",
               ].map((g) => (
@@ -728,7 +728,7 @@ export function BlackPage() {
               </p>
               <ul className="sb-gets sb-gets--form">
                 {[
-                  "A lista da semana antes do site, com cupom do grupo",
+                  "A lista da semana um dia antes do site",
                   "O preço do GTA 6 em 18/11, antes de todo mundo",
                   "As ofertas da Black um dia antes do site",
                 ].map((g) => (

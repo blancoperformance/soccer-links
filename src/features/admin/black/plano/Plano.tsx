@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   Copy,
   Download,
+  Link2,
   ListChecks,
+  MessageCircle,
   Plus,
   Search,
   Trash2,
@@ -58,8 +60,17 @@ import {
 import { cardsDaOferta, criarTarefas } from "./tarefas";
 import { Quadro } from "./Quadro";
 import { Equipe } from "./Equipe";
+import {
+  GRUPO_LINKS,
+  GRUPO_MSGS,
+  GRUPO_STATUS,
+  msgsDoDia,
+  proximaMsg,
+  type GrupoMsg,
+} from "./grupo";
 
-export type PlanoSection = "plano" | "calendario" | "lista" | "quadro" | "equipe" | "fluxo";
+export type PlanoSection =
+  "plano" | "grupo" | "calendario" | "lista" | "quadro" | "equipe" | "fluxo";
 
 const quando = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
@@ -179,6 +190,140 @@ function Sequencia({ o, pix, compact }: { o: Oferta; pix: number | null; compact
         </li>
       ))}
     </ol>
+  );
+}
+
+/* ------------------------------------------------------------------ mensagens do grupo */
+
+function GrupoItem({ m, t }: { m: GrupoMsg; t: string }) {
+  const s = GRUPO_STATUS[m.status];
+  const foi = m.data < t;
+  const hoje = m.data === t;
+  return (
+    <div className={`sg-gmsg ${hoje ? "is-hoje" : ""} ${foi ? "is-foi" : ""}`}>
+      <div className="sg-gmsg__head">
+        <b>{m.titulo}</b>
+        <span className="sg-mono sg-muted">
+          {hoje ? "hoje" : `${WD[dow(m.data)]} ${fmtD(m.data)}`} · {m.quando}
+        </span>
+        <span className={`sg-chip sg-chip--${foi ? "info" : s.tone}`}>{foi ? "Já foi" : s.n}</span>
+      </div>
+      {m.arte && <span className="sg-gmsg__art">Imagem: {m.arte}</span>}
+      <Wa text={m.texto} />
+      {m.status !== "blanco" && !foi && (
+        <CopyBtn text={m.texto} label="Copiar mensagem" primary={hoje} />
+      )}
+    </div>
+  );
+}
+
+/** No Início: a mensagem do grupo de hoje (ou a próxima), a primeira coisa que aparece. */
+export function GrupoHoje({ t }: { t: string }) {
+  const hoje = msgsDoDia(t);
+  const prox = proximaMsg(t);
+  const lista = hoje.length ? hoje : prox ? [prox] : [];
+  if (!lista.length) return null;
+  return (
+    <Card
+      title={hoje.length ? "Grupo VIP: a mensagem de hoje" : "Grupo VIP: hoje não tem mensagem"}
+      hint={
+        hoje.length
+          ? "Copie o texto, faça a imagem no seu modelo e mande no horário."
+          : `A próxima é ${WD[dow(prox!.data)]} ${fmtD(prox!.data)}, ${prox!.quando}. Já dá para deixar a imagem pronta.`
+      }
+      icon={MessageCircle}
+      brand
+    >
+      <div className="sg-stack" style={{ gap: 14 }}>
+        {lista.map((m) => (
+          <GrupoItem key={m.data + m.titulo} m={m} t={t} />
+        ))}
+        <span className="sg-muted" style={{ fontSize: 13 }}>
+          O mês inteiro e os links da loja estão em <b>Mensagens do grupo</b>, no menu.
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+const COMO_USAR: [string, string][] = [
+  [
+    "Entre aqui nos dias de envio",
+    "Segunda, quarta, sexta e domingo. A mensagem do dia aparece primeiro no Início, já pronta.",
+  ],
+  [
+    "Copie o texto e faça a imagem",
+    "O texto vai como está. A imagem você faz no seu modelo do ChatGPT, com o que está escrito em Imagem.",
+  ],
+  [
+    "Mande no horário",
+    "A de sexta 19h é a lista da semana seguinte antes de todo mundo. É ela que faz o grupo valer a pena.",
+  ],
+  [
+    "Falta o preço?",
+    "Troque [PREÇO] pelo valor que está no site antes de mandar. Toda quinta a Blanco coloca aqui a semana seguinte.",
+  ],
+];
+
+/** O mês do grupo: como usar, os links de sempre e todas as mensagens por semana. */
+export function GrupoMes({ t }: { t: string }) {
+  const semanas = [...new Set(GRUPO_MSGS.map((m) => m.semana))];
+  return (
+    <div className="sg-stack">
+      <div className="sg-grid sg-grid--split">
+        <Card
+          title="Como usar"
+          hint="Quatro mensagens por semana, nem mais nem menos."
+          icon={ListChecks}
+        >
+          <ol className="sg-flow">
+            {COMO_USAR.map(([a, b], i) => (
+              <li key={a}>
+                <span className="sg-flow__n sg-mono">{String(i + 1).padStart(2, "0")}</span>
+                <span>
+                  <b>{a}</b>
+                  <span>{b}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+        <Card
+          title="Links da Soccer"
+          hint="Os mesmos no grupo, na bio, nos stories e no anúncio. Mudou a oferta, muda aqui no mesmo dia."
+          icon={Link2}
+        >
+          <ul className="sg-list">
+            {GRUPO_LINKS.map((l) => (
+              <li key={l.url}>
+                <span className="sg-list__main">
+                  <b>{l.nome}</b>
+                  <br />
+                  <span
+                    className="sg-mono sg-muted"
+                    style={{ fontSize: 12, wordBreak: "break-all" }}
+                  >
+                    {l.url.replace("https://", "")}
+                  </span>
+                </span>
+                <span className="sg-list__side">
+                  <CopyBtn text={l.url} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+      {semanas.map((s) => (
+        <Card key={s} title={s} icon={CalendarDays}>
+          <div className="sg-stack" style={{ gap: 14 }}>
+            {GRUPO_MSGS.filter((m) => m.semana === s).map((m) => (
+              <GrupoItem key={m.data + m.titulo} m={m} t={t} />
+            ))}
+          </div>
+        </Card>
+      ))}
+    </div>
   );
 }
 
@@ -1012,6 +1157,7 @@ export function Plano({
   );
 
   if (section === "equipe") return acesso.dono ? <Equipe toast={toast} /> : null;
+  if (section === "grupo") return <GrupoMes t={t} />;
   if (section === "fluxo")
     return (
       <Card
@@ -1117,6 +1263,7 @@ export function Plano({
   const ph = phOf(t);
   return (
     <>
+      <GrupoHoje t={t} />
       <section className="sg-board" aria-label="Placar da campanha">
         <header className="sg-board__head">
           <span className="sg-board__title">

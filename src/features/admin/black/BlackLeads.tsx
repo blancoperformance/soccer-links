@@ -10,6 +10,7 @@ import {
   Download,
   Globe,
   LayoutGrid,
+  MessageCircle,
   List,
   SquareKanban,
   UserCog,
@@ -137,6 +138,7 @@ const VIP_SECS: string[] = ["aovivo", "numeros", "cadastros"];
 const ALL_SECS: string[] = [
   ...VIP_SECS,
   "plano",
+  "grupo",
   "calendario",
   "lista",
   "quadro",
@@ -478,6 +480,7 @@ export function BlackLeads() {
             label: "plano da black",
             items: [
               { id: "plano", label: "Início", icon: LayoutGrid },
+              { id: "grupo", label: "Mensagens do grupo", icon: MessageCircle },
               { id: "calendario", label: "Calendário", icon: CalendarDays },
               { id: "lista", label: "Ofertas", icon: List },
               { id: "quadro", label: "Time", icon: SquareKanban },
@@ -511,6 +514,10 @@ export function BlackLeads() {
     plano: {
       title: "Hoje no plano",
       sub: "A oferta do dia, as mensagens prontas para o grupo e o que vem depois.",
+    },
+    grupo: {
+      title: "Mensagens do grupo",
+      sub: "Novembro inteiro no Grupo VIP: o texto pronto de cada dia, o que vai na imagem e os links.",
     },
     calendario: {
       title: "Calendário de ofertas",

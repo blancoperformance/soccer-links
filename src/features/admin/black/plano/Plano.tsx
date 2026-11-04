@@ -199,6 +199,7 @@ function GrupoItem({ m, t }: { m: GrupoMsg; t: string }) {
   const s = GRUPO_STATUS[m.status];
   const foi = m.data < t;
   const hoje = m.data === t;
+  const copia = m.status !== "blanco" && !foi;
   return (
     <div className={`sg-gmsg ${hoje ? "is-hoje" : ""} ${foi ? "is-foi" : ""}`}>
       <div className="sg-gmsg__head">
@@ -208,10 +209,23 @@ function GrupoItem({ m, t }: { m: GrupoMsg; t: string }) {
         </span>
         <span className={`sg-chip sg-chip--${foi ? "info" : s.tone}`}>{foi ? "Já foi" : s.n}</span>
       </div>
-      {m.arte && <span className="sg-gmsg__art">Imagem: {m.arte}</span>}
-      <Wa text={m.texto} />
-      {m.status !== "blanco" && !foi && (
-        <CopyBtn text={m.texto} label="Copiar mensagem" primary={hoje} />
+      <div className="sg-gmsg__block">
+        <span className="sg-label">Mensagem</span>
+        <Wa text={m.texto} />
+        {copia && <CopyBtn text={m.texto} label="Copiar mensagem" primary={hoje} />}
+      </div>
+      {m.arte && (
+        <div className="sg-gmsg__block">
+          <span className="sg-label">Ideia da foto</span>
+          <p className="sg-gmsg__art">{m.arte}</p>
+        </div>
+      )}
+      {m.prompt && (
+        <div className="sg-gmsg__block">
+          <span className="sg-label">Prompt da imagem (cole no GPT com a capa do jogo)</span>
+          <div className="sg-gmsg__prompt">{m.prompt}</div>
+          {copia && <CopyBtn text={m.prompt} label="Copiar prompt" />}
+        </div>
       )}
     </div>
   );
@@ -225,10 +239,10 @@ export function GrupoHoje({ t }: { t: string }) {
   if (!lista.length) return null;
   return (
     <Card
-      title={hoje.length ? "Grupo VIP: a mensagem de hoje" : "Grupo VIP: hoje não tem mensagem"}
+      title={hoje.length ? "Grupo VIP: as mensagens de hoje" : "Grupo VIP: hoje não tem mensagem"}
       hint={
         hoje.length
-          ? "Copie o texto, faça a imagem no seu modelo e mande no horário."
+          ? "Três por dia: 10h, 15h e 19h. Copie a mensagem e o prompt, gere a imagem no ChatGPT com a capa do jogo e mande no horário."
           : `A próxima é ${WD[dow(prox!.data)]} ${fmtD(prox!.data)}, ${prox!.quando}. Já dá para deixar a imagem pronta.`
       }
       icon={MessageCircle}
@@ -248,20 +262,20 @@ export function GrupoHoje({ t }: { t: string }) {
 
 const COMO_USAR: [string, string][] = [
   [
-    "Entre aqui nos dias de envio",
-    "Segunda, quarta, sexta e domingo. A mensagem do dia aparece primeiro no Início, já pronta.",
+    "Entre aqui todo dia",
+    "São 3 mensagens por dia: 10h, 15h e 19h. As de hoje aparecem primeiro no Início, já prontas.",
   ],
   [
-    "Copie o texto e faça a imagem",
-    "O texto vai como está. A imagem você faz no seu modelo do ChatGPT, com o que está escrito em Imagem.",
+    "Copie a mensagem e faça a imagem",
+    "A mensagem vai como está. Para a imagem, baixe a capa do jogo na página do produto, copie o Prompt da imagem, cole no ChatGPT e anexe a capa. A Ideia da foto mostra como ela tem que ficar.",
   ],
   [
     "Mande no horário",
-    "A de sexta 19h é a lista da semana seguinte antes de todo mundo. É ela que faz o grupo valer a pena.",
+    "Cada mensagem anuncia a próxima. A de sexta 19h é a lista da semana seguinte antes do site, e a de quinta 26/11 é a lista da Black.",
   ],
   [
-    "Falta o preço?",
-    "Troque [PREÇO] pelo valor que está no site antes de mandar. Toda quinta a Blanco coloca aqui a semana seguinte.",
+    "Tem [COLCHETE]?",
+    "Troque antes de mandar: preço do site, placar da enquete, horário da live. Jogo ainda sem nome a Blanco completa na quinta.",
   ],
 ];
 
@@ -273,7 +287,7 @@ export function GrupoMes({ t }: { t: string }) {
       <div className="sg-grid sg-grid--split">
         <Card
           title="Como usar"
-          hint="Quatro mensagens por semana, nem mais nem menos."
+          hint="Três por dia, cada uma com algo novo. Se o grupo começar a silenciar, a Blanco reduz."
           icon={ListChecks}
         >
           <ol className="sg-flow">

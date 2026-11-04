@@ -5411,7 +5411,35 @@ button.sg-board__cell:hover {
 .sg-gmsg__head b {
   font-size: 15px;
 }
+.sg-gmsg__block {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  width: 100%;
+}
+.sg-gmsg__block .sg-label {
+  margin: 0;
+}
 .sg-gmsg__art {
+  margin: 0;
+  max-width: 520px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--sg-ink);
+}
+.sg-gmsg__prompt {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 520px;
+  max-height: 200px;
+  overflow: auto;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--sg-line);
+  background: var(--sg-surface);
+  color: var(--sg-ink);
   font-size: 12.5px;
-  color: var(--sg-muted);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

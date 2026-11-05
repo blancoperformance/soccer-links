@@ -16,15 +16,15 @@ import {
 
 const pageTitle = () =>
   isWeeklyPromotionActive()
-    ? "Semana dos Best Sellers | Soccer Games"
+    ? "Black o mês todo | Soccer Games"
     : isBlackHighlightOn()
       ? "Soccer Games | Black Friday e Grupo VIP"
       : "Soccer Games | Links";
 const pageDescription = () =>
   isWeeklyPromotionActive()
-    ? "De 19 a 25 de outubro: FC 26, Hogwarts Legacy, Call of Duty e mais Best Sellers de PS4 e PS5 em oferta na Soccer Games. Escolha seu jogo e sua licença."
+    ? "Novembro inteiro é Black na Soccer Games. Jogos digitais de PS4 e PS5 em oferta, Entrega Expressa e GTA 6 em pré-venda. Escolha seu jogo e sua licença."
     : isBlackHighlightOn()
-      ? "Black Friday da Soccer Games de 27 a 30/11 e GTA 6 em 19/11. Jogos digitais de PS4 e PS5, atendimento e o Grupo VIP com as ofertas antes do site."
+      ? "Novembro inteiro é Black na Soccer Games. Jogos digitais de PS4 e PS5, GTA 6 em pré-venda, atendimento e o Grupo VIP com as ofertas antes do site."
       : "Jogos digitais de PS4 e PS5, quiz para escolher o próximo jogo, atendimento e o Grupo VIP da Soccer Games.";
 
 export const Route = createFileRoute("/")({

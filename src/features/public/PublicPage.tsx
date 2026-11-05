@@ -43,122 +43,13 @@ import {
 import { loadCatalog } from "./store";
 import { DealsBanner, Offers } from "./Offers";
 import { BagBar } from "./BagBar";
-import { isWeeklyPromotionActive, weeklyPromotion } from "./promotion";
+import { isWeeklyPromotionActive } from "./promotion";
 import { black } from "../black/config";
+import { BlackHero } from "./BlackHero";
+import { Categories, GtaCard } from "./Categories";
 
 /** Destaque da Black no topo: do fim da campanha da semana até o fim da Black (30/11). */
 export const isBlackHighlightOn = (at = new Date()) => at.getTime() <= Date.parse(black.bigEnd);
-
-const BLACK_STEPS = [
-  { at: "Toda segunda", what: "Lista da semana no grupo" },
-  { at: "19/11", what: "Chega o GTA 6" },
-  { at: "27 a 30/11", what: "Black Friday" },
-] as const;
-
-const GTA6 = "gta-6-grand-theft-auto-vi-ps5-midia-digital";
-
-function GtaRow({ game, onOpen }: { game: Game; onOpen: (g: Game) => void }) {
-  const { live, done } = useLiveGame(game.slug, true);
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        track("links_clique", { item_name: "Destaque topo: GTA 6 pré-venda" });
-        onOpen(game);
-      }}
-      className="group mt-4 flex w-full items-center gap-3.5 rounded-xl border border-white/15 bg-white/[.04] p-2.5 pr-4 text-left transition-colors hover:border-[#d77bff]/60"
-    >
-      <span className="block w-14 shrink-0">
-        <Cover game={game} live={live} done={done} w={160} bare />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-semibold text-white">GTA 6 em pré-venda</span>
-        <span className="mt-0.5 block text-[12px] text-white/65">PS5, chega dia 19/11</span>
-      </span>
-      <span className="shrink-0 text-[13px] font-semibold text-[#d77bff]">
-        Ver preço{" "}
-        <span aria-hidden className="inline-block transition-transform group-hover:translate-x-0.5">
-          →
-        </span>
-      </span>
-    </button>
-  );
-}
-
-function BlackHero({ onOpen }: { onOpen: (g: Game) => void }) {
-  const gta = getGame(GTA6);
-  const big = useCountdown(black.bigDay);
-  const live = big === 0;
-  const parts =
-    big == null || live
-      ? null
-      : ([
-          ["dias", Math.floor(big / 86400000)],
-          ["horas", Math.floor((big / 3600000) % 24)],
-          ["min", Math.floor((big / 60000) % 60)],
-        ] as const);
-  return (
-    <div className="relative mt-6" aria-label="Black Friday da Soccer">
-      <p className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[.15em] text-white/80">
-        <span className="rounded-full bg-[#d77bff] px-3 py-1.5 text-[#220034]">27 a 30/11</span>
-        Black Friday {black.year}
-      </p>
-      <h2 className="font-display mt-5 text-[clamp(48px,13vw,70px)] font-black uppercase leading-[.88] tracking-[-.04em] text-white">
-        Black
-        <br />
-        <span className="text-[#d77bff]">Friday.</span>
-      </h2>
-      <p className="mt-4 max-w-[330px] text-[14px] leading-relaxed text-white/80">
-        Os jogos de PS4 e PS5 entram na Black e o GTA 6 chega dia 19/11. No Grupo VIP você vê cada
-        oferta antes do site.
-      </p>
-      <ol className="relative mt-5 grid grid-cols-3 border-y border-white/15" aria-label="Datas">
-        {BLACK_STEPS.map((s, i) => (
-          <li key={s.at} className={`py-3 ${i ? "border-l border-white/15 pl-3" : "pr-3"}`}>
-            <span className="block text-[13px] font-bold text-white">{s.at}</span>
-            <span className="mt-0.5 block text-[11px] leading-snug text-white/65">{s.what}</span>
-          </li>
-        ))}
-      </ol>
-      {gta && <GtaRow game={gta} onOpen={onOpen} />}
-      {parts && (
-        <div
-          className="mt-4 flex items-end justify-between gap-3"
-          aria-label="Tempo até a Black Friday"
-        >
-          <span className="text-[11px] uppercase tracking-[.12em] text-white/60">
-            Faltam para a Black
-          </span>
-          <span className="flex gap-4 tabular-nums">
-            {parts.map(([label, n]) => (
-              <span key={label} className="text-right">
-                <b className="font-display block text-[26px] font-bold leading-none text-white">
-                  {String(n).padStart(2, "0")}
-                </b>
-                <span className="text-[10px] text-white/60">{label}</span>
-              </span>
-            ))}
-          </span>
-        </div>
-      )}
-      <a
-        href="/black"
-        onClick={() =>
-          track("links_clique", { item_name: "Destaque topo: Grupo VIP Black", item_url: "/black" })
-        }
-        className="group mt-5 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-[#c000ff] px-5 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#a400db] active:scale-[.99]"
-      >
-        {live ? "Ver a Black no Grupo VIP" : "Entrar no Grupo VIP da Black"}
-        <span aria-hidden className="transition-transform group-hover:translate-x-1">
-          →
-        </span>
-      </a>
-      <p className="mt-2.5 text-[11px] text-white/60">
-        Grátis, pelo WhatsApp. Só os administradores mandam mensagem.
-      </p>
-    </div>
-  );
-}
 
 function WhatsIcon() {
   return (
@@ -323,19 +214,6 @@ function QuickAnswers({
   );
 }
 
-function useCountdown(endsAt?: string) {
-  const [left, setLeft] = useState<number | null>(null);
-  useEffect(() => {
-    if (!endsAt) return;
-    const end = new Date(endsAt).getTime();
-    const tick = () => setLeft(Math.max(0, end - Date.now()));
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
-  }, [endsAt]);
-  return left;
-}
-
 export interface Campaign {
   enabled: boolean;
   badge?: string;
@@ -349,83 +227,6 @@ export interface Campaign {
 }
 
 const isInternal = (url: string) => url.startsWith("/");
-
-function CampaignCover({ game, index }: { game: Game; index: number }) {
-  const { live, done } = useLiveGame(game.slug, true);
-  return (
-    <span
-      className="absolute top-4 w-[36%] max-w-[150px] rounded-2xl shadow-[0_18px_32px_-10px_rgba(0,0,0,.65)] ring-1 ring-white/30"
-      style={{
-        left: `${14 + index * 18}%`,
-        transform: `rotate(${(index - 1) * 12}deg)`,
-        zIndex: index === 1 ? 3 : 2,
-      }}
-    >
-      <Cover game={game} live={live} done={done} w={320} />
-    </span>
-  );
-}
-
-function CampaignHero({ c, onBrowse }: { c: Campaign; onBrowse: () => void }) {
-  const left = useCountdown(c.endsAt);
-  if (c.endsAt && left === 0) return null;
-  const parts =
-    left == null
-      ? null
-      : ([
-          ["dias", Math.floor(left / 86400000)],
-          ["horas", Math.floor((left / 3600000) % 24)],
-          ["min", Math.floor((left / 60000) % 60)],
-        ] as const);
-  return (
-    <div className="relative mt-6" aria-label={c.title}>
-      <p className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[.15em] text-white/80">
-        <span className="rounded-full bg-[#d77bff] px-3 py-1.5 text-[#220034]">{c.badge}</span>
-        Preço da semana
-      </p>
-      <h2 className="font-display mt-5 text-[clamp(48px,13vw,70px)] font-black uppercase leading-[.88] tracking-[-.04em] text-white">
-        Best
-        <br />
-        <span className="text-[#d77bff]">Sellers.</span>
-      </h2>
-      <p className="mt-4 max-w-[320px] text-[14px] leading-relaxed text-white/80">
-        Os queridinhos do seu console estão em oferta. Escolha o seu e bora jogar.
-      </p>
-      <div
-        className="relative mx-auto mt-3 h-[165px] max-w-[390px] min-[400px]:h-[185px]"
-        aria-label="Destaques da semana"
-      >
-        <span
-          aria-hidden
-          className="absolute bottom-2 left-1/2 h-20 w-3/4 -translate-x-1/2 rounded-full bg-[#c000ff]/35 blur-2xl"
-        />
-        {weeklyPromotion.highlights.map((slug, i) => {
-          const game = getGame(slug);
-          return game ? <CampaignCover key={slug} game={game} index={i} /> : null;
-        })}
-      </div>
-      <button
-        type="button"
-        onClick={onBrowse}
-        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-[#c000ff] px-5 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#a400db] active:scale-[.99]"
-      >
-        Escolher meu jogo da semana <span aria-hidden>→</span>
-      </button>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[11px] text-white/70">
-        <span>Até domingo, 25/10 · PS4 e PS5</span>
-        {parts && (
-          <span className="flex gap-2 tabular-nums" aria-label="Tempo restante da campanha">
-            {parts.map(([label, n]) => (
-              <span key={label}>
-                <b className="text-white">{String(n).padStart(2, "0")}</b> {label}
-              </span>
-            ))}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function Highlight({
   game,
@@ -935,9 +736,9 @@ export function PublicPage({
               </span>
             </div>
             <h1 className="sr-only">{profile.name}</h1>
-            {campaignOn && campaign ? (
-              <CampaignHero
-                c={campaign}
+            {campaignOn || blackOn ? (
+              <BlackHero
+                weekTheme={campaignOn}
                 onBrowse={() => {
                   setQuery("");
                   setChip(null);
@@ -946,8 +747,6 @@ export function PublicPage({
                   track("links_clique", { item_name: "Oferta da semana: escolher jogo" });
                 }}
               />
-            ) : blackOn ? (
-              <BlackHero onOpen={(g) => openGame(g)} />
             ) : (
               <>
                 <p className="font-display relative mt-6 text-[32px] font-semibold leading-[1.04]">
@@ -1007,6 +806,15 @@ export function PublicPage({
           </header>
 
           <div className="px-4 sm:px-0">
+            <GtaCard
+              onOpen={(g) => openGame(g)}
+              onShelf={() => {
+                setQuery("");
+                setChip(null);
+                setShelf("gta-6");
+                goTo("loja");
+              }}
+            />
             {/* atalhos em blocos */}
             <div className="mts-enter mt-4 grid grid-cols-2 gap-2.5" style={stagger(1)}>
               {primary.map((b, i) => {
@@ -1111,6 +919,19 @@ export function PublicPage({
         </aside>
 
         <div className="sg-wide px-4 sm:px-0">
+          <Categories
+            onConsole={(id) => {
+              setQuery("");
+              setChip(null);
+              setShelf(id);
+              goTo("loja");
+            }}
+            onGenre={(id) => {
+              setQuery("");
+              setChip(id);
+              goTo("loja");
+            }}
+          />
           <DealsBanner onGo={() => goTo("ofertas")} weekly={campaignOn} />
           {highlight && (
             <Highlight game={highlight} context={Boolean(context)} onOpen={(g) => openGame(g)} />

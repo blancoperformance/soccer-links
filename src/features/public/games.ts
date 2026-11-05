@@ -83,6 +83,10 @@ function shelf(
   return { id, name, url: `${STORE}${url}`, games: games.filter(filter).slice(0, limit) };
 }
 
+/** GTA 6 em pré-venda: as duas versões da loja. */
+export const GTA6_STANDARD = "gta-6-grand-theft-auto-vi-ps5-midia-digital";
+export const GTA6_ULTIMATE = "gta-6-grand-theft-auto-vi-ultimate-edition-ps5-midia-digital";
+
 export const getShelves = (at = new Date()): Shelf[] =>
   [
     ...(isWeeklyPromotionActive(at)
@@ -95,6 +99,12 @@ export const getShelves = (at = new Date()): Shelf[] =>
           },
         ]
       : []),
+    {
+      id: "gta-6",
+      name: "GTA 6",
+      url: `${STORE}/search/?q=gta%206`,
+      games: [GTA6_STANDARD, GTA6_ULTIMATE].flatMap((slug) => bySlug.get(slug) ?? []),
+    },
     // Ordem pensada para venda: o que mais sai e o que está em oferta primeiro.
     shelf("mais-vendidos", "Mais vendidos", "/best-sellers/", inColl("mais-vendidos")),
     ...(isSeasonalPromotionActive(at)

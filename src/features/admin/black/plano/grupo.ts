@@ -378,8 +378,9 @@ export const GRUPO_MSGS: GrupoMsg[] = [
     semana: S1,
     data: "2026-11-05",
     quando: "19h",
-    titulo: "Jogo do dia: 3 de luta por R$ 39,90",
-    status: "pronta",
+    titulo:
+      "Jogo do dia: 3 de luta por R$ 39,90, o combinado novo e o placar parcial (troque [X] e [Y] pelo que está na enquete)",
+    status: "completar",
     texto: t(
       "*JOGO DO DIA: 3 de luta por R$ 39,90*",
       "",
@@ -388,7 +389,8 @@ export const GRUPO_MSGS: GrupoMsg[] = [
       "Até domingo, 08/11, 23h59:",
       OFERTA_S1,
       "",
-      "A enquete LUTA x FUTEBOL fecha sábado, e o placar final sai aqui às 19h.",
+      "Mudou o combinado: agora é 1 mensagem por dia, sempre às 19h. Por isso os 3 de luta vieram agora.",
+      "Placar parcial: LUTA [X]% x FUTEBOL [Y]%. A enquete fecha sábado, e o placar final sai sábado, 19h.",
       "Amanhã 19h: a lista da semana de TIRO, antes do site.",
     ),
     arte: "As capas do Tekken 7, do Naruto Storm 4 e do Dragon Ball FighterZ lado a lado no alto. Embaixo, R$ 39,90 enorme em branco numa faixa roxa, com CADA UM menor.",
@@ -693,7 +695,8 @@ export const GRUPO_MSGS: GrupoMsg[] = [
     arte: "Capa oficial do [JOGO MAIS VENDIDO DA SEMANA] no alto. Embaixo, 23H59 enorme em branco na faixa roxa e O QUE MAIS SAIU pequeno em cima da capa.",
     prompt: img({
       capa: "a capa oficial do [JOGO MAIS VENDIDO DA SEMANA]",
-      layout: L_CAPA + ' O texto "O QUE MAIS SAIU" vai pequeno, em roxo, acima da capa.',
+      layout:
+        "a capa fica no alto, centralizada, ocupando cerca de metade da altura, com cantos levemente arredondados. Logo abaixo, no fundo claro, o nome do jogo e o preço em quase preto. Depois, uma faixa roxa de ponta a ponta com o horário 23H59 em branco e, logo abaixo dele, menor, acaba hoje. O texto \"O QUE MAIS SAIU\" vai pequeno, em roxo, acima da capa.",
       principal: 'o horário "23H59"',
       textos: [
         "O QUE MAIS SAIU",
@@ -1078,7 +1081,7 @@ export const GRUPO_MSGS: GrupoMsg[] = [
       "",
       "Às 19h: a Black pro seu bolso.",
     ),
-    arte: "Imagem só de texto, fundo roxo: COMEÇOU gigante em branco no centro, BLACK DA SOCCER em cima e ATÉ SEGUNDA, 30/11, 23H59 numa caixa clara no rodapé.",
+    arte: "Imagem só de texto, fundo roxo: COMEÇOU gigante em branco no centro, BLACK DA SOCCER em cima, A PARTIR DE [PREÇO MAIS BAIXO] logo abaixo e ATÉ SEGUNDA, 30/11, 23H59 numa caixa clara no rodapé.",
     prompt: img({
       layout: L_NUM,
       principal: 'a palavra "COMEÇOU"',

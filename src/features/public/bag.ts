@@ -7,6 +7,7 @@ import { useSyncExternalStore } from "react";
 import { STORE } from "./games";
 import { storeLink, visitOrigin } from "@/lib/tracking";
 import { bioCoupon } from "./content";
+import { EXPRESS_ITEM, expressFits } from "./express";
 
 export interface BagItem {
   slug: string;
@@ -95,13 +96,14 @@ if (typeof window !== "undefined") {
 export const storeScriptLikely = () => gtmReachable;
 
 /** Carrinho da loja com todos os itens da sacola. */
-export function bagUrl(list: BagItem[], content: string) {
+export function bagUrl(list: BagItem[], content: string, withExpress = false) {
   const origin = visitOrigin();
+  const parts = list.map((i) => `${i.productId}-${i.variantId}-${encodeURIComponent(i.option ?? i.license)}`);
+  // Entrega Expressa: uma vez só, no fim, sem opção de licença
+  if (withExpress && expressFits(list.length)) parts.push(EXPRESS_ITEM);
   const q = new URLSearchParams({
     sg: "1",
-    sgadd: list
-      .map((i) => `${i.productId}-${i.variantId}-${encodeURIComponent(i.option ?? i.license)}`)
-      .join(","),
+    sgadd: parts.join(","),
     utm_source: origin.source,
     utm_medium: "bio",
     utm_campaign: origin.campaign ?? "sempre-ativo",

@@ -6,6 +6,8 @@ import { withUtm } from "@/lib/utm";
 import { productUrl, similarTo, versionsOf, type Game } from "./games";
 import { brl, parcel, cartUrl, licenseHint, sized, variantFor, type LiveVariant } from "./store";
 import { Cover, useLiveGame } from "./GameCard";
+import { ExpressOption } from "./ExpressOption";
+import { expressFits, useExpress } from "./express";
 import { bag, bagUrl, storeScriptLikely, useBag, type BagItem } from "./bag";
 import { bagEnabled } from "./content";
 
@@ -128,6 +130,8 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   const storeUrl = withUtm(productUrl(game), { content: `ficha-${game.slug}` });
   const images = live?.images.length ? live.images : [];
 
+  const withExpress = useExpress();
+
   const buy = () => {
     if (!chosen && !single) {
       track("buy_no_size", { product: game.slug });
@@ -138,7 +142,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     }
     if (!variant || variant.id <= 0) {
       // Sem o código da licença: abre a página do produto na loja.
-      track("checkout_click", { product: game.slug, detail: "sem licença (loja)" });
+      track("checkout_click", { product: game.slug, detail: "sem licença (loja)", express: false });
       track("links_clique", {
         item_name: `Comprar na loja: ${game.name}`,
         item_url: productUrl(game),
@@ -148,13 +152,15 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     }
     const item = bagEnabled && storeScriptLikely() ? toItem() : null;
     if (item) bag.add(item);
+    const express = !!item && withExpress && expressFits(bag.get().length);
     const url = item
-      ? bagUrl(bag.get(), `ficha-${game.slug}`)
+      ? bagUrl(bag.get(), `ficha-${game.slug}`, express)
       : cartUrl(variant.id, `ficha-${game.slug}`, game.slug);
     track("checkout_click", {
       product: game.slug,
       detail: variant.label,
       size: variant.label,
+      express,
       ...(variant.price !== null ? { value: variant.price, currency: "BRL" } : {}),
     });
     track("links_clique", { item_name: `Comprar: ${game.name}`, item_url: url });
@@ -189,6 +195,10 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     track("links_clique", { item_name: `Sacola: adicionou ${game.slug}`, item_url: productUrl(game) });
     onClose();
   };
+
+  // só no fluxo sgadd (o mesmo critério do buy); no fallback da página do produto não há Expressa
+  const offerExpress =
+    bagEnabled && !allOut && storeScriptLikely() && !!toItem() && expressFits(bag.get().length + (bag.has(game.slug) ? 0 : 1));
 
   const cta = allOut
     ? "Esgotado no momento"
@@ -603,6 +613,11 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
 
         {/* Barra de compra */}
         <div className="shrink-0 border-t border-mts-btn-border bg-mts-column px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-8">
+          {offerExpress && (
+            <div className="mb-2">
+              <ExpressOption />
+            </div>
+          )}
           <div className="flex gap-2">
             {bagEnabled && !allOut && (
               <button

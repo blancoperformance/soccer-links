@@ -4,10 +4,13 @@ import { track } from "@/lib/tracking";
 import { bag, bagTotals, bagUrl, storeScriptLikely, useBag } from "./bag";
 import { brl, INSTALLMENTS } from "./store";
 import { bagEnabled } from "./content";
+import { expressFits, useExpress } from "./express";
+import { ExpressOption } from "./ExpressOption";
 
 /** Barra fixa da sacola: capas empilhadas, total com o "de" riscado, economia e Finalizar. */
 export function BagBar() {
   const list = useBag();
+  const withExpress = useExpress();
   const [open, setOpen] = useState(false);
   const [bump, setBump] = useState(false);
   const prev = useRef(list.length);
@@ -27,15 +30,18 @@ export function BagBar() {
   const { total, save } = bagTotals(list);
   const n = list.length;
   const go = () => {
+    const likely = storeScriptLikely();
+    const express = likely && withExpress && expressFits(n);
     // sem o script da loja (GTM bloqueado), abre o primeiro jogo na loja em vez de um carrinho vazio
-    const url = storeScriptLikely()
-      ? bagUrl(list, "sacola")
+    const url = likely
+      ? bagUrl(list, "sacola", express)
       : `https://lojasoccergames.com.br/produtos/${list[0]!.slug}/?utm_source=bio&utm_medium=bio&utm_content=sacola-sem-script`;
     track("checkout_click", {
       product: list.map((i) => i.slug).join(","),
       detail: `sacola ${n}`,
       value: total,
       currency: "BRL",
+      express,
     });
     track("links_clique", { item_name: `Sacola: finalizar ${n}`, item_url: url });
     window.location.href = url;
@@ -99,6 +105,11 @@ export function BagBar() {
             </div>
           )}
 
+          {storeScriptLikely() && expressFits(n) && (
+            <div className="px-2.5 pt-2.5">
+              <ExpressOption />
+            </div>
+          )}
           <div className="flex items-center gap-2.5 p-2.5 pl-3">
             <button
               type="button"

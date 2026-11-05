@@ -1,7 +1,10 @@
 import { track } from "@/lib/tracking";
 import { EXPRESS_PRICE, express, useExpress } from "./express";
 
-/** Linha opcional da Entrega Expressa. Nunca vem marcada; a escolha dura só a sessão. */
+/**
+ * Linha opcional da Entrega Expressa, numa linha só para não empurrar o Comprar no celular.
+ * Nunca vem marcada; a escolha dura só a sessão.
+ */
 export function ExpressOption({ className = "" }: { className?: string }) {
   const checked = useExpress();
   const toggle = () => {
@@ -14,14 +17,15 @@ export function ExpressOption({ className = "" }: { className?: string }) {
       type="button"
       role="checkbox"
       aria-checked={checked}
+      aria-label={`Entrega Expressa por mais R$ ${EXPRESS_PRICE}: receber em até 2 minutos. Os 2 minutos contam a partir do pagamento confirmado.`}
       onClick={toggle}
-      className={`flex min-h-11 w-full items-start gap-3 rounded-[14px] px-3 py-2 text-left ring-1 motion-safe:transition-colors ${
+      className={`flex min-h-10 w-full items-center gap-2.5 rounded-[12px] px-3 py-1.5 text-left ring-1 motion-safe:transition-colors ${
         checked ? "bg-[#c000ff]/10 ring-[#c000ff]" : "bg-transparent ring-black/10"
       } ${className}`}
     >
       <span
         aria-hidden
-        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 motion-safe:transition-colors ${
+        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-2 motion-safe:transition-colors ${
           checked ? "border-[#8a00c2] bg-[#8a00c2]" : "border-mts-muted bg-transparent"
         }`}
       >
@@ -31,15 +35,11 @@ export function ExpressOption({ className = "" }: { className?: string }) {
           </svg>
         )}
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-2 text-[13px] font-semibold text-mts-text">
-          <span>Receber em até 2 minutos</span>
-          <span className="shrink-0 text-[#8a00c2]">+ R$ {EXPRESS_PRICE}</span>
-        </span>
-        <span className="mt-0.5 block text-[11px] leading-snug text-mts-muted">
-          Os 2 minutos contam a partir do pagamento confirmado.
-        </span>
+      {/* cabe numa linha em 390px; em tela mais estreita quebra em vez de cortar o texto */}
+      <span aria-hidden className="min-w-0 flex-1 text-[12px] leading-tight text-mts-muted">
+        <strong className="font-semibold text-mts-text">Até 2 min</strong> após o pagamento confirmado
       </span>
+      <span aria-hidden className="shrink-0 text-[12px] font-semibold text-[#8a00c2]">+ R$ {EXPRESS_PRICE}</span>
     </button>
   );
 }

@@ -4,7 +4,7 @@ import { track } from "@/lib/tracking";
 import { bag, bagTotals, bagUrl, storeScriptLikely, useBag } from "./bag";
 import { brl, INSTALLMENTS } from "./store";
 import { bagEnabled } from "./content";
-import { expressFits, useExpress } from "./express";
+import { EXPRESS_PRICE, expressFits, useExpress } from "./express";
 import { ExpressOption } from "./ExpressOption";
 
 /** Barra fixa da sacola: capas empilhadas, total com o "de" riscado, economia e Finalizar. */
@@ -27,8 +27,11 @@ export function BagBar() {
   }, [list.length]);
 
   if (!bagEnabled || list.length === 0) return null;
-  const { total, save } = bagTotals(list);
+  const { total: games, save } = bagTotals(list);
   const n = list.length;
+  // a Expressa só existe no fluxo sgadd; marcada, soma no total e nas parcelas (a economia não muda)
+  const offerExpress = storeScriptLikely() && expressFits(n);
+  const total = games + (offerExpress && withExpress ? EXPRESS_PRICE : 0);
   const go = () => {
     const likely = storeScriptLikely();
     const express = likely && withExpress && expressFits(n);
@@ -39,7 +42,7 @@ export function BagBar() {
     track("checkout_click", {
       product: list.map((i) => i.slug).join(","),
       detail: `sacola ${n}`,
-      value: total,
+      value: games + (express ? EXPRESS_PRICE : 0),
       currency: "BRL",
       express,
     });
@@ -49,7 +52,7 @@ export function BagBar() {
 
   return (
     <>
-      <div aria-hidden className="h-28" />
+      <div aria-hidden className={offerExpress ? "h-40" : "h-28"} />
       {open && (
         <button
           type="button"
@@ -105,7 +108,7 @@ export function BagBar() {
             </div>
           )}
 
-          {storeScriptLikely() && expressFits(n) && (
+          {offerExpress && (
             <div className="px-2.5 pt-2.5">
               <ExpressOption />
             </div>

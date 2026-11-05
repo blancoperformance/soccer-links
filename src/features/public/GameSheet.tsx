@@ -7,6 +7,7 @@ import { productUrl, similarTo, versionsOf, type Game } from "./games";
 import { brl, parcel, cartUrl, licenseHint, sized, variantFor, type LiveVariant } from "./store";
 import { Cover, useLiveGame } from "./GameCard";
 import { ExpressOption } from "./ExpressOption";
+import { buyMode, DualBuy, type BuyOption } from "./DualBuy";
 import { expressFits, useExpress } from "./express";
 import { bag, bagUrl, storeScriptLikely, useBag, type BagItem } from "./bag";
 import { bagEnabled } from "./content";
@@ -132,8 +133,17 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
 
   const withExpress = useExpress();
 
-  const buy = () => {
-    if (!chosen && !single) {
+  const dual =
+    buyMode(
+      options.map((o) => ({ key: o.key, label: o.label, out: o.out, price: o.variant?.price ?? null })),
+      chosenKey,
+    ) === "dual";
+
+  /** Compra direto uma licença (botões duplos); sem argumento usa a licença escolhida. */
+  const buy = (forKey?: string) => {
+    const target = forKey ? (options.find((o) => o.key === forKey) ?? null) : chosen;
+    const variant = target ? (target.variant ?? variantFor(live, target.key)) : null;
+    if (!target && !single) {
       track("buy_no_size", { product: game.slug });
       setNudge(true);
       licRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -150,7 +160,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
       window.location.href = storeUrl;
       return;
     }
-    const item = bagEnabled && storeScriptLikely() ? toItem() : null;
+    const item = bagEnabled && storeScriptLikely() ? toItem(variant) : null;
     if (item) bag.add(item);
     const express = !!item && withExpress && expressFits(bag.get().length);
     const url = item
@@ -167,17 +177,17 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     window.location.href = url;
   };
 
-  const toItem = (): BagItem | null =>
-    variant && variant.id > 0 && live?.id
+  const toItem = (v: LiveVariant | null = variant): BagItem | null =>
+    v && v.id > 0 && live?.id
       ? {
           slug: game.slug,
           name: game.name,
           productId: live.id,
-          variantId: variant.id,
-          license: variant.label,
-          option: variant.value ?? variant.label,
-          price: variant.price,
-          from: variant.from,
+          variantId: v.id,
+          license: v.label,
+          option: v.value ?? v.label,
+          price: v.price,
+          from: v.from,
           image: live.images[0] ? sized(live.images[0], 480) : "",
         }
       : null;
@@ -198,7 +208,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
 
   // só no fluxo sgadd (o mesmo critério do buy); no fallback da página do produto não há Expressa
   const offerExpress =
-    bagEnabled && !allOut && storeScriptLikely() && !!toItem() && expressFits(bag.get().length + (bag.has(game.slug) ? 0 : 1));
+    bagEnabled && !allOut && storeScriptLikely() && (dual ? options.some((o) => !o.out && !!toItem(o.variant)) : !!toItem()) && expressFits(bag.get().length + (bag.has(game.slug) ? 0 : 1));
 
   const cta = allOut
     ? "Esgotado no momento"
@@ -618,25 +628,58 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
               <ExpressOption />
             </div>
           )}
-          <div className="flex gap-2">
-            {bagEnabled && !allOut && (
+          {dual ? (
+            <>
+              <DualBuy
+                options={options.map((o): BuyOption => ({ key: o.key, label: o.label, out: o.out, price: o.variant?.price ?? null }))}
+                onBuy={(k) => buy(k)}
+              />
+              <div className="mt-2 flex items-center justify-between gap-3">
+                {bagEnabled ? (
+                  <button
+                    type="button"
+                    onClick={addToBag}
+                    className="flex min-h-11 items-center rounded-[12px] border border-mts-text px-3 text-[13px] font-semibold text-mts-text"
+                  >
+                    + Sacola
+                  </button>
+                ) : (
+                  <span />
+                )}
+                <a
+                  href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() =>
+                    track("links_clique", { item_name: `Ficha: primária ou secundária ${game.slug}` })
+                  }
+                  className="flex min-h-11 items-center text-[13px] text-mts-muted underline underline-offset-4 hover:text-mts-text"
+                >
+                  Primária ou secundária? Entenda
+                </a>
+              </div>
+            </>
+          ) : (
+            <div className="flex gap-2">
+              {bagEnabled && !allOut && (
+                <button
+                  type="button"
+                  onClick={addToBag}
+                  className="flex h-[52px] shrink-0 items-center justify-center rounded-[14px] border border-mts-text px-3 text-[13px] font-semibold text-mts-text"
+                >
+                  + Sacola
+                </button>
+              )}
               <button
                 type="button"
-                onClick={addToBag}
-                className="flex h-[52px] shrink-0 items-center justify-center rounded-[14px] border border-mts-text px-3 text-[13px] font-semibold text-mts-text"
+                disabled={allOut}
+                onClick={() => buy()}
+                className="flex h-[52px] w-full items-center rounded-[14px] justify-center gap-2 bg-mts-ink text-[15px] font-semibold text-mts-on-ink transition-opacity hover:opacity-90 disabled:opacity-40"
               >
-                + Sacola
+                {others.length > 0 && !allOut ? `Comprar com mais ${others.length}` : cta} {!allOut && <span aria-hidden>→</span>}
               </button>
-            )}
-            <button
-              type="button"
-              disabled={allOut}
-              onClick={buy}
-              className="flex h-[52px] w-full items-center rounded-[14px] justify-center gap-2 bg-mts-ink text-[15px] font-semibold text-mts-on-ink transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              {others.length > 0 && !allOut ? `Comprar com mais ${others.length}` : cta} {!allOut && <span aria-hidden>→</span>}
-            </button>
-          </div>
+            </div>
+          )}
           <p className="mt-2 text-center text-[11px] text-mts-muted">
             Você finaliza no site da Soccer Games, com Pix, cartão ou boleto.
           </p>

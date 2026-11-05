@@ -6,20 +6,44 @@ import { weeklyPromotion } from "./promotion";
 
 export const EXPRESS_URL = `${STORE}/produtos/entrega-expressa-ate-2-minutos-14f4c/`;
 
-function HeroCover({ game, index }: { game: Game; index: number }) {
+function HeroCover({
+  game,
+  index,
+  onOpenGame,
+}: {
+  game: Game;
+  index: number;
+  onOpenGame?: ((g: Game) => void) | undefined;
+}) {
   const { live, done } = useLiveGame(game.slug, true);
+  const cls =
+    "sg-cover-in absolute top-3 w-[36%] max-w-[150px] rounded-2xl shadow-[0_18px_32px_-10px_rgba(0,0,0,.65)] ring-1 ring-white/30";
+  const style = {
+    left: `${14 + index * 18}%`,
+    transform: `rotate(${(index - 1) * 12}deg)`,
+    zIndex: index === 1 ? 3 : 2,
+    animationDelay: `${120 + index * 110}ms`,
+  };
+  const cover = <Cover game={game} live={live} done={done} w={320} />;
+  if (!onOpenGame)
+    return (
+      <span className={cls} style={style}>
+        {cover}
+      </span>
+    );
   return (
-    <span
-      className="sg-cover-in absolute top-3 w-[36%] max-w-[150px] rounded-2xl shadow-[0_18px_32px_-10px_rgba(0,0,0,.65)] ring-1 ring-white/30"
-      style={{
-        left: `${14 + index * 18}%`,
-        transform: `rotate(${(index - 1) * 12}deg)`,
-        zIndex: index === 1 ? 3 : 2,
-        animationDelay: `${120 + index * 110}ms`,
+    <button
+      type="button"
+      aria-label={`Ver ${game.name}`}
+      onClick={() => {
+        track("links_clique", { item_name: `Topo: capa ${game.name}` });
+        onOpenGame(game);
       }}
+      className={`${cls} block cursor-pointer p-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white`}
+      style={style}
     >
-      <Cover game={game} live={live} done={done} w={320} />
-    </span>
+      {cover}
+    </button>
   );
 }
 
@@ -69,7 +93,16 @@ function ExpressCard({ onBrowse }: { onBrowse: () => void }) {
  * Topo da página no mês da Black: sem datas no herói. Com a campanha da semana no ar, mostra o tema
  * dela como etiqueta e leva à escolha do jogo; sem campanha, leva ao Grupo VIP.
  */
-export function BlackHero({ weekTheme, onBrowse }: { weekTheme: boolean; onBrowse: () => void }) {
+export function BlackHero({
+  weekTheme,
+  onBrowse,
+  onOpenGame,
+}: {
+  weekTheme: boolean;
+  onBrowse: () => void;
+  /** Abre a ficha do jogo (a mesma função dos cards da loja). */
+  onOpenGame?: ((g: Game) => void) | undefined;
+}) {
   return (
     <div className="relative mt-6" aria-label="Black Friday da Soccer">
       <p className="flex flex-wrap items-center gap-2 text-[12px] font-semibold">
@@ -106,7 +139,7 @@ export function BlackHero({ weekTheme, onBrowse }: { weekTheme: boolean; onBrows
           />
           {weeklyPromotion.highlights.map((slug, i) => {
             const game = getGame(slug);
-            return game ? <HeroCover key={slug} game={game} index={i} /> : null;
+            return game ? <HeroCover key={slug} game={game} index={i} onOpenGame={onOpenGame} /> : null;
           })}
         </div>
       )}

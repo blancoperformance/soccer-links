@@ -739,6 +739,7 @@ export function PublicPage({
             {campaignOn || blackOn ? (
               <BlackHero
                 weekTheme={campaignOn}
+                onOpenGame={(g) => openGame(g)}
                 onBrowse={() => {
                   setQuery("");
                   setChip(null);

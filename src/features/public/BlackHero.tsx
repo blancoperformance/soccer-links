@@ -1,5 +1,4 @@
 import { ArrowRight, Zap } from "lucide-react";
-import { withUtm } from "@/lib/utm";
 import { track } from "@/lib/tracking";
 import { Cover, useLiveGame } from "./GameCard";
 import { getGame, STORE, type Game } from "./games";
@@ -24,7 +23,7 @@ function HeroCover({ game, index }: { game: Game; index: number }) {
   );
 }
 
-function ExpressCard() {
+function ExpressCard({ onBrowse }: { onBrowse: () => void }) {
   return (
     <section
       className="mts-enter mt-5 rounded-[22px] bg-[#c000ff] p-5 text-white"
@@ -45,24 +44,23 @@ function ExpressCard() {
         {"Seu jogo chega em até 2\u00a0minutos."}
       </h3>
       <p className="mt-2.5 max-w-[360px] text-[14px] leading-relaxed text-white/95">
-        Os 2 minutos contam a partir do pagamento confirmado. A Entrega Expressa custa R$ 5 e aparece
-        no carrinho: é só confirmar.
+        Escolha o seu jogo e, na hora de comprar, marque "Até 2 min". Custa R$ 5 e os 2 minutos
+        contam a partir do pagamento confirmado.
       </p>
-      <a
-        href={withUtm(EXPRESS_URL, { content: "topo-entrega-expressa" })}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() =>
-          track("links_clique", { item_name: "Expressa: ver no topo", item_url: EXPRESS_URL })
-        }
+      <button
+        type="button"
+        onClick={() => {
+          track("links_clique", { item_name: "Expressa: escolher jogo no topo" });
+          onBrowse();
+        }}
         className="group mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[14px] font-bold text-[#220034] transition active:scale-[.98] hover:bg-[#f3e1ff]"
       >
-        Ver a Entrega Expressa
+        Escolher meu jogo
         <ArrowRight
           className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
           aria-hidden
         />
-      </a>
+      </button>
     </section>
   );
 }
@@ -156,7 +154,7 @@ export function BlackHero({ weekTheme, onBrowse }: { weekTheme: boolean; onBrows
           />
         </a>
       )}
-      <ExpressCard />
+      <ExpressCard onBrowse={onBrowse} />
     </div>
   );
 }

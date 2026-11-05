@@ -14,8 +14,8 @@ describe("Topo da Black", () => {
 
   it("explica a Entrega Expressa sem escassez nem cupom", () => {
     expect(html).toMatch(/até 2(\u00a0| )minutos/);
-    expect(html).toContain("é só confirmar");
-    expect(html).toContain(EXPRESS_URL.replace("&", "&amp;"));
+    expect(html).toContain("na hora de comprar, marque");
+    expect(html).not.toContain(EXPRESS_URL);
     expect(html).not.toMatch(/alta demanda|cupom|últimas|restam/i);
     expect(html).not.toMatch(/[—–]/);
     expect(html).toMatch(/Seu jogo chega em até 2(\u00a0|&nbsp;| )minutos\./);

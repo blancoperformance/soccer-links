@@ -152,7 +152,12 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     }
     if (!variant || variant.id <= 0) {
       // Sem o código da licença: abre a página do produto na loja.
-      track("checkout_click", { product: game.slug, detail: "sem licença (loja)", express: false });
+      track("checkout_click", {
+        product: game.slug,
+        detail: target ? `${target.label} (loja)` : "sem licença (loja)",
+        ...(target ? { size: target.label } : {}),
+        express: false,
+      });
       track("links_clique", {
         item_name: `Comprar na loja: ${game.name}`,
         item_url: productUrl(game),
@@ -681,6 +686,11 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
             </div>
           )}
           <p className="mt-2 text-center text-[11px] text-mts-muted">
+            {dual && others.length > 0 && (
+              <>
+                Vai junto com {others.length === 1 ? "o outro jogo" : `os outros ${others.length} jogos`} da sacola.{" "}
+              </>
+            )}
             Você finaliza no site da Soccer Games, com Pix, cartão ou boleto.
           </p>
         </div>

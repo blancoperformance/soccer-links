@@ -145,7 +145,7 @@ export function DealsBanner({ onGo, weekly = false }: { onGo: () => void; weekly
       <span className="relative min-w-0 flex-1">
         <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white/80">
           <Flame className="h-3.5 w-3.5" aria-hidden />{" "}
-          {weekly ? "Best Sellers da semana" : "Ofertas de hoje"}
+          {weekly ? "Ofertas da semana" : "Ofertas de hoje"}
         </span>
         <span className="mt-1 block leading-none">
           <span className="text-[14px] font-semibold text-white/90">Jogos com até </span>
@@ -294,7 +294,7 @@ export function Offers({
       <div className="relative mt-4 overflow-hidden rounded-[22px] bg-white p-5 text-mts-text ring-1 ring-black/5">
         <p className="relative flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#8a00c2]">
           <Sparkles className="h-4 w-4" aria-hidden />{" "}
-          {weekly ? "Roleta dos Best Sellers" : "Roleta das ofertas"}
+          {weekly ? "Roleta das ofertas da semana" : "Roleta das ofertas"}
         </p>
         <p className="relative mt-1 text-[15px] text-mts-muted">
           Gire e veja qual oferta de {plat} caiu para você.
@@ -364,7 +364,7 @@ export function Offers({
       {/* Ranking */}
       <p className="mt-6 flex items-center gap-2 text-sm font-bold text-mts-text">
         <Flame className="h-4 w-4 text-[#ff2d87]" aria-hidden />{" "}
-        {weekly ? `Best Sellers de ${plat} em oferta` : `Maiores descontos de ${plat} agora`}
+        {weekly ? `Ofertas da semana de ${plat}` : `Maiores descontos de ${plat} agora`}
       </p>
       <ol className="mt-3 space-y-2">
         {ranking.map((d, i) => (

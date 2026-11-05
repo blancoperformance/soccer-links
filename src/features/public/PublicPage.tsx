@@ -409,7 +409,7 @@ function CampaignHero({ c, onBrowse }: { c: Campaign; onBrowse: () => void }) {
         onClick={onBrowse}
         className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-[#c000ff] px-5 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#a400db] active:scale-[.99]"
       >
-        Escolher meu Best Seller <span aria-hidden>→</span>
+        Escolher meu jogo da semana <span aria-hidden>→</span>
       </button>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[11px] text-white/70">
         <span>Até domingo, 25/10 · PS4 e PS5</span>
@@ -781,7 +781,7 @@ export function PublicPage({
 
   const highlight = context ?? lastGame;
   const nav = [
-    { id: "ofertas", label: campaignOn ? "Best Sellers" : "Ofertas" },
+    { id: "ofertas", label: campaignOn ? "Ofertas da semana" : "Ofertas" },
     { id: "loja", label: "Jogos" },
     ...(quizReady ? [{ id: "ideal", label: "Jogo ideal" }] : []),
     { id: "atendimento", label: "Atendimento" },
@@ -941,9 +941,9 @@ export function PublicPage({
                 onBrowse={() => {
                   setQuery("");
                   setChip(null);
-                  setShelf("best-sellers-semana");
+                  setShelf("oferta-da-semana");
                   goTo("loja");
-                  track("links_clique", { item_name: "Best Sellers: escolher jogo" });
+                  track("links_clique", { item_name: "Oferta da semana: escolher jogo" });
                 }}
               />
             ) : blackOn ? (
@@ -1118,7 +1118,7 @@ export function PublicPage({
 
           <section id="ofertas" className={sectionCls} aria-label="Ofertas">
             {sectionTitle(
-              campaignOn ? "Seu próximo Best Seller" : "Caça-ofertas",
+              campaignOn ? "Seu jogo da semana" : "Caça-ofertas",
               campaignOn
                 ? "Gire para descobrir um jogo da semana ou compare os descontos abaixo."
                 : "Gire a roleta ou veja os maiores descontos da loja agora.",

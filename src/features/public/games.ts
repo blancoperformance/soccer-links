@@ -88,8 +88,8 @@ export const getShelves = (at = new Date()): Shelf[] =>
     ...(isWeeklyPromotionActive(at)
       ? [
           {
-            id: "best-sellers-semana",
-            name: "Best Sellers da semana",
+            id: "oferta-da-semana",
+            name: weeklyPromotion.shelfName,
             url: weeklyPromotion.url,
             games: weeklyPromotion.games.flatMap((slug) => bySlug.get(slug) ?? []),
           },

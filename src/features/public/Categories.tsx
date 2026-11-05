@@ -5,10 +5,52 @@ import { brl, livePriceFrom } from "./store";
 import { getGame, GTA6_STANDARD, GTA6_ULTIMATE, type Game } from "./games";
 
 /** Capa de cada categoria: jogos reais do catálogo (a foto vem ao vivo da loja). */
+/** Banners de PS4 e PS5 da própria loja (home da Nuvemshop, lidos em 04/11/2026). */
+const BANNER =
+  "https://acdn-us.mitiendanube.com/stores/007/661/773/themes/brasilia/2-slide-1778032744314-";
 const CONSOLES = [
-  { id: "ps5", label: "PS5", slug: "marvels-spider-man-2-para-ps5-midia-digital" },
-  { id: "ps4", label: "PS4", slug: "god-of-war-ps4-midia-digital" },
+  {
+    id: "ps5",
+    label: "PS5",
+    img: `${BANNER}6712401579-a0cedf3e9ca2b8a77f5f00d7e5cdc89a1778032746`,
+  },
+  {
+    id: "ps4",
+    label: "PS4",
+    img: `${BANNER}2539267348-7c73e279ad2a67cfab537b5a064b20fe1778032745`,
+  },
 ] as const;
+
+function ConsoleBanner({
+  label,
+  img,
+  onClick,
+}: {
+  label: string;
+  img: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Ver jogos de ${label}`}
+      className="group block w-full overflow-hidden rounded-2xl border border-white/10 bg-white transition duration-300 hover:-translate-y-0.5 hover:border-[#d77bff]/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d77bff] active:scale-[.99] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    >
+      <img
+        src={`${img}-1024-1024.webp`}
+        srcSet={`${img}-640-0.webp 640w, ${img}-1024-1024.webp 1024w, ${img}-1400-1400.webp 1400w`}
+        sizes="(min-width: 640px) 560px, 92vw"
+        width={1024}
+        height={454}
+        alt={`Jogos de ${label}`}
+        loading="lazy"
+        decoding="async"
+        className="block aspect-[1024/454] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+      />
+    </button>
+  );
+}
 
 const GENRES = [
   { id: "futebol", label: "Futebol", slug: "ea-sports-fc-26-para-ps5-midia-digital" },
@@ -157,13 +199,12 @@ export function Categories({
         <h2 className="font-display text-[22px] font-semibold text-mts-text">
           Qual é o seu console?
         </h2>
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid gap-3">
           {CONSOLES.map((c) => (
-            <Tile
+            <ConsoleBanner
               key={c.id}
-              slug={c.slug}
               label={c.label}
-              size="lg"
+              img={c.img}
               onClick={() => {
                 track("intent_select", { collection: c.id, from: "categoria" });
                 onConsole(c.id);

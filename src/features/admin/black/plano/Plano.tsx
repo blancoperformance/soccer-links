@@ -242,7 +242,7 @@ export function GrupoHoje({ t }: { t: string }) {
       title={hoje.length ? "Grupo VIP: as mensagens de hoje" : "Grupo VIP: hoje não tem mensagem"}
       hint={
         hoje.length
-          ? "Três por dia: 10h, 15h e 19h. Copie a mensagem e o prompt, gere a imagem no ChatGPT com a capa do jogo e mande no horário."
+          ? "Uma por dia, às 19h, a partir de 05/11 (duas nos dias 19, 26, 27 e 28/11: 10h e 19h). Copie a mensagem e o prompt, gere a imagem no ChatGPT com a capa do jogo e mande no horário."
           : `A próxima é ${WD[dow(prox!.data)]} ${fmtD(prox!.data)}, ${prox!.quando}. Já dá para deixar a imagem pronta.`
       }
       icon={MessageCircle}
@@ -263,7 +263,7 @@ export function GrupoHoje({ t }: { t: string }) {
 const COMO_USAR: [string, string][] = [
   [
     "Entre aqui todo dia",
-    "São 3 mensagens por dia: 10h, 15h e 19h. As de hoje aparecem primeiro no Início, já prontas.",
+    "É 1 mensagem por dia, às 19h. Nos dias 19, 26, 27 e 28/11 são 2: 10h e 19h. As de hoje aparecem primeiro no Início, já prontas.",
   ],
   [
     "Copie a mensagem e faça a imagem",
@@ -287,7 +287,7 @@ export function GrupoMes({ t }: { t: string }) {
       <div className="sg-grid sg-grid--split">
         <Card
           title="Como usar"
-          hint="Três por dia, cada uma com algo novo. Se o grupo começar a silenciar, a Blanco reduz."
+          hint="Uma por dia a partir de 05/11, cada uma com algo novo. Se o grupo começar a silenciar, a Blanco reduz."
           icon={ListChecks}
         >
           <ol className="sg-flow">

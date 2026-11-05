@@ -13,11 +13,17 @@ describe("Topo da Black", () => {
   });
 
   it("explica a Entrega Expressa sem escassez nem cupom", () => {
-    expect(html).toContain("até 2 minutos");
+    expect(html).toMatch(/até 2(\u00a0| )minutos/);
     expect(html).toContain("é só confirmar");
     expect(html).toContain(EXPRESS_URL.replace("&", "&amp;"));
     expect(html).not.toMatch(/alta demanda|cupom|últimas|restam/i);
     expect(html).not.toMatch(/[—–]/);
+    expect(html).toMatch(/Seu jogo chega em até 2(\u00a0|&nbsp;| )minutos\./);
+    expect(html).not.toContain("Quer o seu primeiro");
+  });
+
+  it("não tem contagem de dias no topo", () => {
+    expect(html).not.toMatch(/chega em\s*<|Black Friday em|Contagem/);
   });
 
   it("sem campanha da semana, o botão leva ao Grupo VIP", () => {

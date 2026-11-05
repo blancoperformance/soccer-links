@@ -1,26 +1,11 @@
-import { useEffect, useState } from "react";
 import { ArrowRight, Zap } from "lucide-react";
 import { withUtm } from "@/lib/utm";
 import { track } from "@/lib/tracking";
-import { black } from "../black/config";
 import { Cover, useLiveGame } from "./GameCard";
 import { getGame, STORE, type Game } from "./games";
 import { weeklyPromotion } from "./promotion";
 
 export const EXPRESS_URL = `${STORE}/produtos/entrega-expressa-ate-2-minutos-14f4c/`;
-
-/** Dias inteiros que faltam até a data (null antes de montar, para o servidor e o navegador baterem). */
-function useDaysUntil(iso: string): number | null {
-  const [days, setDays] = useState<number | null>(null);
-  useEffect(() => {
-    const target = Date.parse(iso);
-    const tick = () => setDays(Math.ceil((target - Date.now()) / 86400000));
-    tick();
-    const t = setInterval(tick, 60000);
-    return () => clearInterval(t);
-  }, [iso]);
-  return days;
-}
 
 function HeroCover({ game, index }: { game: Game; index: number }) {
   const { live, done } = useLiveGame(game.slug, true);
@@ -36,35 +21,6 @@ function HeroCover({ game, index }: { game: Game; index: number }) {
     >
       <Cover game={game} live={live} done={done} w={320} />
     </span>
-  );
-}
-
-function Countdowns() {
-  const gta = useDaysUntil(black.launch);
-  const big = useDaysUntil(black.bigDay);
-  const cells = [
-    { label: "GTA 6 chega em", days: gta },
-    { label: "Black Friday em", days: big },
-  ].filter((c): c is { label: string; days: number } => c.days != null && c.days > 0);
-  if (!cells.length) return null;
-  return (
-    <ul
-      className="mts-enter mt-3 grid divide-x divide-white/25 rounded-2xl border border-white/25"
-      style={{
-        gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))`,
-        animationDelay: "260ms",
-      }}
-      aria-label="Contagem"
-    >
-      {cells.map((c) => (
-        <li key={c.label} className="px-4 py-3">
-          <span className="block text-[12px] text-white/65">{c.label}</span>
-          <span className="font-display mt-0.5 block text-[22px] font-bold leading-none text-white tabular-nums">
-            {c.days} {c.days === 1 ? "dia" : "dias"}
-          </span>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -86,11 +42,11 @@ function ExpressCard() {
         <p className="text-[13px] font-semibold text-white/90">Entrega Expressa</p>
       </div>
       <h3 className="font-display mt-3 text-[22px] font-extrabold leading-[1.1]">
-        Mês da Black. Quer o seu primeiro?
+        {"Seu jogo chega em até 2\u00a0minutos."}
       </h3>
       <p className="mt-2.5 max-w-[360px] text-[14px] leading-relaxed text-white/95">
-        Com a Entrega Expressa, seu jogo chega em até 2 minutos depois que o pagamento é confirmado.
-        Por R$ 5. No carrinho, é só confirmar.
+        Os 2 minutos contam a partir do pagamento confirmado. A Entrega Expressa custa R$ 5 e aparece
+        no carrinho: é só confirmar.
       </p>
       <a
         href={withUtm(EXPRESS_URL, { content: "topo-entrega-expressa" })}
@@ -201,7 +157,6 @@ export function BlackHero({ weekTheme, onBrowse }: { weekTheme: boolean; onBrows
         </a>
       )}
       <ExpressCard />
-      <Countdowns />
     </div>
   );
 }

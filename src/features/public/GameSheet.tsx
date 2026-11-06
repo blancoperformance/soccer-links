@@ -13,6 +13,8 @@ import { checkoutTotal, liveChecked, PIX_HINT, pixExact, POPULAR_BADGE, POPULAR_
 import { TotalLine } from "./TotalLine";
 import { bag, bagUrl, storeScriptLikely, useBag, type BagItem } from "./bag";
 import { bagEnabled } from "./content";
+import { BuyBar, useBlockVisible } from "./BuyBar";
+import { LicenseHelp } from "./LicenseHelp";
 
 interface Props {
   game: Game;
@@ -63,6 +65,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   const [slide, setSlide] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const licRef = useRef<HTMLDivElement>(null);
+  const buyRef = useRef<HTMLDivElement>(null);
   const inBag = useBag();
   const others = bagEnabled ? inBag.filter((i) => i.slug !== game.slug) : [];
   useLiveChecks(others.map((i) => i.slug));
@@ -227,7 +230,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
 
   // Total que o clique em Comprar vai levar ao carrinho (mesma conta do checkout_click).
   const buyVariant = chosen ? (chosen.variant ?? variantFor(live, chosen.key)) : single ? variant : null;
-  const sheetTotal = (() => {
+  const sheetCheckout = (() => {
     // sem licença ao vivo o Comprar abre a página do produto (outro caminho); licença esgotada não vai ao carrinho
     if (allOut || dual || chosen?.out || !buyVariant || buyVariant.id <= 0 || !buyVariant.available || buyVariant.price == null)
       return null;
@@ -235,8 +238,9 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     const t = flow
       ? checkoutTotal(liveChecked(bag.get()), { slug: game.slug, price: buyVariant.price }, withExpress, true)
       : checkoutTotal([], { slug: game.slug, price: buyVariant.price }, false, false);
-    return t.complete ? totalText(t) : null;
+    return t.complete ? t : null;
   })();
+  const sheetTotal = sheetCheckout ? totalText(sheetCheckout) : null;
   const dualHint = dual && options.some((o) => !o.out && o.variant?.price != null) ? PIX_HINT : null;
 
   const cta = allOut
@@ -246,6 +250,23 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
         ? `Comprar licença ${chosen.label.toLowerCase()}`
         : "Comprar na loja"
       : "Escolher a licença";
+
+  // Barra compacta: só aparece quando o bloco de compra do conteúdo está fora da tela.
+  const blockVisible = useBlockVisible(buyRef, scroller, !allOut);
+  const showBar = !allOut && !blockVisible;
+  const cheapest =
+    variant ??
+    live?.variants
+      .filter((x) => x.available && x.price != null)
+      .sort((a, b) => (a.price ?? 9e9) - (b.price ?? 9e9))[0] ??
+    null;
+  const barAmount = sheetCheckout ? brl(sheetCheckout.total) : cheapest?.price != null ? brl(cheapest.price) : null;
+  const barPrefix = sheetCheckout ? "Total" : cheapest?.price != null ? (variant ? null : "a partir de") : game.short;
+  const goToBuyBlock = () => {
+    track("links_clique", { item_name: "Barra: foi ao bloco de compra" });
+    const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    buyRef.current?.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "center" });
+  };
 
   return (
     <div
@@ -284,7 +305,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
           </button>
         </div>
 
-        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-8">
+        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
           {flash && (
             <div className="pointer-events-none sticky top-3 z-30 -mb-10 flex justify-center">
               <span className="animate-[sg-pop_.45s_ease-out] rounded-full bg-[#0f0f0f] px-4 py-2 text-sm font-bold text-white shadow-lg">
@@ -491,17 +512,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                     );
                   })}
                 </div>
-                <a
-                  href={withUtm("https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/", {
-                    content: "ficha-licencas",
-                  })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => track("links_clique", { item_name: "Ficha: entender licenças" })}
-                  className="mt-3 inline-block text-xs text-mts-muted underline underline-offset-4 hover:text-mts-text"
-                >
-                  Qual licença escolher?
-                </a>
+                <LicenseHelp />
               </div>
             )}
             {!allOut && single && (
@@ -517,6 +528,67 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                 </p>
               </div>
             )}
+            {/* Compra no fluxo da página: rola junto; a barra de baixo só aparece quando este bloco sai da tela */}
+            <div ref={buyRef} data-testid="buy-block" className="mt-6 scroll-mt-4">
+              {offerExpress && (
+                <div className="mb-2">
+                  <ExpressOption />
+                </div>
+              )}
+              {dual ? (
+                <>
+                  <DualBuy
+                    options={options.map((o): BuyOption => ({ key: o.key, label: o.label, out: o.out, price: o.variant?.price ?? null }))}
+                    onBuy={(k) => buy(k)}
+                    popular={popular}
+                  />
+                  <TotalLine text={dualHint} className="mt-2" />
+                  <div className="mt-2 flex items-center justify-start gap-3">
+                    {bagEnabled ? (
+                      <button
+                        type="button"
+                        onClick={addToBag}
+                        className="flex min-h-11 items-center rounded-[12px] border border-mts-text px-3 text-[13px] font-semibold text-mts-text"
+                      >
+                        + Sacola
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex gap-2">
+                  {bagEnabled && !allOut && (
+                    <button
+                      type="button"
+                      onClick={addToBag}
+                      className="flex h-[52px] shrink-0 items-center justify-center rounded-[14px] border border-mts-text px-3 text-[13px] font-semibold text-mts-text"
+                    >
+                      + Sacola
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={allOut}
+                    onClick={() => buy()}
+                    className="flex h-[52px] w-full items-center rounded-[14px] justify-center gap-2 bg-mts-ink text-[15px] font-semibold text-mts-on-ink transition-opacity hover:opacity-90 disabled:opacity-40"
+                  >
+                    {others.length > 0 && !allOut ? `Comprar com mais ${others.length}` : cta} {!allOut && <span aria-hidden>→</span>}
+                  </button>
+                </div>
+              )}
+              {!dual && <TotalLine text={sheetTotal} className="mt-2" />}
+              <p className="mt-2 text-center text-[11px] text-mts-muted">
+                {dual && others.length > 0 && (
+                  <>
+                    Vai junto com {others.length === 1 ? "o outro jogo" : `os outros ${others.length} jogos`} da sacola.{" "}
+                  </>
+                )}
+                Você finaliza no site da Soccer Games, com Pix, cartão ou boleto.
+              </p>
+            </div>
+
             {/* Outras versões (PS4/PS5, edições) */}
             {editions.length > 0 && (
               <div className="mt-5">
@@ -629,17 +701,6 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
               >
                 Ver a página completa na loja
               </a>
-              <a
-href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() =>
-                  track("links_clique", { item_name: `Ficha: primária ou secundária ${game.slug}` })
-                }
-                className="flex items-center gap-1.5 text-mts-muted underline underline-offset-4 hover:text-mts-text"
-              >
-                Primária ou secundária? Entenda
-              </a>
             </div>
 
             {similar.length > 0 && (
@@ -660,77 +721,7 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
           </div>
         </div>
 
-        {/* Barra de compra */}
-        <div className="shrink-0 border-t border-mts-btn-border bg-mts-column px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-8">
-          {offerExpress && (
-            <div className="mb-2">
-              <ExpressOption />
-            </div>
-          )}
-          {dual ? (
-            <>
-              <DualBuy
-                options={options.map((o): BuyOption => ({ key: o.key, label: o.label, out: o.out, price: o.variant?.price ?? null }))}
-                onBuy={(k) => buy(k)}
-                popular={popular}
-              />
-              <TotalLine text={dualHint} className="mt-2" />
-              <div className="mt-2 flex items-center justify-between gap-3">
-                {bagEnabled ? (
-                  <button
-                    type="button"
-                    onClick={addToBag}
-                    className="flex min-h-11 items-center rounded-[12px] border border-mts-text px-3 text-[13px] font-semibold text-mts-text"
-                  >
-                    + Sacola
-                  </button>
-                ) : (
-                  <span />
-                )}
-                <a
-                  href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() =>
-                    track("links_clique", { item_name: `Ficha: primária ou secundária ${game.slug}` })
-                  }
-                  className="flex min-h-11 items-center text-[13px] text-mts-muted underline underline-offset-4 hover:text-mts-text"
-                >
-                  Primária ou secundária? Entenda
-                </a>
-              </div>
-            </>
-          ) : (
-            <div className="flex gap-2">
-              {bagEnabled && !allOut && (
-                <button
-                  type="button"
-                  onClick={addToBag}
-                  className="flex h-[52px] shrink-0 items-center justify-center rounded-[14px] border border-mts-text px-3 text-[13px] font-semibold text-mts-text"
-                >
-                  + Sacola
-                </button>
-              )}
-              <button
-                type="button"
-                disabled={allOut}
-                onClick={() => buy()}
-                className="flex h-[52px] w-full items-center rounded-[14px] justify-center gap-2 bg-mts-ink text-[15px] font-semibold text-mts-on-ink transition-opacity hover:opacity-90 disabled:opacity-40"
-              >
-                {others.length > 0 && !allOut ? `Comprar com mais ${others.length}` : cta} {!allOut && <span aria-hidden>→</span>}
-              </button>
-            </div>
-          )}
-          {!dual && <TotalLine text={sheetTotal} className="mt-2" />}
-          <p className="mt-2 text-center text-[11px] text-mts-muted">
-            {dual && others.length > 0 && (
-              <>
-                Vai junto com {others.length === 1 ? "o outro jogo" : `os outros ${others.length} jogos`} da sacola.{" "}
-              </>
-            )}
-            Você finaliza no site da Soccer Games, com Pix, cartão ou boleto.
-          </p>
-        </div>
+        <BuyBar show={showBar} prefix={barPrefix} amount={barAmount} onBuy={dual ? goToBuyBlock : () => buy()} />
       </div>
     </div>
   );

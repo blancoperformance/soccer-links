@@ -4,6 +4,8 @@ import { DualBuy, type BuyOption } from "@/features/public/DualBuy";
 import { SGADD_MAX } from "@/features/public/express";
 import {
   checkoutTotal,
+  liveChecked,
+  pixExact,
   PIX_HINT,
   pixPrice,
   POPULAR_BADGE,
@@ -31,20 +33,24 @@ describe("total final", () => {
   });
   it("um jogo com Expressa soma R$ 5 e o Pix vem sobre o total", () => {
     const t = checkoutTotal([], g("a", 89.9), true, true);
-    expect(t).toMatchObject({ total: 94.9, pix: 93, express: true });
-    expect(nbsp(totalText(t))).toBe("Total R$ 94,90 · no Pix R$ 93,00");
+    expect(t).toMatchObject({ total: 94.9, pix: 93, express: true, lines: 2 });
+    // 2 linhas no carrinho: o centavo do Pix pode mudar na loja, então sem valor exato
+    expect(pixExact(t)).toBe(false);
+    expect(nbsp(totalText(t))).toBe("Total R$ 94,90 · no Pix, 2% a menos");
   });
   it("3 dígitos com Expressa", () => {
     const t = checkoutTotal([], g("a", 189.9), true, true);
-    expect(nbsp(totalText(t))).toBe("Total R$ 194,90 · no Pix R$ 191,00");
+    expect(nbsp(totalText(t))).toBe("Total R$ 194,90 · no Pix, 2% a menos");
+    expect(nbsp(totalText(checkoutTotal([], g("a", 189.9), false, true)))).toBe("Total R$ 189,90 · no Pix R$ 186,10");
   });
   it("sacola com vários jogos soma tudo; o jogo da ficha troca a licença anterior", () => {
     const bag = [g("a", 50), g("b", 79.9)];
     expect(checkoutTotal(bag, g("c", 30), false, true).total).toBe(159.9);
     expect(checkoutTotal(bag, g("a", 40), false, true).total).toBe(119.9);
     const t = checkoutTotal(bag, null, true, true);
-    expect(t).toMatchObject({ total: 134.9, express: true });
-    expect(t.pix).toBe(132.2);
+    expect(t).toMatchObject({ total: 134.9, express: true, lines: 3 });
+    expect(nbsp(totalText(t))).toBe("Total R$ 134,90 · no Pix, 2% a menos");
+    expect(nbsp(totalText(checkoutTotal(bag, null, false, true)))).toBe("Total R$ 129,90 · no Pix, 2% a menos");
   });
   it("sem o fluxo sgadd não há Expressa", () => {
     expect(checkoutTotal([], g("a", 50), true, false)).toMatchObject({ total: 50, express: false });
@@ -57,6 +63,20 @@ describe("total final", () => {
     expect(checkoutTotal([], g("a", null), false, true).complete).toBe(false);
     expect(checkoutTotal([g("b", 50)], g("a", null), false, true).complete).toBe(false);
     expect(checkoutTotal([], null, true, true).complete).toBe(false);
+  });
+  it("sacola: preço guardado só vale se bater com a loja ao vivo", () => {
+    const live = (price: number | null, available = true) => () => ({
+      id: 1,
+      images: [],
+      variants: [{ id: 7, key: "primaria", label: "Primária", price, from: null, available }],
+    });
+    const item = { slug: "a", price: 39.9, variantId: 7 };
+    expect(liveChecked([item], live(39.9))).toEqual([{ slug: "a", price: 39.9 }]);
+    // oferta da semana passada acabou: a loja cobra outro preço
+    expect(liveChecked([item], live(59.9))[0]!.price).toBeNull();
+    expect(liveChecked([item], live(39.9, false))[0]!.price).toBeNull();
+    expect(liveChecked([item], () => null)[0]!.price).toBeNull();
+    expect(checkoutTotal(liveChecked([item], () => null), null, false, true).complete).toBe(false);
   });
   it("sem licença escolhida o texto é a dica do Pix", () => expect(PIX_HINT).toBe("No Pix, 2% a menos"));
 });

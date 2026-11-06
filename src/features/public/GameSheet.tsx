@@ -9,7 +9,7 @@ import { Cover, useLiveGame } from "./GameCard";
 import { ExpressOption } from "./ExpressOption";
 import { buyMode, DualBuy, type BuyOption } from "./DualBuy";
 import { expressFits, useExpress } from "./express";
-import { checkoutTotal, PIX_HINT, POPULAR_BADGE, POPULAR_KEY, POPULAR_LINE, showPopular, totalText } from "./total";
+import { checkoutTotal, liveChecked, PIX_HINT, pixExact, POPULAR_BADGE, POPULAR_KEY, POPULAR_LINE, showPopular, totalText, useLiveChecks } from "./total";
 import { TotalLine } from "./TotalLine";
 import { bag, bagUrl, storeScriptLikely, useBag, type BagItem } from "./bag";
 import { bagEnabled } from "./content";
@@ -65,6 +65,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   const licRef = useRef<HTMLDivElement>(null);
   const inBag = useBag();
   const others = bagEnabled ? inBag.filter((i) => i.slug !== game.slug) : [];
+  useLiveChecks(others.map((i) => i.slug));
   const versions = useMemo(() => versionsOf(game).filter((v) => v.slug !== game.slug), [game]);
   const plat = game.platforms.length === 1 ? game.platforms[0]! : null;
   /** Mesma edição no outro console (troca PS4/PS5 sem mudar de edição). */
@@ -173,7 +174,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     const express = !!item && withExpress && expressFits(bag.get().length);
     // mesma conta do total mostrado na ficha: sacola inteira (com este jogo) + Expressa
     const sum = item
-      ? checkoutTotal(bag.get(), null, express, true)
+      ? checkoutTotal(liveChecked(bag.get()), null, express, true)
       : checkoutTotal([], { slug: game.slug, price: variant.price }, false, false);
     const url = item
       ? bagUrl(bag.get(), `ficha-${game.slug}`, express)
@@ -183,7 +184,9 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
       detail: variant.label,
       size: variant.label,
       express,
-      ...(sum.complete ? { value: sum.total, pix_total: sum.pix, currency: "BRL" } : {}),
+      ...(sum.complete
+        ? { value: sum.total, ...(pixExact(sum) ? { pix_total: sum.pix } : {}), currency: "BRL" }
+        : {}),
     });
     track("links_clique", { item_name: `Comprar: ${game.name}`, item_url: url });
     window.location.href = url;
@@ -225,10 +228,12 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   // Total que o clique em Comprar vai levar ao carrinho (mesma conta do checkout_click).
   const buyVariant = chosen ? (chosen.variant ?? variantFor(live, chosen.key)) : single ? variant : null;
   const sheetTotal = (() => {
-    if (allOut || dual || !buyVariant || buyVariant.price == null) return null;
+    // sem licença ao vivo o Comprar abre a página do produto (outro caminho); licença esgotada não vai ao carrinho
+    if (allOut || dual || chosen?.out || !buyVariant || buyVariant.id <= 0 || !buyVariant.available || buyVariant.price == null)
+      return null;
     const flow = bagEnabled && storeScriptLikely() && !!toItem(buyVariant);
     const t = flow
-      ? checkoutTotal(bag.get(), { slug: game.slug, price: buyVariant.price }, withExpress, true)
+      ? checkoutTotal(liveChecked(bag.get()), { slug: game.slug, price: buyVariant.price }, withExpress, true)
       : checkoutTotal([], { slug: game.slug, price: buyVariant.price }, false, false);
     return t.complete ? totalText(t) : null;
   })();

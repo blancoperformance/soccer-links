@@ -1,9 +1,14 @@
 /**
  * Total final mostrado embaixo dos botões de compra e enviado no checkout_click.
  * A conta é uma só: o texto na tela, o `value` e o `pix_total` do evento saem daqui.
+ * O `value` do checkout_click é o total do carrinho (jogos + Expressa), não o preço de um jogo, e só
+ * vai quando o total é conferido ao vivo. Ele segue só para o dataLayer (GTM): a tabela events do
+ * Supabase não tem coluna de valor, então o painel do admin não lê nem soma esse número.
+ * `pix_total` só vai quando o carrinho tem 1 linha (valor exato).
  */
+import { useEffect, useReducer } from "react";
 import { EXPRESS_PRICE, expressFits } from "./express";
-import { brl } from "./store";
+import { brl, liveSync, loadGame, type LiveGame } from "./store";
 
 /** A loja dá 2% de desconto no Pix em todo produto (página do produto: "2% de desconto pagando com Pix"). */
 export const PIX_DISCOUNT = 0.02;
@@ -25,6 +30,8 @@ export interface CheckoutTotal {
   express: boolean;
   /** Todos os jogos têm preço ao vivo. Sem isso o total é parcial e não deve aparecer. */
   complete: boolean;
+  /** Linhas no carrinho (jogos + Expressa). Pix exato só com 1: com mais, o arredondamento da loja pode mudar o centavo. */
+  lines: number;
 }
 
 /**
@@ -48,12 +55,46 @@ export function checkoutTotal(
     pix: pixPrice(total),
     express,
     complete: items.length > 0 && items.every((i) => i.price != null && i.price > 0),
+    lines: items.length + (express ? 1 : 0),
   };
 }
 
-/** "Total R$ 94,90 · no Pix R$ 93,00" */
-export const totalText = (t: Pick<CheckoutTotal, "total" | "pix">) =>
-  `Total ${brl(t.total)} · no Pix ${brl(t.pix)}`;
+/** Pix com valor exato só quando o carrinho tem uma linha só. */
+export const pixExact = (t: Pick<CheckoutTotal, "lines">) => t.lines === 1;
+
+/** "Total R$ 89,90 · no Pix R$ 88,10"; com mais de um item: "Total R$ 94,90 · no Pix, 2% a menos". */
+export const totalText = (t: Pick<CheckoutTotal, "total" | "pix" | "lines">) =>
+  pixExact(t) ? `Total ${brl(t.total)} · no Pix ${brl(t.pix)}` : `Total ${brl(t.total)} · no Pix, 2% a menos`;
+
+/**
+ * Itens da sacola com o preço conferido na loja ao vivo. A sacola fica salva no aparelho e o preço
+ * guardado pode ser de uma oferta que já acabou: se a licença não foi lida ao vivo nesta visita,
+ * esgotou ou mudou de preço, o preço vira null e o total não aparece (o carrinho iria diferente).
+ */
+export function liveChecked<T extends PricedItem & { variantId: number }>(
+  items: T[],
+  lookup: (slug: string) => LiveGame | null = liveSync,
+): PricedItem[] {
+  return items.map((i) => {
+    const v = lookup(i.slug)?.variants.find((x) => x.id === i.variantId);
+    const ok = !!v && v.available && v.price != null && i.price != null && Math.abs(v.price - i.price) < 0.005;
+    return { slug: i.slug, price: ok ? i.price : null };
+  });
+}
+
+/** Lê ao vivo os jogos da sacola e redesenha quando chegam (para o total poder aparecer). */
+export function useLiveChecks(slugs: string[]) {
+  const [, bump] = useReducer((n: number) => n + 1, 0);
+  const key = slugs.join(",");
+  useEffect(() => {
+    let alive = true;
+    const missing = key ? key.split(",").filter((s) => !liveSync(s)) : [];
+    if (missing.length) void Promise.all(missing.map((s) => loadGame(s))).then(() => alive && bump());
+    return () => {
+      alive = false;
+    };
+  }, [key]);
+}
 
 export const PIX_HINT = "No Pix, 2% a menos";
 

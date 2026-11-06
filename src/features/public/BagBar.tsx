@@ -6,7 +6,7 @@ import { brl, INSTALLMENTS } from "./store";
 import { bagEnabled } from "./content";
 import { expressFits, useExpress } from "./express";
 import { ExpressOption } from "./ExpressOption";
-import { checkoutTotal, totalText } from "./total";
+import { checkoutTotal, liveChecked, pixExact, totalText, useLiveChecks } from "./total";
 import { TotalLine } from "./TotalLine";
 
 /** Barra fixa da sacola: capas empilhadas, total com o "de" riscado, economia e Finalizar. */
@@ -27,17 +27,19 @@ export function BagBar() {
     if (list.length === 0) setOpen(false);
     return undefined;
   }, [list.length]);
+  useLiveChecks(bagEnabled ? list.map((i) => i.slug) : []);
 
   if (!bagEnabled || list.length === 0) return null;
   const { total: games, save } = bagTotals(list);
   const n = list.length;
   // a Expressa só existe no fluxo sgadd; marcada, soma no total e nas parcelas (a economia não muda)
   const offerExpress = storeScriptLikely() && expressFits(n);
-  const sum = checkoutTotal(list, null, withExpress, storeScriptLikely());
-  const total = sum.total;
+  // número grande: preços guardados na sacola (como antes). Linha do total e value: só com preço conferido ao vivo.
+  const total = checkoutTotal(list, null, withExpress, storeScriptLikely()).total;
+  const sum = checkoutTotal(liveChecked(list), null, withExpress, storeScriptLikely());
   const go = () => {
     const likely = storeScriptLikely();
-    const final = checkoutTotal(list, null, withExpress, likely);
+    const final = checkoutTotal(liveChecked(list), null, withExpress, likely);
     const express = final.express;
     // sem o script da loja (GTM bloqueado), abre o primeiro jogo na loja em vez de um carrinho vazio
     const url = likely
@@ -46,9 +48,9 @@ export function BagBar() {
     track("checkout_click", {
       product: list.map((i) => i.slug).join(","),
       detail: `sacola ${n}`,
-      value: final.total,
-      pix_total: final.pix,
-      currency: "BRL",
+      ...(likely && final.complete
+        ? { value: final.total, ...(pixExact(final) ? { pix_total: final.pix } : {}), currency: "BRL" }
+        : {}),
       express,
     });
     track("links_clique", { item_name: `Sacola: finalizar ${n}`, item_url: url });
@@ -176,7 +178,7 @@ export function BagBar() {
               Finalizar <span aria-hidden>→</span>
             </button>
           </div>
-          <TotalLine text={sum.complete ? totalText(sum) : null} className="-mt-1 pb-2.5" />
+          <TotalLine text={sum.complete && storeScriptLikely() ? totalText(sum) : null} className="-mt-1 pb-2.5" />
         </div>
       </div>
     </>

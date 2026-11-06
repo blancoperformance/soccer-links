@@ -4,8 +4,10 @@ import { track } from "@/lib/tracking";
 import { bag, bagTotals, bagUrl, storeScriptLikely, useBag } from "./bag";
 import { brl, INSTALLMENTS } from "./store";
 import { bagEnabled } from "./content";
-import { EXPRESS_PRICE, expressFits, useExpress } from "./express";
+import { expressFits, useExpress } from "./express";
 import { ExpressOption } from "./ExpressOption";
+import { checkoutTotal, totalText } from "./total";
+import { TotalLine } from "./TotalLine";
 
 /** Barra fixa da sacola: capas empilhadas, total com o "de" riscado, economia e Finalizar. */
 export function BagBar() {
@@ -31,10 +33,12 @@ export function BagBar() {
   const n = list.length;
   // a Expressa só existe no fluxo sgadd; marcada, soma no total e nas parcelas (a economia não muda)
   const offerExpress = storeScriptLikely() && expressFits(n);
-  const total = games + (offerExpress && withExpress ? EXPRESS_PRICE : 0);
+  const sum = checkoutTotal(list, null, withExpress, storeScriptLikely());
+  const total = sum.total;
   const go = () => {
     const likely = storeScriptLikely();
-    const express = likely && withExpress && expressFits(n);
+    const final = checkoutTotal(list, null, withExpress, likely);
+    const express = final.express;
     // sem o script da loja (GTM bloqueado), abre o primeiro jogo na loja em vez de um carrinho vazio
     const url = likely
       ? bagUrl(list, "sacola", express)
@@ -42,7 +46,8 @@ export function BagBar() {
     track("checkout_click", {
       product: list.map((i) => i.slug).join(","),
       detail: `sacola ${n}`,
-      value: games + (express ? EXPRESS_PRICE : 0),
+      value: final.total,
+      pix_total: final.pix,
       currency: "BRL",
       express,
     });
@@ -52,7 +57,7 @@ export function BagBar() {
 
   return (
     <>
-      <div aria-hidden className={offerExpress ? "h-40" : "h-28"} />
+      <div aria-hidden className={offerExpress ? "h-44" : "h-32"} />
       {open && (
         <button
           type="button"
@@ -171,6 +176,7 @@ export function BagBar() {
               Finalizar <span aria-hidden>→</span>
             </button>
           </div>
+          <TotalLine text={sum.complete ? totalText(sum) : null} className="-mt-1 pb-2.5" />
         </div>
       </div>
     </>

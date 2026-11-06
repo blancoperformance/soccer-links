@@ -9,6 +9,8 @@ import { Cover, useLiveGame } from "./GameCard";
 import { ExpressOption } from "./ExpressOption";
 import { buyMode, DualBuy, type BuyOption } from "./DualBuy";
 import { expressFits, useExpress } from "./express";
+import { checkoutTotal, PIX_HINT, POPULAR_BADGE, POPULAR_KEY, POPULAR_LINE, showPopular, totalText } from "./total";
+import { TotalLine } from "./TotalLine";
 import { bag, bagUrl, storeScriptLikely, useBag, type BagItem } from "./bag";
 import { bagEnabled } from "./content";
 
@@ -133,6 +135,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
 
   const withExpress = useExpress();
 
+  const popular = showPopular(options);
   const dual =
     buyMode(
       options.map((o) => ({ key: o.key, label: o.label, out: o.out, price: o.variant?.price ?? null })),
@@ -168,6 +171,10 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
     const item = bagEnabled && storeScriptLikely() ? toItem(variant) : null;
     if (item) bag.add(item);
     const express = !!item && withExpress && expressFits(bag.get().length);
+    // mesma conta do total mostrado na ficha: sacola inteira (com este jogo) + Expressa
+    const sum = item
+      ? checkoutTotal(bag.get(), null, express, true)
+      : checkoutTotal([], { slug: game.slug, price: variant.price }, false, false);
     const url = item
       ? bagUrl(bag.get(), `ficha-${game.slug}`, express)
       : cartUrl(variant.id, `ficha-${game.slug}`, game.slug);
@@ -176,7 +183,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
       detail: variant.label,
       size: variant.label,
       express,
-      ...(variant.price !== null ? { value: variant.price, currency: "BRL" } : {}),
+      ...(sum.complete ? { value: sum.total, pix_total: sum.pix, currency: "BRL" } : {}),
     });
     track("links_clique", { item_name: `Comprar: ${game.name}`, item_url: url });
     window.location.href = url;
@@ -214,6 +221,18 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   // só no fluxo sgadd (o mesmo critério do buy); no fallback da página do produto não há Expressa
   const offerExpress =
     bagEnabled && !allOut && storeScriptLikely() && (dual ? options.some((o) => !o.out && !!toItem(o.variant)) : !!toItem()) && expressFits(bag.get().length + (bag.has(game.slug) ? 0 : 1));
+
+  // Total que o clique em Comprar vai levar ao carrinho (mesma conta do checkout_click).
+  const buyVariant = chosen ? (chosen.variant ?? variantFor(live, chosen.key)) : single ? variant : null;
+  const sheetTotal = (() => {
+    if (allOut || dual || !buyVariant || buyVariant.price == null) return null;
+    const flow = bagEnabled && storeScriptLikely() && !!toItem(buyVariant);
+    const t = flow
+      ? checkoutTotal(bag.get(), { slug: game.slug, price: buyVariant.price }, withExpress, true)
+      : checkoutTotal([], { slug: game.slug, price: buyVariant.price }, false, false);
+    return t.complete ? totalText(t) : null;
+  })();
+  const dualHint = dual && options.some((o) => !o.out && o.variant?.price != null) ? PIX_HINT : null;
 
   const cta = allOut
     ? "Esgotado no momento"
@@ -433,6 +452,11 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                         <span>
                           <span className="flex items-center gap-2 text-[15px] font-semibold text-mts-text">
                             {o.label}
+                            {popular && o.key === POPULAR_KEY && (
+                              <span className="rounded-full bg-[#8a00c2] px-2 py-0.5 text-[10px] font-semibold leading-none text-white">
+                                {POPULAR_BADGE}
+                              </span>
+                            )}
                             {suggested === o.key && (
                               <span className="bg-mts-ink px-1.5 py-0.5 text-[10px] font-semibold text-mts-on-ink">
                                 Indicada no quiz
@@ -442,6 +466,11 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
                           <span className="mt-0.5 block text-xs leading-snug text-mts-muted">
                             {o.out ? "Esgotada no momento." : (licenseHint[o.key] ?? "")}
                           </span>
+                          {popular && o.key === POPULAR_KEY && (
+                            <span className="mt-1 block text-xs font-medium leading-snug text-[#8a00c2]">
+                              {POPULAR_LINE}
+                            </span>
+                          )}
                         </span>
                         <span className="shrink-0 text-right">
                           {o.variant?.price != null && (
@@ -638,7 +667,9 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
               <DualBuy
                 options={options.map((o): BuyOption => ({ key: o.key, label: o.label, out: o.out, price: o.variant?.price ?? null }))}
                 onBuy={(k) => buy(k)}
+                popular={popular}
               />
+              <TotalLine text={dualHint} className="mt-2" />
               <div className="mt-2 flex items-center justify-between gap-3">
                 {bagEnabled ? (
                   <button
@@ -685,6 +716,7 @@ href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
               </button>
             </div>
           )}
+          {!dual && <TotalLine text={sheetTotal} className="mt-2" />}
           <p className="mt-2 text-center text-[11px] text-mts-muted">
             {dual && others.length > 0 && (
               <>

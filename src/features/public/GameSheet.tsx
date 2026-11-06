@@ -66,6 +66,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
   const scroller = useRef<HTMLDivElement>(null);
   const licRef = useRef<HTMLDivElement>(null);
   const buyRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
   const inBag = useBag();
   const others = bagEnabled ? inBag.filter((i) => i.slug !== game.slug) : [];
   useLiveChecks(others.map((i) => i.slug));
@@ -252,7 +253,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
       : "Escolher a licença";
 
   // Barra compacta: só aparece quando o bloco de compra do conteúdo está fora da tela.
-  const blockVisible = useBlockVisible(buyRef, scroller, !allOut);
+  const blockVisible = useBlockVisible(buyRef, scroller, !allOut, barRef);
   const showBar = !allOut && !blockVisible;
   const cheapest =
     variant ??
@@ -721,7 +722,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
           </div>
         </div>
 
-        <BuyBar show={showBar} prefix={barPrefix} amount={barAmount} onBuy={dual ? goToBuyBlock : () => buy()} />
+        <BuyBar ref={barRef} show={showBar} prefix={barPrefix} amount={barAmount} onBuy={dual ? goToBuyBlock : () => buy()} />
       </div>
     </div>
   );

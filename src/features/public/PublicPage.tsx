@@ -27,6 +27,7 @@ import { loadClarity, loadGtm, loadPixel, memory, storeLink, track } from "@/lib
 import type { IconName, LinkItem, QuizQuestion } from "./content";
 import { Quiz } from "./Quiz";
 import { GameSheet } from "./GameSheet";
+import { LicensePanel } from "./LicenseHelp";
 import { GameGrid, useLiveGame, Cover } from "./GameCard";
 import {
   games,
@@ -475,6 +476,7 @@ export function PublicPage({
   const [shelf, setShelf] = useState(() => getShelves()[0]?.id ?? "");
   const [chip, setChip] = useState<string | null>(null);
   const [quizOpen, setQuizOpen] = useState(false);
+  const [licenseHelp, setLicenseHelp] = useState(false);
   const [query, setQuery] = useState("");
   const [quizInitial, setQuizInitial] = useState<Record<string, string>>({});
   const [lastGame, setLastGame] = useState<Game | null>(null);
@@ -618,7 +620,7 @@ export function PublicPage({
     {
       label: "Primária ou secundária?",
       sub: "Entenda qual licença escolher",
-      href: "https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/",
+      onClick: () => setLicenseHelp(true),
     },
   ];
 
@@ -1082,6 +1084,7 @@ export function PublicPage({
         />
       )}
 
+      <LicensePanel open={licenseHelp} onClose={() => setLicenseHelp(false)} />
       {!sheet && <BagBar />}
       {sheet && (
         <GameSheet

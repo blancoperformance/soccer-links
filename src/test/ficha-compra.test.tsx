@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BuyBar } from "@/features/public/BuyBar";
 import { GameSheet } from "@/features/public/GameSheet";
-import { LICENSE_HELP, LicenseHelp } from "@/features/public/LicenseHelp";
+import { LICENSE_HELP, LicenseHelp, LicensePanel } from "@/features/public/LicenseHelp";
 import { getGame, type Game } from "@/features/public/games";
 import * as tracking from "@/lib/tracking";
 
@@ -133,5 +133,34 @@ describe("explicação de licença na própria ficha", () => {
     mount(twoLicenses());
     expect(screen.queryByText(/Entenda/)).toBeNull();
     expect(screen.getByRole("button", { name: /Primária ou secundária\?/ })).toBeInTheDocument();
+  });
+
+  it("não tem link para fora no acordeão", () => {
+    render(<LicenseHelp from="Quiz" />);
+    expect(document.querySelector("a")).toBeNull();
+  });
+
+  it("painel da página inicial explica ali mesmo e fecha no Entendi e no Esc", () => {
+    const onClose = vi.fn();
+    const { rerender } = render(<LicensePanel open={false} onClose={onClose} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    rerender(<LicensePanel open onClose={onClose} />);
+    const dlg = screen.getByRole("dialog", { name: "Primária ou secundária?" });
+    for (const l of LICENSE_HELP) expect(dlg.textContent).toContain(l.text);
+    expect(dlg.querySelector("a")).toBeNull();
+    expect(dlg.textContent).not.toMatch(/[—–]/);
+    fireEvent.click(screen.getByRole("button", { name: "Entendi" }));
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("nenhum atalho do Links leva para fora para explicar licença", () => {
+  it("Quiz e página inicial não apontam mais para a ajuda da loja", async () => {
+    const fs = await import("node:fs");
+    for (const f of ["Quiz.tsx", "PublicPage.tsx", "GameSheet.tsx", "LicenseHelp.tsx"]) {
+      const src = fs.readFileSync(`src/features/public/${f}`, "utf8");
+      expect(src, f).not.toContain("ajuda-primaria-ou-secundaria");
+    }
   });
 });

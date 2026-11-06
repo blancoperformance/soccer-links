@@ -8,6 +8,7 @@ import type { Game } from "./games";
 import { Cover, useLiveGame } from "./GameCard";
 import { brl, licenseHint, livePriceFrom, variantFor } from "./store";
 import { poolSize, replyFor, summaryOf } from "./quiz-chat";
+import { LicenseHelp } from "./LicenseHelp";
 
 interface QuizProps {
   questions: QuizQuestion[];
@@ -368,18 +369,7 @@ export function Quiz({ questions, whatsapp, initial = {}, onClose, onOpen }: Qui
                   </div>
                 </>
               )}
-              <p className="mt-8 text-[13px] text-mts-muted">
-                Ficou na dúvida?{" "}
-                <a
-                  href="https://lojasoccergames.com.br/ajuda-primaria-ou-secundaria/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => track("links_clique", { item_name: "Quiz: primária ou secundária" })}
-                  className="font-medium text-mts-text underline underline-offset-4"
-                >
-                  Entenda primária e secundária
-                </a>
-              </p>
+              <LicenseHelp className="mt-8" from="Quiz" />
               <button
                 type="button"
                 onClick={restart}

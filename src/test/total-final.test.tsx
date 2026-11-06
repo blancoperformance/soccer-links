@@ -25,35 +25,51 @@ describe("pixPrice (2% da loja, centavo arredondado)", () => {
   it("preço de 3 dígitos", () => expect(pixPrice(189.9)).toBe(186.1));
 });
 
-describe("total final", () => {
+describe("total final (cartão com o cupom do link de 1%, Pix com 2%, os dois sobre o subtotal)", () => {
+  it("bate com o carrinho real da loja de 05/11: subtotal 389,40 vira 385,51 e 381,61 no Pix", () => {
+    const bag = [
+      g("a", 89.9),
+      g("b", 59.9),
+      g("c", 49.9),
+      g("d", 49.9),
+      g("e", 59.9),
+      g("f", 79.9),
+    ];
+    const t = checkoutTotal(bag, null, false, true);
+    expect(t).toMatchObject({ total: 385.51, pix: 381.61, lines: 6 });
+    expect(nbsp(totalText(t))).toBe("Total R$ 385,51 · no Pix R$ 381,61");
+  });
   it("um jogo, sem Expressa", () => {
     const t = checkoutTotal([], g("a", 89.9), false, true);
-    expect(t).toMatchObject({ total: 89.9, pix: 88.1, express: false, complete: true });
-    expect(nbsp(totalText(t))).toBe("Total R$ 89,90 · no Pix R$ 88,10");
+    expect(t).toMatchObject({ total: 89, pix: 88.1, express: false, complete: true });
+    expect(nbsp(totalText(t))).toBe("Total R$ 89,00 · no Pix R$ 88,10");
   });
-  it("um jogo com Expressa soma R$ 5 e o Pix vem sobre o total", () => {
+  it("um jogo com Expressa soma R$ 5 antes dos descontos", () => {
     const t = checkoutTotal([], g("a", 89.9), true, true);
-    expect(t).toMatchObject({ total: 94.9, pix: 93, express: true, lines: 2 });
-    // 2 linhas no carrinho: o centavo do Pix pode mudar na loja, então sem valor exato
-    expect(pixExact(t)).toBe(false);
-    expect(nbsp(totalText(t))).toBe("Total R$ 94,90 · no Pix, 2% a menos");
+    expect(t).toMatchObject({ total: 93.95, pix: 93, express: true, lines: 2 });
+    expect(pixExact(t)).toBe(true);
+    expect(nbsp(totalText(t))).toBe("Total R$ 93,95 · no Pix R$ 93,00");
   });
   it("3 dígitos com Expressa", () => {
-    const t = checkoutTotal([], g("a", 189.9), true, true);
-    expect(nbsp(totalText(t))).toBe("Total R$ 194,90 · no Pix, 2% a menos");
-    expect(nbsp(totalText(checkoutTotal([], g("a", 189.9), false, true)))).toBe("Total R$ 189,90 · no Pix R$ 186,10");
+    expect(nbsp(totalText(checkoutTotal([], g("a", 189.9), true, true)))).toBe(
+      "Total R$ 192,95 · no Pix R$ 191,00",
+    );
+    expect(nbsp(totalText(checkoutTotal([], g("a", 189.9), false, true)))).toBe(
+      "Total R$ 188,00 · no Pix R$ 186,10",
+    );
   });
   it("sacola com vários jogos soma tudo; o jogo da ficha troca a licença anterior", () => {
     const bag = [g("a", 50), g("b", 79.9)];
-    expect(checkoutTotal(bag, g("c", 30), false, true).total).toBe(159.9);
-    expect(checkoutTotal(bag, g("a", 40), false, true).total).toBe(119.9);
+    expect(checkoutTotal(bag, g("c", 30), false, true).total).toBe(158.3);
+    expect(checkoutTotal(bag, g("a", 40), false, true).total).toBe(118.7);
     const t = checkoutTotal(bag, null, true, true);
-    expect(t).toMatchObject({ total: 134.9, express: true, lines: 3 });
-    expect(nbsp(totalText(t))).toBe("Total R$ 134,90 · no Pix, 2% a menos");
-    expect(nbsp(totalText(checkoutTotal(bag, null, false, true)))).toBe("Total R$ 129,90 · no Pix, 2% a menos");
+    expect(t).toMatchObject({ total: 133.55, pix: 132.2, express: true, lines: 3 });
   });
   it("sem o fluxo sgadd não há Expressa", () => {
-    expect(checkoutTotal([], g("a", 50), true, false)).toMatchObject({ total: 50, express: false });
+    expect(checkoutTotal([], g("a", 50), true, false)).toMatchObject({
+      total: 49.5,
+      express: false,
+    });
   });
   it("Expressa não entra quando a sacola já enche o sgadd", () => {
     const full = Array.from({ length: SGADD_MAX }, (_, i) => g(`j${i}`, 10));
@@ -65,20 +81,30 @@ describe("total final", () => {
     expect(checkoutTotal([], null, true, true).complete).toBe(false);
   });
   it("sacola: preço guardado só vale se bater com a loja ao vivo", () => {
-    const live = (price: number | null, available = true) => () => ({
-      id: 1,
-      images: [],
-      variants: [{ id: 7, key: "primaria", label: "Primária", price, from: null, available }],
-    });
+    const live =
+      (price: number | null, available = true) =>
+      () => ({
+        id: 1,
+        images: [],
+        variants: [{ id: 7, key: "primaria", label: "Primária", price, from: null, available }],
+      });
     const item = { slug: "a", price: 39.9, variantId: 7 };
     expect(liveChecked([item], live(39.9))).toEqual([{ slug: "a", price: 39.9 }]);
     // oferta da semana passada acabou: a loja cobra outro preço
     expect(liveChecked([item], live(59.9))[0]!.price).toBeNull();
     expect(liveChecked([item], live(39.9, false))[0]!.price).toBeNull();
     expect(liveChecked([item], () => null)[0]!.price).toBeNull();
-    expect(checkoutTotal(liveChecked([item], () => null), null, false, true).complete).toBe(false);
+    expect(
+      checkoutTotal(
+        liveChecked([item], () => null),
+        null,
+        false,
+        true,
+      ).complete,
+    ).toBe(false);
   });
-  it("sem licença escolhida o texto é a dica do Pix", () => expect(PIX_HINT).toBe("No Pix, 2% a menos"));
+  it("sem licença escolhida o texto é a dica do Pix", () =>
+    expect(PIX_HINT).toBe("No Pix, 2% a menos"));
 });
 
 const prim: BuyOption = { key: "primaria", label: "Primária", out: false, price: 89.9 };
@@ -90,14 +116,21 @@ describe("selo Mais escolhida", () => {
     render(<DualBuy options={[sec, prim]} onBuy={() => {}} popular />);
     expect(screen.getAllByText(POPULAR_BADGE)).toHaveLength(1);
     // nenhum botão vem pré-selecionado
-    expect(screen.getAllByRole("button").every((b) => b.getAttribute("aria-pressed") === null)).toBe(true);
+    expect(
+      screen.getAllByRole("button").every((b) => b.getAttribute("aria-pressed") === null),
+    ).toBe(true);
   });
   it("uma licença só: não", () => expect(showPopular([prim])).toBe(false));
   it("uma das duas esgotada: não", () => {
     expect(showPopular([prim, { ...sec, out: true }])).toBe(false);
   });
   it("outro par de licenças: não", () => {
-    expect(showPopular([{ ...prim, key: "x" }, { ...sec, key: "y" }])).toBe(false);
+    expect(
+      showPopular([
+        { ...prim, key: "x" },
+        { ...sec, key: "y" },
+      ]),
+    ).toBe(false);
   });
   it("sem popular, DualBuy não mostra o selo", () => {
     render(<DualBuy options={[prim, sec]} onBuy={() => {}} />);

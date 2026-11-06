@@ -4,18 +4,33 @@
  * O `value` do checkout_click é o total do carrinho (jogos + Expressa), não o preço de um jogo, e só
  * vai quando o total é conferido ao vivo. Ele segue só para o dataLayer (GTM): a tabela events do
  * Supabase não tem coluna de valor, então o painel do admin não lê nem soma esse número.
- * `pix_total` só vai quando o carrinho tem 1 linha (valor exato).
+ * Conferido num carrinho real da loja em 05/11/2026 (6 jogos, subtotal R$ 389,40): o cupom do link
+ * (BIO1, 1%) deu "Desconto do cupom: -R$ 3,89", "Total: R$ 385,51" e "Ou R$ 381,61 com Pix".
+ * Ou seja: total = subtotal menos 1% (centavo arredondado) e Pix = subtotal menos 2%, sem somar os dois.
+ * Se o cupom BIO1 mudar de % no admin da Nuvemshop, troque BIO_COUPON_PCT.
  */
 import { useEffect, useReducer } from "react";
 import { EXPRESS_PRICE, expressFits } from "./express";
+import { bioCoupon } from "./content";
 import { brl, liveSync, loadGame, type LiveGame } from "./store";
 
 /** A loja dá 2% de desconto no Pix em todo produto (página do produto: "2% de desconto pagando com Pix"). */
 export const PIX_DISCOUNT = 0.02;
 
-/** Preço no Pix, arredondado ao centavo como a loja faz: 79,90 x 0,98 = 78,302 -> 78,30. */
-export const pixPrice = (value: number) =>
-  Math.round((Math.round(value * 100) * (100 - PIX_DISCOUNT * 100)) / 100) / 100;
+/** Cupom do link (BIO1) no admin da Nuvemshop em 05/11/2026: 1%, ativo, sem limite. */
+export const BIO_COUPON_PCT = bioCoupon ? 0.01 : 0;
+
+/** Desconto em % sobre o subtotal, com o centavo do desconto arredondado como a loja faz. */
+const off = (value: number, pct: number) => {
+  const cents = Math.round(value * 100);
+  return (cents - Math.round(cents * pct)) / 100;
+};
+
+/** Preço no Pix: subtotal menos 2% (389,40 -> 381,61; 79,90 -> 78,30). Não soma com o cupom. */
+export const pixPrice = (value: number) => off(value, PIX_DISCOUNT);
+
+/** Total no cartão ou boleto com o cupom do link: subtotal menos 1% (389,40 -> 385,51). */
+export const linkPrice = (value: number) => off(value, BIO_COUPON_PCT);
 
 export interface PricedItem {
   slug: string;
@@ -23,7 +38,7 @@ export interface PricedItem {
 }
 
 export interface CheckoutTotal {
-  /** Jogos mais a Expressa, se ela entra no carrinho. */
+  /** Jogos mais a Expressa, com o cupom do link (o que o checkout mostra no cartão). */
   total: number;
   pix: number;
   /** A Expressa vai junto neste carrinho. */
@@ -49,22 +64,22 @@ export function checkoutTotal(
   const items = adding ? [...bagItems.filter((i) => i.slug !== adding.slug), adding] : bagItems;
   const games = items.reduce((s, i) => s + (i.price ?? 0), 0);
   const express = expressFlow && wantsExpress && items.length > 0 && expressFits(items.length);
-  const total = Math.round((games + (express ? EXPRESS_PRICE : 0)) * 100) / 100;
+  const subtotal = Math.round((games + (express ? EXPRESS_PRICE : 0)) * 100) / 100;
   return {
-    total,
-    pix: pixPrice(total),
+    total: linkPrice(subtotal),
+    pix: pixPrice(subtotal),
     express,
     complete: items.length > 0 && items.every((i) => i.price != null && i.price > 0),
     lines: items.length + (express ? 1 : 0),
   };
 }
 
-/** Pix com valor exato só quando o carrinho tem uma linha só. */
-export const pixExact = (t: Pick<CheckoutTotal, "lines">) => t.lines === 1;
+/** Pix exato em qualquer carrinho: a loja calcula sobre o subtotal (conferido com 6 itens). */
+export const pixExact = (_t: Pick<CheckoutTotal, "lines">) => true;
 
-/** "Total R$ 89,90 · no Pix R$ 88,10"; com mais de um item: "Total R$ 94,90 · no Pix, 2% a menos". */
+/** "Total R$ 89,00 · no Pix R$ 88,10" (cartão já com o cupom do link). */
 export const totalText = (t: Pick<CheckoutTotal, "total" | "pix" | "lines">) =>
-  pixExact(t) ? `Total ${brl(t.total)} · no Pix ${brl(t.pix)}` : `Total ${brl(t.total)} · no Pix, 2% a menos`;
+  `Total ${brl(t.total)} · no Pix ${brl(t.pix)}`;
 
 /**
  * Itens da sacola com o preço conferido na loja ao vivo. A sacola fica salva no aparelho e o preço
@@ -77,7 +92,12 @@ export function liveChecked<T extends PricedItem & { variantId: number }>(
 ): PricedItem[] {
   return items.map((i) => {
     const v = lookup(i.slug)?.variants.find((x) => x.id === i.variantId);
-    const ok = !!v && v.available && v.price != null && i.price != null && Math.abs(v.price - i.price) < 0.005;
+    const ok =
+      !!v &&
+      v.available &&
+      v.price != null &&
+      i.price != null &&
+      Math.abs(v.price - i.price) < 0.005;
     return { slug: i.slug, price: ok ? i.price : null };
   });
 }
@@ -89,7 +109,8 @@ export function useLiveChecks(slugs: string[]) {
   useEffect(() => {
     let alive = true;
     const missing = key ? key.split(",").filter((s) => !liveSync(s)) : [];
-    if (missing.length) void Promise.all(missing.map((s) => loadGame(s))).then(() => alive && bump());
+    if (missing.length)
+      void Promise.all(missing.map((s) => loadGame(s))).then(() => alive && bump());
     return () => {
       alive = false;
     };

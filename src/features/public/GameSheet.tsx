@@ -306,7 +306,7 @@ export function GameSheet({ game, whatsapp, suggested = null, onClose, onOpenOth
           </button>
         </div>
 
-        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-10">
           {flash && (
             <div className="pointer-events-none sticky top-3 z-30 -mb-10 flex justify-center">
               <span className="animate-[sg-pop_.45s_ease-out] rounded-full bg-[#0f0f0f] px-4 py-2 text-sm font-bold text-white shadow-lg">

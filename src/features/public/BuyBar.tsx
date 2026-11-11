@@ -54,7 +54,8 @@ export function useBlockVisible(
 
 /**
  * Barra de baixo, compacta: uma linha com preço e "Comprar". Entra de baixo só quando `show`;
- * escondida fica invisível para toque, foco e leitor de tela.
+ * escondida fica invisível para toque, foco e leitor de tela. Só em tela menor que 1024px: no computador
+ * a compra fica só no bloco do próprio conteúdo, sem faixa presa embaixo.
  */
 export const BuyBar = forwardRef<
   HTMLDivElement,
@@ -82,7 +83,7 @@ export const BuyBar = forwardRef<
       data-testid="buy-bar"
       data-show={show}
       aria-hidden={!show}
-      className={`absolute inset-x-0 bottom-0 z-20 border-t border-mts-btn-border bg-mts-column px-5 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-6px_18px_rgba(0,0,0,0.07)] sm:px-8 ${
+      className={`absolute inset-x-0 bottom-0 z-20 border-t border-mts-btn-border bg-mts-column px-5 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-6px_18px_rgba(0,0,0,0.07)] sm:px-8 lg:hidden ${
         ready
           ? "motion-safe:transition-[transform,visibility] motion-safe:duration-300 motion-safe:ease-out"
           : ""

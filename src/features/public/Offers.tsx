@@ -1,9 +1,10 @@
 /**
  * "Caça-ofertas": tudo aqui vem dos preços reais da loja (preço de / por da Nuvemshop).
  * Nada de número inventado: sem oferta real, o bloco não aparece.
- *  - Faixa com o maior desconto do dia.
+ *  - Faixa com quantos jogos estão em oferta e o prazo real de cada campanha.
  *  - Roleta: gira pelas capas e para numa oferta de verdade (do console escolhido).
- *  - Ranking dos maiores descontos, com quanto a pessoa economiza.
+ *  - Lista das ofertas com "a partir de", sem preço riscado nem porcentagem: o preço "de"
+ *    vem do cadastro da loja, sem fonte pública, e a Meta lê isso como sinal de golpe (11/11/2026).
  */
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,7 +12,7 @@ import { ArrowRight, Flame, RotateCw, Sparkles, Timer } from "lucide-react";
 import { track } from "@/lib/tracking";
 import { games, isGame, type Game } from "./games";
 import { brl, loadCatalog, loadGame, sized, type LiveGame } from "./store";
-import { offers as offersCfg } from "./content";
+import { offerDeadlines, offers as offersCfg } from "./content";
 import { weeklyGameSlugs } from "./promotion";
 
 export interface Deal {
@@ -22,6 +23,8 @@ export interface Deal {
   pct: number;
   save: number;
   license: string;
+  /** Menor preço disponível do jogo (qualquer licença), mostrado como "a partir de". */
+  min: number;
 }
 
 /** Melhor oferta de cada jogo (a licença com maior desconto real). */
@@ -32,6 +35,10 @@ export function dealsFrom(cat: Record<string, LiveGame>, scope?: ReadonlySet<str
     const live = cat[g.slug];
     if (!live) continue;
     let best: Deal | null = null;
+    const prices = live.variants
+      .filter((v) => v.available && v.price != null)
+      .map((v) => v.price as number);
+    const min = prices.length ? Math.min(...prices) : 0;
     for (const v of live.variants) {
       if (!v.available || v.price == null || v.from == null || v.from <= v.price) continue;
       const pct = Math.round((1 - v.price / v.from) * 100);
@@ -45,6 +52,7 @@ export function dealsFrom(cat: Record<string, LiveGame>, scope?: ReadonlySet<str
           pct,
           save: v.from - v.price,
           license: v.label,
+          min,
         };
     }
     if (best) out.push(best);
@@ -120,13 +128,17 @@ function Countdown({ ms }: { ms: number }) {
 
 const img = (d: Deal, w = 480) => (d.live.images[0] ? sized(d.live.images[0], w) : "");
 
-/** Faixa do topo: "Hoje tem jogo com até 84% OFF" + contagem da campanha da loja. */
+/**
+ * Faixa do topo: quantos jogos estão em oferta + prazo real de cada campanha da loja.
+ * Sem porcentagem: o preço "de" vem do cadastro da loja e não tem fonte pública (sinal de golpe pra Meta).
+ */
 export function DealsBanner({ onGo, weekly = false }: { onGo: () => void; weekly?: boolean }) {
   const deals = useDeals(weekly);
   const left = useCountdown(weekly ? offersCfg.endsAt : undefined);
   if (!deals?.length) return null;
-  const top = deals[0]!;
   const live = weekly && left != null && left > 0;
+  const now = Date.now();
+  const prazos = offerDeadlines.filter((p) => new Date(p.endsAt).getTime() > now);
   const covers = deals.filter((d) => d.live.images[0]).slice(0, 3);
   return (
     <button
@@ -145,23 +157,26 @@ export function DealsBanner({ onGo, weekly = false }: { onGo: () => void; weekly
       <span className="relative min-w-0 flex-1">
         <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white/80">
           <Flame className="h-3.5 w-3.5" aria-hidden />{" "}
-          {weekly ? "Ofertas da semana" : "Ofertas de hoje"}
+          {weekly ? "Ofertas da semana" : "Ofertas no ar"}
         </span>
-        <span className="mt-1 block leading-none">
-          <span className="text-[14px] font-semibold text-white/90">Jogos com até </span>
-          <span className="block text-[38px] font-black leading-[0.95] tracking-tight">
-            {top.pct}% <span className="text-[22px]">OFF</span>
+        <span className="mt-1 block text-[32px] font-black leading-[0.95] tracking-tight">
+          {deals.length} jogos em oferta
+        </span>
+        {live ? (
+          <span className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[12px] text-white/90">
+            <Timer className="h-3.5 w-3.5" aria-hidden /> Acaba em <Countdown ms={left!} />
           </span>
-        </span>
-        <span className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[12px] text-white/90">
-          {live ? (
-            <>
-              <Timer className="h-3.5 w-3.5" aria-hidden /> Acaba em <Countdown ms={left!} />
-            </>
-          ) : (
-            <>{deals.length} jogos em oferta agora</>
-          )}
-        </span>
+        ) : (
+          prazos.length > 0 && (
+            <span className="mt-2.5 block space-y-0.5 text-[12px] leading-snug text-white/90">
+              {prazos.map((p) => (
+                <span key={p.text} className="block">
+                  {p.text}
+                </span>
+              ))}
+            </span>
+          )
+        )}
       </span>
       <span className="relative mr-1 flex h-24 w-[112px] shrink-0 items-center justify-center">
         {covers.map((d, k) => (
@@ -263,7 +278,7 @@ export function Offers({
         setSpinning(false);
         setSpins((n) => n + 1);
         if (navigator.vibrate) navigator.vibrate(40);
-        track("links_clique", { item_name: `Roleta: ${prize.game.slug} (-${prize.pct}%)` });
+        track("links_clique", { item_name: `Roleta: ${prize.game.slug}` });
         return;
       }
       setFace(pool[Math.floor(Math.random() * Math.min(pool.length, 30))]!);
@@ -311,22 +326,14 @@ export function Offers({
             <span className="font-display text-6xl font-black text-[#8a00c2]/25">?</span>
           )}
           {won && !spinning && <Confetti key={spins} />}
-          {won && !spinning && (
-            <span className="absolute left-2 top-2 animate-[sg-pop_.5s_ease-out] rounded-full bg-[#ff2d87] px-3 py-1 text-lg font-black text-white shadow-lg">
-              -{won.pct}%
-            </span>
-          )}
         </div>
 
         {won && !spinning ? (
           <div className="relative mt-4 text-center">
             <p className="text-[15px] font-bold leading-snug">{won.game.name}</p>
             <p className="mt-1 text-sm">
-              <span className="text-mts-muted line-through">{brl(won.from)}</span>{" "}
-              <span className="text-xl font-black text-[#8a00c2]">{brl(won.price)}</span>
-            </p>
-            <p className="mt-0.5 text-xs text-mts-muted">
-              Você economiza {brl(won.save)} na licença {won.license.toLowerCase()}.
+              <span className="text-mts-muted">a partir de</span>{" "}
+              <span className="text-xl font-black text-[#8a00c2]">{brl(won.min)}</span>
             </p>
             <div className="mt-4 flex gap-2">
               <button
@@ -364,7 +371,7 @@ export function Offers({
       {/* Ranking */}
       <p className="mt-6 flex items-center gap-2 text-sm font-bold text-mts-text">
         <Flame className="h-4 w-4 text-[#ff2d87]" aria-hidden />{" "}
-        {weekly ? `Ofertas da semana de ${plat}` : `Maiores descontos de ${plat} agora`}
+        {weekly ? `Ofertas da semana de ${plat}` : `Ofertas de ${plat} agora`}
       </p>
       <ol className="mt-3 space-y-2">
         {ranking.map((d, i) => (
@@ -395,12 +402,9 @@ export function Offers({
                   {d.game.name}
                 </span>
                 <span className="mt-1 block text-xs">
-                  <span className="text-mts-muted line-through">{brl(d.from)}</span>{" "}
-                  <span className="font-bold text-mts-text">{brl(d.price)}</span>
+                  <span className="text-mts-muted">a partir de</span>{" "}
+                  <span className="font-bold text-mts-text">{brl(d.min)}</span>
                 </span>
-              </span>
-              <span className="shrink-0 rounded-full bg-[#ff2d87] px-2 py-1 text-xs font-black text-white">
-                -{d.pct}%
               </span>
             </button>
           </li>

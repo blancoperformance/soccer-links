@@ -25,6 +25,7 @@ import { withUtm } from "@/lib/utm";
 import { isPubliclyVisible } from "@/lib/schedule";
 import { loadClarity, loadGtm, loadPixel, memory, storeLink, track } from "@/lib/tracking";
 import type { IconName, LinkItem, QuizQuestion } from "./content";
+import { contact, seller } from "./content";
 import { Quiz } from "./Quiz";
 import { GameSheet } from "./GameSheet";
 import { LicensePanel } from "./LicenseHelp";
@@ -737,6 +738,28 @@ export function PublicPage({
                 PS4 · PS5
               </span>
             </div>
+            {/* Quem vende, já na primeira tela: razão social, CNPJ e WhatsApp (Meta, práticas comerciais) */}
+            <p className="relative mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12px] leading-5 text-white/75">
+              <span className="whitespace-nowrap">{seller.legalName} ·</span>
+              <a
+                href={seller.cnpjUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track("links_clique", { item_name: "Topo: CNPJ" })}
+                className="relative whitespace-nowrap underline decoration-white/30 underline-offset-4 after:absolute after:inset-x-0 after:-top-6 after:bottom-0 after:content-[''] hover:text-white"
+              >
+                CNPJ {seller.cnpj}
+              </a>
+              <a
+                href={seller.whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track("links_clique", { item_name: "Topo: WhatsApp" })}
+                className="relative whitespace-nowrap underline decoration-white/30 underline-offset-4 after:absolute after:inset-x-0 after:top-0 after:-bottom-6 after:content-[''] hover:text-white"
+              >
+                WhatsApp {seller.whatsappLabel}
+              </a>
+            </p>
             <h1 className="sr-only">{profile.name}</h1>
             {campaignOn || blackOn ? (
               <BlackHero
@@ -944,8 +967,8 @@ export function PublicPage({
             {sectionTitle(
               campaignOn ? "Seu jogo da semana" : "Caça-ofertas",
               campaignOn
-                ? "Gire para descobrir um jogo da semana ou compare os descontos abaixo."
-                : "Gire a roleta ou veja os maiores descontos da loja agora.",
+                ? "Gire para descobrir um jogo da semana ou veja as ofertas abaixo."
+                : "Gire a roleta ou veja as ofertas agora.",
             )}
             <div className="mt-5">
               <Offers onOpen={(g) => openGame(g)} weekly={campaignOn} />
@@ -1024,6 +1047,73 @@ export function PublicPage({
                 <QuickAnswers items={quickAnswers} />
               </div>
             )}
+          </section>
+
+          <section id="quem-vende" className={sectionCls} aria-label="Quem vende">
+            {sectionTitle("Quem vende")}
+            <div className="mt-4 text-[14px] leading-relaxed text-mts-text">
+              <p className="font-semibold">
+                {seller.legalName}
+                <span className="block font-normal text-mts-muted">
+                  <a
+                    href={seller.cnpjUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => track("links_clique", { item_name: "Quem vende: CNPJ" })}
+                    className="inline-flex min-h-[44px] items-center underline underline-offset-4"
+                  >
+                    CNPJ {seller.cnpj}
+                  </a>
+                </span>
+              </p>
+              <p className="mt-2 text-mts-muted">{seller.about}</p>
+              <ul className="mt-1">
+                <li>
+                  <a
+                    href={seller.whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => track("links_clique", { item_name: "Quem vende: WhatsApp" })}
+                    className="inline-flex min-h-[44px] items-center underline underline-offset-4"
+                  >
+                    WhatsApp {seller.whatsappLabel}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={`mailto:${contact.email}`}
+                    onClick={() => track("links_clique", { item_name: "Quem vende: e-mail" })}
+                    className="inline-flex min-h-[44px] items-center underline underline-offset-4"
+                  >
+                    {contact.email}
+                  </a>
+                </li>
+                <li className="text-mts-muted">{seller.hours}</li>
+              </ul>
+              <p className="mt-1 flex flex-wrap gap-x-5">
+                <a
+                  href={withUtm(seller.refundUrl, { content: "quem-vende-reembolso" })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() =>
+                    track("links_clique", { item_name: "Quem vende: cancelamento e reembolso" })
+                  }
+                  className="inline-flex min-h-[44px] items-center font-semibold underline underline-offset-4"
+                >
+                  Cancelamento e reembolso
+                </a>
+                <a
+                  href={withUtm(seller.termsUrl, { content: "quem-vende-termos" })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => track("links_clique", { item_name: "Quem vende: termos" })}
+                  className="inline-flex min-h-[44px] items-center font-semibold underline underline-offset-4"
+                >
+                  Termos de uso
+                </a>
+              </p>
+              <p className="mt-3 text-[12px] text-mts-muted">{seller.marks}</p>
+            </div>
           </section>
 
           {vipOn && community?.vip && (

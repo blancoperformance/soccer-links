@@ -88,6 +88,35 @@ export const contact = {
   hours: "Segunda a sábado, das 9h às 21h. Domingo, das 9h às 15h.",
 };
 
+/**
+ * Quem vende: identificação da loja na página (topo e cartão "Quem vende").
+ * Razão social e CNPJ conferidos no cadastro público em 11/11/2026 (SOCCER GAMES LTDA, ativa).
+ * Mesmo CNPJ do rodapé de lojasoccergames.com.br. Endereço e "sem vínculo com a Sony" esperam o ok do Geovane.
+ */
+export const seller = {
+  legalName: "Soccer Games LTDA",
+  cnpj: "61.240.766/0001-38",
+  cnpjUrl:
+    "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp?cnpj=61240766000138",
+  whatsappLabel: "(18) 99636-6686",
+  whatsappUrl: wa("Olá! Vim pela página de links da Soccer."),
+  about: "Loja de jogos digitais de PS4 e PS5, com entrega por e-mail.",
+  hours: "Seg a sáb 9h às 21h · dom 9h às 15h",
+  refundUrl: `${STORE}/ajuda-cancelamento-e-reembolso/`,
+  termsUrl: `${STORE}/como-comprar-e-termos-de-seguranca/`,
+  marks:
+    "PlayStation, PS4 e PS5 são marcas da Sony Interactive Entertainment. Grand Theft Auto é marca da Take‑Two Interactive.",
+};
+
+/**
+ * Prazos reais das ofertas que estão no ar na loja, mostrados na faixa do Caça-ofertas.
+ * Cada linha some sozinha quando passa do endsAt. Atualize a cada campanha nova.
+ */
+export const offerDeadlines: { text: string; endsAt: string }[] = [
+  { text: "Black da semana até dom 15/11", endsAt: "2026-11-15T23:59:59-03:00" },
+  { text: "Sazonal PSN até sex 20/11", endsAt: "2026-11-20T23:59:59-03:00" },
+];
+
 /** Botões do atendimento (seção "Atendimento"). visible: false esconde sem apagar. */
 export const items: LinkItem[] = [
   {
@@ -229,7 +258,7 @@ export const quickAnswers: { q: string; a: string; action?: { label: string; url
 export const trust: { icon: "mail" | "shield" | "clock"; title: string; text: string }[] = [
   { icon: "mail", title: "Chega no e-mail", text: "Pix em geral em menos de 30 min" },
   { icon: "shield", title: "Garantia vitalícia", text: "Em todas as contas" },
-  { icon: "clock", title: "Atendimento", text: "Todos os dias" },
+  { icon: "clock", title: "Atendimento", text: "Seg a sáb 9h às 21h, dom 9h às 15h" },
 ];
 
 /** Bloco "Comunidade" no fim da página. */
@@ -242,7 +271,7 @@ export const community = {
   vip: {
     enabled: true,
     title: "Grupo VIP da Black",
-    sub: "As ofertas da Black e o preço do GTA 6 antes do site",
+    sub: "As ofertas da Black e o preço do fim de semana do GTA 6 antes do site",
     url: "/black",
   },
   playlist: { enabled: false, title: "", sub: "", url: "" },

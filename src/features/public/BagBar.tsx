@@ -93,9 +93,6 @@ export function BagBar() {
                         <span className="rounded-full bg-mts-column px-1.5 py-px text-[10px] font-semibold text-mts-muted">
                           {i.license}
                         </span>
-                        {i.from && i.price != null && i.from > i.price && (
-                          <span className="text-mts-muted line-through">{brl(i.from)}</span>
-                        )}
                         {i.price != null && (
                           <span className="font-bold text-mts-text">{brl(i.price)}</span>
                         )}

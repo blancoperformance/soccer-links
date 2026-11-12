@@ -149,7 +149,7 @@ export function GtaCard({ onOpen, onShelf }: { onOpen: (g: Game) => void; onShel
             GTA 6
           </h3>
           <p className="mt-3 text-[13px] leading-relaxed text-white/70">
-            Garanta o seu agora. A entrega é pelo e-mail.
+            A entrega é pelo e-mail, no lançamento.
           </p>
         </div>
         <button

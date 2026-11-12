@@ -132,7 +132,6 @@ export function GameCard({
 }) {
   const { live, done, ref } = useLiveGame(game.slug);
   const price = livePriceFrom(live);
-  const from = live?.variants.find((v) => v.available && v.price === price)?.from ?? null;
   const out =
     done && live !== null && live.variants.length > 0 && !live.variants.some((v) => v.available);
   return (
@@ -153,7 +152,6 @@ export function GameCard({
         <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[13px]">
           <span className="text-mts-muted">a partir de</span>
           <span className="font-bold tracking-tight text-mts-text">{brl(price)}</span>
-          {from && <span className="text-[11px] text-mts-muted line-through">{brl(from)}</span>}
         </p>
       )}
       {showPrices && price !== null && !out && (
